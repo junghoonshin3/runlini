@@ -1,0 +1,36 @@
+name: runlini
+description: "Runlini agent-first running coach bootstrap."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  apple_maps_flutter: ^1.4.0
+  cupertino_icons: ^1.0.8
+  fl_chart: ^1.2.0
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.3.1
+  geolocator: ^14.0.2
+  geolocator_android: ^5.0.2
+  geolocator_apple: ^2.3.13
+  google_maps_flutter: ^2.17.0
+  health: ^13.3.1
+  latlong2: ^0.9.1
+  path: ^1.9.1
+  sqflite: ^2.4.2
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/fixtures/fake_run_session.json
+    - assets/fixtures/osaka_namba_tobita_route.json
+    - assets/fixtures/osaka_namba_kanzakigawa_route.json

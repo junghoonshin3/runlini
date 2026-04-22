@@ -1,0 +1,101 @@
+{
+  "id": "fixture_morning_tempo",
+  "startedAt": "2026-04-19T06:30:00.000Z",
+  "endedAt": "2026-04-19T06:42:00.000Z",
+  "distanceM": 2400.0,
+  "durationMs": 720000,
+  "sourceSummary": "fixture:simulated-primary",
+  "points": [
+    {
+      "lat": 37.5665,
+      "lng": 126.978,
+      "timestampRelMs": 0,
+      "paceSecPerKm": 320,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5669,
+      "lng": 126.9783,
+      "timestampRelMs": 60000,
+      "paceSecPerKm": 315,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5673,
+      "lng": 126.9787,
+      "timestampRelMs": 120000,
+      "paceSecPerKm": 310,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5677,
+      "lng": 126.9791,
+      "timestampRelMs": 180000,
+      "paceSecPerKm": 305,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.568,
+      "lng": 126.9795,
+      "timestampRelMs": 240000,
+      "paceSecPerKm": 300,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5684,
+      "lng": 126.9799,
+      "timestampRelMs": 300000,
+      "paceSecPerKm": 296,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5687,
+      "lng": 126.9803,
+      "timestampRelMs": 360000,
+      "paceSecPerKm": 294,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5691,
+      "lng": 126.9807,
+      "timestampRelMs": 420000,
+      "paceSecPerKm": 292,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5695,
+      "lng": 126.981,
+      "timestampRelMs": 480000,
+      "paceSecPerKm": 290,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5699,
+      "lng": 126.9814,
+      "timestampRelMs": 540000,
+      "paceSecPerKm": 288,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5702,
+      "lng": 126.9818,
+      "timestampRelMs": 600000,
+      "paceSecPerKm": 286,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.5706,
+      "lng": 126.9822,
+      "timestampRelMs": 660000,
+      "paceSecPerKm": 284,
+      "source": "simulated"
+    },
+    {
+      "lat": 37.571,
+      "lng": 126.9826,
+      "timestampRelMs": 720000,
+      "paceSecPerKm": 282,
+      "source": "simulated"
+    }
+  ]
+}
