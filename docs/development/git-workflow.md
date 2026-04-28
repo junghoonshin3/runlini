@@ -5,20 +5,36 @@ workflow should protect the codebase without slowing down fast iteration.
 
 ## Branch Strategy
 
-- Use a mixed strategy.
-- Small, focused work can happen on the current branch or directly on `main`.
-- If the work's nature calls for isolation, create the branch before doing the
-  work and keep the changes there until they are ready to merge.
-- A short-lived branch is required for risky or long-running work:
+- Use strict task branches by default.
+- `main` should stay stable and should not collect active feature work.
+- One branch should represent one coherent task, fix, or docs update.
+- Start each new task by checking the worktree:
+
+```bash
+git status --short --branch
+```
+
+- If the worktree is dirty, decide whether the existing changes belong to the
+  new task before creating or switching branches.
+- If the existing changes do not belong to the new task, first commit them,
+  stash them, or move them to their own branch.
+- Do not create an independent task branch from a dirty worktree. `git switch
+  -c` carries uncommitted changes into the new branch, which mixes unrelated
+  work and makes review harder.
+- Short-lived branches are required for:
   - database migrations
   - large refactors
   - native platform changes
   - multi-session features
   - work that needs review before it lands on `main`
+- Small docs-only edits may happen on the current branch only when the worktree
+  is clean or the docs edit clearly belongs to that branch.
 - Keep branch names short and purpose-driven:
   - `feature/wear-ghost-start`
   - `fix/history-today-filter`
   - `docs/git-workflow`
+- If a branch name no longer describes the work on it, stop and split the work
+  before adding more commits.
 
 ## Commit Boundaries
 
