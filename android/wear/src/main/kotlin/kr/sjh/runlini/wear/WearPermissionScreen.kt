@@ -25,9 +25,9 @@ internal fun WearPermissionScreen(onRequest: () -> Unit) {
     ) {
         item {
             Text(
-                text = "Runlini",
+                text = "RUNLINI",
                 color = RunliniWearColors.Chalk,
-                fontSize = 24.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
@@ -35,16 +35,17 @@ internal fun WearPermissionScreen(onRequest: () -> Unit) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
             Text(
-                text = "러닝 기록 권한이 필요해요",
+                text = "권한 필요",
                 color = RunliniWearColors.Muted,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
         }
         item { Spacer(modifier = Modifier.height(16.dp)) }
         item {
             WearActionButton(
-                label = "권한 허용",
+                label = "ALLOW",
                 color = RunliniWearColors.VoltGreen,
                 textColor = RunliniWearColors.Black,
                 onClick = onRequest,

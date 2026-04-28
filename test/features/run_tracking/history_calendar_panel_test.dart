@@ -48,22 +48,25 @@ void main() {
     );
   });
 
-  testWidgets('selects and clears a day', (WidgetTester tester) async {
+  testWidgets('selects a day and shows today action away from today', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       _Host(
         child: _SelectableCalendar(
-          sessions: [_session('run', DateTime(2026, 4, 28), 3000)],
+          sessions: [_session('run', DateTime(2026, 4, 27), 3000)],
         ),
       ),
     );
 
-    await tester.tap(find.byKey(const Key('history-calendar-day-2026-04-28')));
+    await tester.tap(find.byKey(const Key('history-calendar-day-2026-04-27')));
     await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('history-calendar-clear-selection-button')),
       findsOne,
     );
+    expect(find.text('오늘 보기'), findsOne);
 
     await tester.tap(
       find.byKey(const Key('history-calendar-clear-selection-button')),

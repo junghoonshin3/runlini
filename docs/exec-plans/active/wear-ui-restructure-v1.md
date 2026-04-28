@@ -23,6 +23,7 @@ page, paused focus, and finish review.
 - [x] Add swipeable active run pages.
 - [x] Preserve recording and sync behavior.
 - [x] Run validation commands.
+- [x] Worker 1 design pass: sharpen Wear UI hierarchy, spacing, labels, and tests.
 
 ## Decisions
 
@@ -31,6 +32,8 @@ page, paused focus, and finish review.
 - Pause and stop actions live on the controls page while running.
 - Paused state gets its own focused resume / stop screen.
 - Review screen shows only save, discard, and short result summary.
+- Worker 1 keeps Health Services, Data Layer, ghost gap, and draft sync logic
+  unchanged; the pass is limited to Wear presentation and UI model labels.
 
 ## Validation
 
@@ -40,6 +43,15 @@ page, paused focus, and finish review.
 - `./gradlew :wear:testDebugUnitTest`
 - `./gradlew :wear:assembleDebug`
 - `./gradlew :app:assembleDebug :wear:assembleDebug`
+
+Worker 1 validation:
+
+- `android/gradlew :wear:testDebugUnitTest` passed.
+- `android/gradlew :wear:assembleDebug` passed.
+- `dart run tool/guardrails.dart` ran from the repo root and failed on
+  pre-existing out-of-scope Dart file length issues in
+  `lib/features/run_tracking/ui/history/history_tab_screen.dart` and
+  `test/helpers/runlini_widget_harness.dart`.
 
 ## Risks Or Recovery
 

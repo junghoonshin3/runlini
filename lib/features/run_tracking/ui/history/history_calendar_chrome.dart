@@ -191,7 +191,7 @@ class HistoryCalendarClearButton extends StatelessWidget {
       child: TextButton(
         key: const Key('history-calendar-clear-selection-button'),
         onPressed: onPressed,
-        child: const Text('전체 기록 보기'),
+        child: const Text('오늘 보기'),
       ),
     );
   }

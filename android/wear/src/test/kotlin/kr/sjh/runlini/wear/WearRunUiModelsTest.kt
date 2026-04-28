@@ -53,7 +53,7 @@ class WearRunUiModelsTest {
         assertEquals("일반 시작", model.secondaryLabel)
         assertEquals("전송 대기 2개", model.pendingLabel)
         assertEquals("다시 보내기", model.retryLabel)
-        assertEquals("고스트: 한강 5K", model.ghostLabel)
+        assertEquals("한강 5K", model.ghostLabel)
         assertFalse(model.isError)
     }
 

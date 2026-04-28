@@ -165,14 +165,12 @@ LiveLocationSample sample({
   required double latitude,
   required double longitude,
   DateTime? capturedAt,
-}) {
-  return LiveLocationSample(
-    latitude: latitude,
-    longitude: longitude,
-    capturedAt: capturedAt ?? DateTime(2026, 4, 20, 6),
-    source: RunPointSource.deviceGps,
-  );
-}
+}) => LiveLocationSample(
+  latitude: latitude,
+  longitude: longitude,
+  capturedAt: capturedAt ?? DateTime(2026, 4, 20, 6),
+  source: RunPointSource.deviceGps,
+);
 
 Future<void> pumpUntilFound(
   WidgetTester tester,
@@ -250,20 +248,23 @@ RunSession ghostSession() {
   );
 }
 
-List<RunSession> sampleRunSessions() => <RunSession>[
-  _sampleRunSession(
-    id: 'fixture_morning_tempo',
-    startedAt: DateTime.utc(2026, 4, 19, 6),
-    latOffset: 0,
-    lngOffset: 0,
-  ),
-  _sampleRunSession(
-    id: 'fixture_han_river_push',
-    startedAt: DateTime.utc(2026, 4, 18, 6),
-    latOffset: 0.01,
-    lngOffset: 0.01,
-  ),
-];
+List<RunSession> sampleRunSessions() {
+  final today = DateUtils.dateOnly(DateTime.now());
+  return <RunSession>[
+    _sampleRunSession(
+      id: 'fixture_morning_tempo',
+      startedAt: today.add(const Duration(hours: 6)),
+      latOffset: 0,
+      lngOffset: 0,
+    ),
+    _sampleRunSession(
+      id: 'fixture_han_river_push',
+      startedAt: today.add(const Duration(hours: -18)),
+      latOffset: 0.01,
+      lngOffset: 0.01,
+    ),
+  ];
+}
 
 RunSession _sampleRunSession({
   required String id,

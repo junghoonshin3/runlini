@@ -38,6 +38,8 @@ Runlini should feel like a running app that answers one question instantly:
   - configurable weekly, monthly, and yearly distance goals for the progress
     ring
   - weekly-default history calendar that expands into a monthly calendar
+  - today's date selected by default, with the list filtered to runs from that
+    date instead of a recent-records feed
   - day cells with small circular progress markers based on the monthly goal
     divided by days in the selected month
   - app-local saved runs visible even when health export is unavailable or

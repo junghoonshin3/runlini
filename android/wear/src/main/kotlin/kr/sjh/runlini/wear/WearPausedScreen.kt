@@ -30,27 +30,25 @@ internal fun WearPausedScreen(
     ) {
         item {
             Text(
-                text = "일시정지",
+                text = "PAUSED",
                 color = RunliniWearColors.Chalk,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-        item {
-            Text(
-                text = WearRunFormatters.elapsed(state.elapsedMs),
-                color = RunliniWearColors.Chalk,
-                fontSize = 36.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
         }
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
+            WearHeroMetric(
+                label = "TIME",
+                value = WearRunFormatters.elapsed(state.elapsedMs),
+                valueColor = RunliniWearColors.Chalk,
+            )
+        }
+        item { Spacer(modifier = Modifier.height(10.dp)) }
+        item {
             WearMetricTile(
-                label = "거리",
+                label = "DIST",
                 value = WearRunFormatters.distance(state.distanceM),
             )
         }
@@ -61,7 +59,7 @@ internal fun WearPausedScreen(
         item { Spacer(modifier = Modifier.height(12.dp)) }
         item {
             WearActionButton(
-                label = "재개",
+                label = "RESUME",
                 color = RunliniWearColors.VoltGreen,
                 textColor = RunliniWearColors.Black,
                 modifier = Modifier.fillMaxWidth(),
@@ -71,7 +69,7 @@ internal fun WearPausedScreen(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
             WearActionButton(
-                label = "종료",
+                label = "STOP",
                 color = RunliniWearColors.ElectricRed,
                 textColor = RunliniWearColors.Chalk,
                 modifier = Modifier.fillMaxWidth(),

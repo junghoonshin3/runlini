@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,7 +54,7 @@ internal fun WearActiveRunPager(
             selectedIndex = pagerState.currentPage,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 8.dp),
+                .padding(bottom = 6.dp),
         )
     }
 }
@@ -64,15 +63,23 @@ internal fun WearActiveRunPager(
 private fun WearCorePage(state: WearRunState) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         item {
+            WearHeroMetric(
+                label = "DIST",
+                value = WearRunFormatters.distance(state.distanceM),
+                valueColor = RunliniWearColors.VoltGreen,
+            )
+        }
+        item { Spacer(modifier = Modifier.height(10.dp)) }
+        item {
             Text(
                 text = WearRunFormatters.elapsed(state.elapsedMs),
                 color = RunliniWearColors.Chalk,
-                fontSize = 38.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -80,26 +87,16 @@ private fun WearCorePage(state: WearRunState) {
         }
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
-            Text(
-                text = WearRunFormatters.distance(state.distanceM),
-                color = RunliniWearColors.VoltGreen,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(12.dp)) }
-        item {
             WearMetricTile(
-                label = "현재 페이스",
+                label = "NOW",
                 value = WearRunFormatters.pace(state.currentPaceSecPerKm),
+                valueColor = RunliniWearColors.Chalk,
             )
         }
         item { Spacer(modifier = Modifier.height(6.dp)) }
         item {
             WearMetricTile(
-                label = "평균 페이스",
+                label = "AVG",
                 value = WearRunFormatters.pace(state.averagePaceSecPerKm),
             )
         }
@@ -112,7 +109,7 @@ private fun WearGhostPage(state: WearRunState) {
     val color = ghostColor(frame?.status)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -120,34 +117,31 @@ private fun WearGhostPage(state: WearRunState) {
             Text(
                 text = WearRunFormatters.ghostStatusLabel(frame?.status),
                 color = color,
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
-            Text(
-                text = WearRunFormatters.ghostGap(frame),
-                color = color,
-                fontSize = 42.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
+            WearHeroMetric(
+                label = "GAP",
+                value = WearRunFormatters.ghostGap(frame),
+                valueColor = color,
             )
         }
-        item { Spacer(modifier = Modifier.height(12.dp)) }
         state.ghostConfig?.sourceSummary?.let { summary ->
+            item { Spacer(modifier = Modifier.height(8.dp)) }
             item {
                 Text(
                     text = summary,
                     color = RunliniWearColors.Muted,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -159,13 +153,13 @@ private fun WearGhostPage(state: WearRunState) {
 private fun WearDetailsPage(state: WearRunState) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         item {
             Text(
-                text = "세부",
+                text = "DETAIL",
                 color = RunliniWearColors.Chalk,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Black,
@@ -175,28 +169,28 @@ private fun WearDetailsPage(state: WearRunState) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             WearMetricTile(
-                label = "심박",
+                label = "HR",
                 value = WearRunFormatters.heartRate(state.heartRateBpm),
             )
         }
         item { Spacer(modifier = Modifier.height(6.dp)) }
         item {
             WearMetricTile(
-                label = "칼로리",
+                label = "CAL",
                 value = WearRunFormatters.calories(state.caloriesKcal),
             )
         }
         item { Spacer(modifier = Modifier.height(6.dp)) }
         item {
             WearMetricTile(
-                label = "속도",
+                label = "SPD",
                 value = WearRunFormatters.speed(state.speedMps),
             )
         }
         item { Spacer(modifier = Modifier.height(6.dp)) }
         item {
             WearMetricTile(
-                label = "거리",
+                label = "DIST",
                 value = WearRunFormatters.distance(state.distanceM),
             )
         }
@@ -211,20 +205,20 @@ private fun WearRunControlsPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 18.dp, vertical = 18.dp),
+            .padding(horizontal = 18.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "컨트롤",
+            text = "CONTROL",
             color = RunliniWearColors.Chalk,
             fontSize = 20.sp,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         WearActionButton(
-            label = "일시정지",
+            label = "PAUSE",
             color = RunliniWearColors.Chalk,
             textColor = RunliniWearColors.Black,
             modifier = Modifier.fillMaxWidth(),
@@ -232,7 +226,7 @@ private fun WearRunControlsPage(
         )
         Spacer(modifier = Modifier.height(10.dp))
         WearActionButton(
-            label = "종료",
+            label = "STOP",
             color = RunliniWearColors.ElectricRed,
             textColor = RunliniWearColors.Chalk,
             modifier = Modifier.fillMaxWidth(),
@@ -251,7 +245,7 @@ internal fun WearGhostStatusPanel(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .border(2.dp, color, RoundedCornerShape(8.dp))
+            .border(2.dp, color, RoundedCornerShape(2.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {

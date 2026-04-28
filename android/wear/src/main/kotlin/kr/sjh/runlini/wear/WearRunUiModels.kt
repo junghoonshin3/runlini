@@ -40,7 +40,7 @@ internal object WearReadyScreenModelBuilder {
             secondaryLabel = if (hasGhost) "일반 시작" else null,
             statusLabel = state.errorMessage ?: state.statusMessage ?: "준비 완료",
             isError = state.errorMessage != null,
-            ghostLabel = state.ghostConfig?.sourceSummary?.let { "고스트: $it" },
+            ghostLabel = state.ghostConfig?.sourceSummary,
             pendingLabel = pendingLabel,
             retryLabel = pendingLabel?.let { "다시 보내기" },
         )

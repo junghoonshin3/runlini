@@ -31,7 +31,7 @@ internal fun WearFinishReviewScreen(
     ) {
         item {
             Text(
-                text = "완료",
+                text = "REVIEW",
                 color = RunliniWearColors.Chalk,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Black,
@@ -40,25 +40,23 @@ internal fun WearFinishReviewScreen(
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
-            Text(
-                text = summary.elapsed,
-                color = RunliniWearColors.Chalk,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
+            WearHeroMetric(
+                label = "TIME",
+                value = summary.elapsed,
+                valueColor = RunliniWearColors.Chalk,
             )
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
-        item { WearMetricTile(label = "거리", value = summary.distance) }
+        item { WearMetricTile(label = "DIST", value = summary.distance) }
         item { Spacer(modifier = Modifier.height(6.dp)) }
-        item { WearMetricTile(label = "평균 페이스", value = summary.averagePace) }
+        item { WearMetricTile(label = "AVG", value = summary.averagePace) }
         item { Spacer(modifier = Modifier.height(6.dp)) }
-        item { WearMetricTile(label = "칼로리", value = summary.calories) }
+        item { WearMetricTile(label = "CAL", value = summary.calories) }
         summary.ghostResult?.let { ghostResult ->
             item { Spacer(modifier = Modifier.height(6.dp)) }
             item {
                 WearMetricTile(
-                    label = "고스트",
+                    label = "GHOST",
                     value = ghostResult,
                     valueColor = ghostColor(state.ghostFrame?.status),
                 )
@@ -79,7 +77,7 @@ internal fun WearFinishReviewScreen(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         item {
             WearActionButton(
-                label = "저장",
+                label = "SAVE",
                 color = RunliniWearColors.VoltGreen,
                 textColor = RunliniWearColors.Black,
                 modifier = Modifier.fillMaxWidth(),
@@ -89,7 +87,7 @@ internal fun WearFinishReviewScreen(
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             WearActionButton(
-                label = "삭제",
+                label = "DISCARD",
                 color = RunliniWearColors.ElectricRed,
                 textColor = RunliniWearColors.Chalk,
                 modifier = Modifier.fillMaxWidth(),

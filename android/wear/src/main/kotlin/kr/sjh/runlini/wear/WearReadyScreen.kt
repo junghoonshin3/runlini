@@ -33,14 +33,14 @@ internal fun WearReadyScreen(
     ) {
         item {
             Text(
-                text = "Runlini",
+                text = "RUNLINI",
                 color = RunliniWearColors.Chalk,
-                fontSize = 25.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
         }
-        item { Spacer(modifier = Modifier.height(6.dp)) }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
         item {
             Text(
                 text = model.statusLabel,
@@ -56,20 +56,16 @@ internal fun WearReadyScreen(
             )
         }
         model.ghostLabel?.let { ghostLabel ->
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item { Spacer(modifier = Modifier.height(10.dp)) }
             item {
-                Text(
-                    text = ghostLabel,
-                    color = RunliniWearColors.Chalk,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                WearMetricTile(
+                    label = "GHOST",
+                    value = ghostLabel,
+                    valueColor = RunliniWearColors.VoltGreen,
                 )
             }
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { Spacer(modifier = Modifier.height(14.dp)) }
         item {
             WearCircleButton(
                 label = model.primaryLabel,
@@ -91,7 +87,7 @@ internal fun WearReadyScreen(
             }
         }
         model.pendingLabel?.let { pendingLabel ->
-            item { Spacer(modifier = Modifier.height(10.dp)) }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
             item {
                 Text(
                     text = pendingLabel,

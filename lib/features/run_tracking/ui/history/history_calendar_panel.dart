@@ -69,6 +69,8 @@ class _HistoryCalendarPanelState extends State<HistoryCalendarPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final today = _localDate(widget.now ?? DateTime.now());
+    final isSelectedToday = _sameDay(today, widget.selectedDate);
     final summaries = widget.calculator.calculate(sessions: widget.sessions);
     final dayGoalM =
         widget.distanceGoals.monthlyGoalM / _daysInMonth(_focusedMonth);
@@ -159,7 +161,7 @@ class _HistoryCalendarPanelState extends State<HistoryCalendarPanel> {
               ),
             ),
           ),
-          if (widget.selectedDate != null) ...[
+          if (widget.selectedDate != null && !isSelectedToday) ...[
             const SizedBox(height: 12),
             HistoryCalendarClearButton(onPressed: widget.onClearSelectedDate),
           ],

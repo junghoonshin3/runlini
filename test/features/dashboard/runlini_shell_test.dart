@@ -209,7 +209,8 @@ class _TrackingHealthRoute implements HealthRouteClient {
 }
 
 RunSession _healthSession() {
-  final startedAt = DateTime.utc(2026, 4, 21, 7);
+  final now = DateTime.now();
+  final startedAt = DateTime(now.year, now.month, now.day, 7);
   return RunSession(
     id: 'healthconnect-widget',
     startedAt: startedAt,

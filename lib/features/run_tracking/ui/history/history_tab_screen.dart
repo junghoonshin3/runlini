@@ -12,10 +12,13 @@ import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_distance_progress_panel.dart';
+import 'package:runlini/features/run_tracking/ui/history/history_no_runs_on_date_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
 
 class HistoryTabScreen extends ConsumerStatefulWidget {
-  const HistoryTabScreen({super.key});
+  const HistoryTabScreen({super.key, this.now});
+
+  final DateTime? now;
 
   @override
   ConsumerState<HistoryTabScreen> createState() => _HistoryTabScreenState();
@@ -23,7 +26,13 @@ class HistoryTabScreen extends ConsumerStatefulWidget {
 
 class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
   final Set<String> _deletedSessionIds = <String>{};
-  DateTime? _selectedDate;
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = _localDate(widget.now ?? DateTime.now());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +51,12 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
           final visibleSessions = sessions
               .where((session) => !_deletedSessionIds.contains(session.id))
               .toList(growable: false);
-          final filteredSessions = _selectedDate == null
-              ? visibleSessions
-              : visibleSessions
-                    .where(
-                      (RunSession session) =>
-                          _isSameDay(session.startedAt, _selectedDate!),
-                    )
-                    .toList(growable: false);
+          final filteredSessions = visibleSessions
+              .where(
+                (RunSession session) =>
+                    _isSameDay(session.startedAt, _selectedDate),
+              )
+              .toList(growable: false);
           final showRecovery = visibleSessions.isEmpty;
           final content = <Widget>[
             const _HistoryHeader(),
@@ -72,16 +79,21 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
                 displaySettings: displaySettings,
                 distanceGoals: distanceGoals,
                 selectedDate: _selectedDate,
+                now: widget.now,
                 onSelectedDate: (DateTime date) {
                   setState(() => _selectedDate = date);
                 },
                 onClearSelectedDate: () {
-                  setState(() => _selectedDate = null);
+                  setState(
+                    () => _selectedDate = _localDate(
+                      widget.now ?? DateTime.now(),
+                    ),
+                  );
                 },
               ),
               _HistoryListLabel(selectedDate: _selectedDate),
               if (filteredSessions.isEmpty)
-                const _NoRunsOnDatePanel()
+                const HistoryNoRunsOnDatePanel()
               else
                 for (final session in filteredSessions)
                   RunSessionSummaryTile(
@@ -168,6 +180,10 @@ bool _isSameDay(DateTime left, DateTime right) {
   return left.year == right.year &&
       left.month == right.month &&
       left.day == right.day;
+}
+
+DateTime _localDate(DateTime date) {
+  return DateTime(date.year, date.month, date.day);
 }
 
 String _selectedDateLabel(DateTime date) {
@@ -257,35 +273,13 @@ class _HistoryRecoveryPanel extends StatelessWidget {
 class _HistoryListLabel extends StatelessWidget {
   const _HistoryListLabel({required this.selectedDate});
 
-  final DateTime? selectedDate;
+  final DateTime selectedDate;
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      selectedDate == null ? '최근 기록' : _selectedDateLabel(selectedDate!),
+      _selectedDateLabel(selectedDate),
       style: Theme.of(context).textTheme.titleLarge,
-    );
-  }
-}
-
-class _NoRunsOnDatePanel extends StatelessWidget {
-  const _NoRunsOnDatePanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.panel,
-        border: Border.all(color: AppColors.chalk.withValues(alpha: 0.16)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '이 날은 저장된 러닝이 없어요.',
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
-      ),
     );
   }
 }
