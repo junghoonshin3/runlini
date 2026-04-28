@@ -8,7 +8,8 @@ discoverable. Treat it as a map, not an encyclopedia.
 1. Read `README.md` for the repo purpose and local commands.
 2. Read `ARCHITECTURE.md` before touching `lib/`.
 3. Read `PLANS.md` before any multi-file feature, refactor, or debugging task.
-4. Treat `docs/` as the source of truth for product, design, reliability, and
+4. Read `docs/development/git-workflow.md` before committing or pushing.
+5. Treat `docs/` as the source of truth for product, design, reliability, and
    platform decisions.
 
 ## Non-Negotiables
@@ -22,6 +23,7 @@ discoverable. Treat it as a map, not an encyclopedia.
 - Put adapters for location, health, haptics, maps, and persistence in `core/`.
 - When a rule becomes recurring, encode it in docs, tests, or tooling.
 - If behavior changes, update the matching doc in `docs/` in the same change.
+- Commit or push only when the user explicitly asks.
 
 ## UX Defaults
 
@@ -37,6 +39,7 @@ discoverable. Treat it as a map, not an encyclopedia.
 - `lib/features`: product domains
 - `tool/guardrails.dart`: mechanical structure checks
 - `docs/design-docs`: design identity and core beliefs
+- `docs/development`: Git and development workflow rules
 - `docs/product-specs`: user-facing product plans
 - `docs/platform`: platform policy and permission notes
 - `docs/testing`: field-test protocol

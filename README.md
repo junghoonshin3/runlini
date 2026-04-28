@@ -14,6 +14,9 @@ flutter analyze
 flutter test
 ```
 
+See `docs/development/git-workflow.md` for branch, commit, validation, and push
+rules.
+
 ## Native Map Setup
 
 - Android uses Google Maps. Add `GOOGLE_MAPS_API_KEY=your_key_here` to
@@ -27,6 +30,7 @@ flutter test
 - `AGENTS.md`: short operating guide for future agents and humans.
 - `PLANS.md`: rules for executable plans on multi-file or long-running work.
 - `ARCHITECTURE.md`: the dependency model for `app`, `core`, and `features`.
+- `docs/development/git-workflow.md`: Git workflow for humans and agents.
 - `docs/`: product, design, reliability, platform, and execution-plan source of truth.
 - `tool/guardrails.dart`: structural checks for the layered feature layout.
 
