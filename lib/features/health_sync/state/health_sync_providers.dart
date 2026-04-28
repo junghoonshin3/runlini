@@ -12,6 +12,11 @@ final healthRouteClientProvider = Provider<HealthRouteClient>((Ref ref) {
   return HealthPluginRouteClient();
 });
 
+final healthConnectionStatusProvider =
+    FutureProvider<HealthRouteConnectionStatus>((Ref ref) {
+      return ref.watch(healthRouteClientProvider).checkConnection();
+    });
+
 final healthSyncServiceProvider = Provider<HealthSyncService>((Ref ref) {
   return PlatformHealthSyncService(
     routeClient: ref.watch(healthRouteClientProvider),
@@ -33,6 +38,22 @@ class HealthSyncController extends AsyncNotifier<HealthSyncStatus> {
     return _sync(requestAuthorization: true);
   }
 
+  Future<HealthSyncStatus> connectAndSync() async {
+    state = const AsyncValue<HealthSyncStatus>.data(HealthSyncStatus.syncing());
+    final result = await AsyncValue.guard(() async {
+      final connection = await ref
+          .read(healthRouteClientProvider)
+          .requestConnection();
+      if (connection.kind != HealthRouteConnectionStatusKind.connected) {
+        return _statusFromConnection(connection);
+      }
+      return ref
+          .read(healthSyncServiceProvider)
+          .syncRecentSessions(requestAuthorization: false);
+    });
+    return _commitResult(result);
+  }
+
   Future<HealthSyncStatus> _sync({required bool requestAuthorization}) async {
     state = const AsyncValue<HealthSyncStatus>.data(HealthSyncStatus.syncing());
     final result = await AsyncValue.guard(
@@ -40,7 +61,28 @@ class HealthSyncController extends AsyncNotifier<HealthSyncStatus> {
           .read(healthSyncServiceProvider)
           .syncRecentSessions(requestAuthorization: requestAuthorization),
     );
+    return _commitResult(result);
+  }
+
+  HealthSyncStatus _statusFromConnection(
+    HealthRouteConnectionStatus connection,
+  ) {
+    return switch (connection.kind) {
+      HealthRouteConnectionStatusKind.connected =>
+        const HealthSyncStatus.idle(),
+      HealthRouteConnectionStatusKind.connectionNeeded =>
+        HealthSyncStatus.connectionNeeded(connection.message),
+      HealthRouteConnectionStatusKind.unavailable =>
+        HealthSyncStatus.unavailable(connection.message),
+      HealthRouteConnectionStatusKind.failed => HealthSyncStatus.failed(
+        connection.message,
+      ),
+    };
+  }
+
+  HealthSyncStatus _commitResult(AsyncValue<HealthSyncStatus> result) {
     state = result;
+    ref.invalidate(healthConnectionStatusProvider);
     if (result.hasValue) {
       final status = result.requireValue;
       ref.invalidate(runSessionListProvider);

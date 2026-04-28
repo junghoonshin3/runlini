@@ -79,6 +79,8 @@ class RunFinishReviewPanel extends StatelessWidget {
                         const SizedBox(height: 12),
                         RunDetailSyncStatusSection(
                           status: session.syncStatus,
+                          recordSource: session.recordSource,
+                          sourceSummary: session.sourceSummary,
                           onRetry: onRetryHealthBackup,
                         ),
                       ],

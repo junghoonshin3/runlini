@@ -7,6 +7,35 @@ enum HealthRouteImportStatus {
   failed,
 }
 
+enum HealthRouteConnectionStatusKind {
+  connected,
+  connectionNeeded,
+  unavailable,
+  failed,
+}
+
+class HealthRouteConnectionStatus {
+  const HealthRouteConnectionStatus({required this.kind, this.message});
+
+  const HealthRouteConnectionStatus.connected()
+    : this(kind: HealthRouteConnectionStatusKind.connected);
+
+  const HealthRouteConnectionStatus.connectionNeeded([String? message])
+    : this(
+        kind: HealthRouteConnectionStatusKind.connectionNeeded,
+        message: message,
+      );
+
+  const HealthRouteConnectionStatus.unavailable([String? message])
+    : this(kind: HealthRouteConnectionStatusKind.unavailable, message: message);
+
+  const HealthRouteConnectionStatus.failed([String? message])
+    : this(kind: HealthRouteConnectionStatusKind.failed, message: message);
+
+  final HealthRouteConnectionStatusKind kind;
+  final String? message;
+}
+
 class HealthRouteImportResult {
   const HealthRouteImportResult({
     required this.status,
@@ -35,6 +64,18 @@ class HealthRouteImportResult {
 }
 
 abstract class HealthRouteClient {
+  Future<HealthRouteConnectionStatus> checkConnection() async {
+    return const HealthRouteConnectionStatus.unavailable(
+      'Health connection is not available.',
+    );
+  }
+
+  Future<HealthRouteConnectionStatus> requestConnection() async {
+    return const HealthRouteConnectionStatus.unavailable(
+      'Health connection is not available.',
+    );
+  }
+
   Future<HealthRouteImportResult> importRecentSessions({
     required bool requestAuthorization,
   });

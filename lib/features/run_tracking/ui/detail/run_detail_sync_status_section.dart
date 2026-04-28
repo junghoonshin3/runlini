@@ -8,10 +8,14 @@ class RunDetailSyncStatusSection extends StatelessWidget {
   const RunDetailSyncStatusSection({
     super.key,
     required this.status,
+    this.recordSource = RunSessionRecordSource.appLocal,
+    this.sourceSummary = '',
     this.onRetry,
   });
 
   final RunSessionSyncStatus status;
+  final RunSessionRecordSource recordSource;
+  final String sourceSummary;
   final VoidCallback? onRetry;
 
   @override
@@ -30,8 +34,13 @@ class RunDetailSyncStatusSection extends StatelessWidget {
         runSpacing: 10,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          RunSyncStatusBadge(status: status),
-          if (status == RunSessionSyncStatus.syncFailed)
+          RunSyncStatusBadge(
+            status: status,
+            recordSource: recordSource,
+            sourceSummary: sourceSummary,
+          ),
+          if (status == RunSessionSyncStatus.syncFailed &&
+              recordSource == RunSessionRecordSource.appLocal)
             RunCompactButton(
               key: const Key('retry-health-backup-button'),
               label: 'Health 백업 다시 시도',

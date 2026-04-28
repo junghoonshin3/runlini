@@ -31,6 +31,10 @@
 - Health Connect permission rationale entry points:
   - `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` intent filter
   - `ViewPermissionUsageActivity` alias for Health permissions review
+- Settings > 연동 exposes Health Connect as the Android Health connection
+  entry point. The primary action opens the Health Connect permission request
+  when access is missing and changes to a recent-record import action after
+  connection.
 - On Android 13 and lower, Health Connect is delivered as the separate
   `com.google.android.apps.healthdata` app. Runlini does not prompt for install
   during app startup; install or permission UI appears only from explicit user
@@ -65,6 +69,8 @@
 - `NSHealthShareUsageDescription`
 - `NSHealthUpdateUsageDescription`
 - HealthKit entitlement via `Runner/Runner.entitlements`
+- Settings > 연동 labels the iOS Health integration as `건강 앱` for runners,
+  while the implementation uses HealthKit authorization and queries.
 - Apple Watch workout data is treated as a HealthKit import unless Runlini adds
   a native watchOS app. Real-time Apple Watch support requires a watchOS workout
   session and companion communication. See `docs/platform/watch-integration.md`.
@@ -89,5 +95,8 @@
   permission failure.
 - Health backup status is stored on the local run record, so skipped or failed
   export can be shown and retried without hiding the saved run.
+- Health-imported records must show their import origin instead of the app-local
+  backup label: Health Connect records use the Health Connect/source app label,
+  and HealthKit records use 건강 앱/source app labeling.
 - Explain why each permission is needed in plain runner language.
 - Android uses Google Maps; iOS uses Apple Maps.

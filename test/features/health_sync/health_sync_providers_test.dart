@@ -51,7 +51,6 @@ void main() {
       );
     },
   );
-
   test('matching app-local sessions are merged after health sync', () async {
     final startedAt = DateTime.utc(2026, 4, 20, 6);
     final local = _session(
@@ -183,6 +182,14 @@ class _HealthRoute implements HealthRouteClient {
   final List<bool> requestAuthorizationValues = <bool>[];
 
   @override
+  Future<HealthRouteConnectionStatus> checkConnection() async =>
+      const HealthRouteConnectionStatus.connected();
+
+  @override
+  Future<HealthRouteConnectionStatus> requestConnection() async =>
+      const HealthRouteConnectionStatus.connected();
+
+  @override
   Future<HealthRouteImportResult> importRecentSessions({
     required bool requestAuthorization,
   }) async {
@@ -211,12 +218,10 @@ class _Repository implements RunSessionRepository {
 
   @override
   Future<RunSession?> findById(String id) async {
-    for (final session in sessions) {
-      if (session.id == id) {
-        return session;
-      }
-    }
-    return null;
+    return sessions.cast<RunSession?>().firstWhere(
+      (session) => session?.id == id,
+      orElse: () => null,
+    );
   }
 
   @override

@@ -39,7 +39,11 @@ class RunSessionSummaryTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              RunSyncStatusBadge(status: summary.syncStatus),
+              RunSyncStatusBadge(
+                status: summary.syncStatus,
+                recordSource: summary.recordSource,
+                sourceSummary: summary.sourceSummary,
+              ),
             ],
           ),
           const SizedBox(height: 12),

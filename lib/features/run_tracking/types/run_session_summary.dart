@@ -8,6 +8,8 @@ class RunSessionSummary {
     required this.durationMs,
     required this.averagePaceSecPerKm,
     required this.sourceSummary,
+    required this.recordSource,
+    required this.captureSource,
     required this.syncStatus,
     this.averageCadenceSpm,
   });
@@ -18,6 +20,8 @@ class RunSessionSummary {
   final int durationMs;
   final double averagePaceSecPerKm;
   final String sourceSummary;
+  final RunSessionRecordSource recordSource;
+  final RunSessionCaptureSource captureSource;
   final RunSessionSyncStatus syncStatus;
   final double? averageCadenceSpm;
 
@@ -36,6 +40,8 @@ class RunSessionSummary {
       durationMs: session.durationMs,
       averagePaceSecPerKm: averagePace,
       sourceSummary: session.sourceSummary,
+      recordSource: session.recordSource,
+      captureSource: session.captureSource,
       syncStatus: session.syncStatus,
       averageCadenceSpm: session.averageCadenceSpm,
     );

@@ -140,6 +140,16 @@ class _HealthRoute implements HealthRouteClient {
   final List<bool> requestAuthorizationValues = <bool>[];
 
   @override
+  Future<HealthRouteConnectionStatus> checkConnection() async {
+    return const HealthRouteConnectionStatus.connectionNeeded();
+  }
+
+  @override
+  Future<HealthRouteConnectionStatus> requestConnection() async {
+    return const HealthRouteConnectionStatus.connected();
+  }
+
+  @override
   Future<HealthRouteImportResult> importRecentSessions({
     required bool requestAuthorization,
   }) {
