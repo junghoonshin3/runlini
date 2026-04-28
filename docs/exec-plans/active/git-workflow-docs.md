@@ -25,7 +25,8 @@ worktrees.
 ## Decisions
 
 - Use a mixed branch strategy: small work may stay on the current branch or
-  `main`, while risky or long-running work uses a short-lived branch.
+  `main`, while risky or long-running work must start on a short-lived branch
+  when the work's nature calls for isolation.
 - Commit boundaries follow the user request: small requests become one commit,
   while large features may split into 2-3 meaningful commits.
 - `커밋해줘` means current task changes only; `전부 커밋해줘` means the full

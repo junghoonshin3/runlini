@@ -7,7 +7,9 @@ workflow should protect the codebase without slowing down fast iteration.
 
 - Use a mixed strategy.
 - Small, focused work can happen on the current branch or directly on `main`.
-- Create a short-lived branch for risky or long-running work:
+- If the work's nature calls for isolation, create the branch before doing the
+  work and keep the changes there until they are ready to merge.
+- A short-lived branch is required for risky or long-running work:
   - database migrations
   - large refactors
   - native platform changes
