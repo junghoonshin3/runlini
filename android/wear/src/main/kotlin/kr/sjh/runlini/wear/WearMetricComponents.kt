@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material3.Text
@@ -51,11 +52,13 @@ internal fun WearCircleButton(
     label: String,
     color: Color,
     textColor: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = 104.dp,
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .size(108.dp)
+        modifier = modifier
+            .size(size)
             .clip(CircleShape)
             .background(color)
             .border(3.dp, RunliniWearColors.Black, CircleShape)
@@ -79,11 +82,12 @@ internal fun WearActionButton(
     color: Color,
     textColor: Color,
     modifier: Modifier = Modifier,
+    height: Dp = 44.dp,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
-            .height(46.dp)
+            .height(height)
             .clip(RoundedCornerShape(2.dp))
             .background(color)
             .clickable(onClick = onClick)
@@ -103,34 +107,36 @@ internal fun WearActionButton(
 }
 
 @Composable
-internal fun WearMetricTile(
+internal fun WearCompactMetric(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
     valueColor: Color = RunliniWearColors.Chalk,
 ) {
-    Row(
+    val labelSize = if (label.length >= 5) 8.sp else 9.sp
+    Column(
         modifier = modifier
-            .fillMaxWidth()
-            .height(42.dp)
+            .height(44.dp)
             .border(2.dp, RunliniWearColors.Border, RoundedCornerShape(2.dp))
-            .padding(horizontal = 11.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 6.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = label,
             color = RunliniWearColors.Muted,
-            fontSize = 10.sp,
+            fontSize = labelSize,
             fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = value,
             color = valueColor,
-            fontSize = 16.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Black,
-            textAlign = TextAlign.End,
+            textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -138,23 +144,24 @@ internal fun WearMetricTile(
 }
 
 @Composable
-internal fun WearHeroMetric(
+internal fun WearPrimaryMetric(
     label: String,
     value: String,
     valueColor: Color,
     modifier: Modifier = Modifier,
+    profile: WearLayoutProfile = WearLayoutProfile.Compact,
 ) {
+    val valueSize = if (profile == WearLayoutProfile.Compact) 38.sp else 44.sp
+    val labelSize = if (profile == WearLayoutProfile.Compact) 10.sp else 11.sp
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(3.dp, valueColor, RoundedCornerShape(2.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = label,
             color = RunliniWearColors.Muted,
-            fontSize = 10.sp,
+            fontSize = labelSize,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -162,7 +169,31 @@ internal fun WearHeroMetric(
         Text(
             text = value,
             color = valueColor,
-            fontSize = 34.sp,
+            fontSize = valueSize,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+internal fun WearStatusPill(
+    label: String,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .border(2.dp, color, RoundedCornerShape(50))
+            .padding(horizontal = 9.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = color,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
             maxLines = 1,

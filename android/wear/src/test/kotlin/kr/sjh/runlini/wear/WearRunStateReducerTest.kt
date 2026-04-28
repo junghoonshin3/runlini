@@ -15,6 +15,7 @@ class WearRunStateReducerTest {
                 distanceM = 250.0,
                 paceSecPerKm = 248.0,
                 speedMps = 4.03,
+                cadenceSpm = 172.0,
                 heartRateBpm = 142,
                 caloriesKcal = 18.4,
                 points = listOf(
@@ -39,10 +40,37 @@ class WearRunStateReducerTest {
         assertEquals(248.0, state.averagePaceSecPerKm ?: 0.0, 0.01)
         assertEquals(248.0, state.currentPaceSecPerKm ?: 0.0, 0.01)
         assertEquals(4.03, state.speedMps ?: 0.0, 0.01)
+        assertEquals(172.0, state.cadenceSpm ?: 0.0, 0.01)
+        assertEquals(172.0, state.averageCadenceSpm ?: 0.0, 0.01)
         assertEquals(142, state.heartRateBpm)
         assertEquals(18.4, state.caloriesKcal ?: 0.0, 0.01)
         assertEquals(1, state.points.size)
         assertEquals(37.5665, state.points.first().latitude, 0.0001)
+    }
+
+    @Test
+    fun applyMetricsAveragesCadenceAndKeepsValueWhenMissing() {
+        val reducer = WearRunStateReducer()
+        val started = reducer.start(WearRunState(), epochMs = 1_000L, realtimeMs = 10L)
+        val first = reducer.applyMetrics(
+            started,
+            WearMetricSample(cadenceSpm = 170.0),
+            realtimeMs = 1_010L,
+        )
+        val second = reducer.applyMetrics(
+            first,
+            WearMetricSample(cadenceSpm = 174.0),
+            realtimeMs = 2_010L,
+        )
+        val missing = reducer.applyMetrics(
+            second,
+            WearMetricSample(),
+            realtimeMs = 3_010L,
+        )
+
+        assertEquals(174.0, missing.cadenceSpm ?: 0.0, 0.01)
+        assertEquals(172.0, missing.averageCadenceSpm ?: 0.0, 0.01)
+        assertEquals(2, missing.cadenceSampleCount)
     }
 
     @Test

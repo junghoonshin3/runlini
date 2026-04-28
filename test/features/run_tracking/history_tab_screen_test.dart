@@ -72,6 +72,34 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('shows a UTC Wear session on its local calendar day', (
+    WidgetTester tester,
+  ) async {
+    final localStart = DateTime(2026, 4, 29, 0, 30);
+    final utcStartedAt = localStart.toUtc();
+    final wearSession = _session('wear-utc-run', utcStartedAt);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          runSessionListProvider.overrideWith((Ref ref) async => [wearSession]),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(body: HistoryTabScreen(now: localStart)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(utcStartedAt.isUtc, isTrue);
+    expect(find.text('4월 29일 기록'), findsOneWidget);
+    expect(
+      find.byKey(const Key('history-session-wear-utc-run')),
+      findsOneWidget,
+    );
+  });
 }
 
 RunSession _session(String id, DateTime startedAt) {

@@ -23,6 +23,7 @@ data class WearMetricSample(
     val distanceM: Double? = null,
     val paceSecPerKm: Double? = null,
     val speedMps: Double? = null,
+    val cadenceSpm: Double? = null,
     val heartRateBpm: Int? = null,
     val caloriesKcal: Double? = null,
     val points: List<WearRunPoint> = emptyList(),
@@ -38,6 +39,9 @@ data class WearRunState(
     val averagePaceSecPerKm: Double? = null,
     val currentPaceSecPerKm: Double? = null,
     val speedMps: Double? = null,
+    val cadenceSpm: Double? = null,
+    val averageCadenceSpm: Double? = null,
+    val cadenceSampleCount: Int = 0,
     val heartRateBpm: Int? = null,
     val caloriesKcal: Double? = null,
     val points: List<WearRunPoint> = emptyList(),
@@ -66,6 +70,7 @@ data class WearRunDraftPayload(
     val points: List<WearRunPoint>,
     val sourceDeviceName: String,
     val caloriesKcal: Double?,
+    val averageCadenceSpm: Double? = null,
     val ghostSummary: WearRunGhostSummary? = null,
 ) {
     companion object {
@@ -79,6 +84,7 @@ data class WearRunDraftPayload(
                 points = state.points,
                 sourceDeviceName = deviceName,
                 caloriesKcal = state.caloriesKcal,
+                averageCadenceSpm = state.averageCadenceSpm,
                 ghostSummary = WearRunGhostSummary.from(
                     state.ghostConfig,
                     state.ghostFrame,
@@ -100,6 +106,7 @@ object WearRunDraftJsonMapper {
             .put("externalWorkoutId", draft.id)
             .put("sourceDeviceName", draft.sourceDeviceName)
             .put("caloriesKcal", draft.caloriesKcal)
+            .put("averageCadenceSpm", draft.averageCadenceSpm)
             .put("ghostSummary", draft.ghostSummary?.toJson())
             .put("points", JSONArray(draft.points.map(::pointToJson)))
             .toString()

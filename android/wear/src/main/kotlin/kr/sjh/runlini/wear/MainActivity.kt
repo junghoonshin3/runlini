@@ -1,7 +1,12 @@
 package kr.sjh.runlini.wear
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.os.IBinder
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,7 +20,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -34,12 +38,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun RunliniWearApp() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val controller = remember {
-        HealthServicesRunController(context.applicationContext, scope)
-    }
+    var recordingService by remember { mutableStateOf<WearRunRecordingService?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    val state by controller.state.collectAsState()
+    val fallbackState = remember {
+        kotlinx.coroutines.flow.MutableStateFlow(
+            WearRunState(statusMessage = "준비 중"),
+        )
+    }
+    val state by (recordingService?.state ?: fallbackState).collectAsState()
     var hasPermissions by remember { mutableStateOf(context.hasRunPermissions()) }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -49,23 +55,54 @@ private fun RunliniWearApp() {
                 ContextCompat.checkSelfPermission(context, permission) == PERMISSION_GRANTED
         }
     }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { }
 
-    LaunchedEffect(Unit) {
-        controller.flushPendingDrafts()
-        while (true) {
-            delay(2_000L)
-            controller.refreshPendingDraftCount()
+    DisposableEffect(context) {
+        val intent = Intent(context, WearRunRecordingService::class.java)
+        val connection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+                recordingService = (binder as? WearRunRecordingService.LocalBinder)?.service()
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                recordingService = null
+            }
+        }
+        context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        onDispose {
+            recordingService = null
+            runCatching { context.unbindService(connection) }
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { controller.dispose() }
+    LaunchedEffect(hasPermissions) {
+        if (
+            hasPermissions &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
-    DisposableEffect(lifecycleOwner) {
+    LaunchedEffect(recordingService) {
+        val service = recordingService ?: return@LaunchedEffect
+        service.flushPendingDrafts()
+        while (true) {
+            delay(2_000L)
+            service.refreshPendingDraftCount()
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, recordingService) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                controller.refreshPendingDraftCount()
+                recordingService?.refreshPendingDraftCount()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -82,9 +119,25 @@ private fun RunliniWearApp() {
                 },
             )
         } else {
-            WearRunScreen(state = state, controller = controller)
+            WearRunScreen(
+                state = state,
+                actions = recordingService?.actions() ?: WearRunActions.NoOp,
+            )
         }
     }
+}
+
+private fun WearRunRecordingService.actions(): WearRunActions {
+    return WearRunActions(
+        onStart = ::startRun,
+        onGhostStart = ::startGhostRun,
+        onRetryPending = ::retryPendingDrafts,
+        onPause = ::pauseRun,
+        onStop = ::stopRun,
+        onResume = ::resumeRun,
+        onSave = ::saveDraft,
+        onDiscard = ::discardDraft,
+    )
 }
 
 private fun runPermissions(): Array<String> {

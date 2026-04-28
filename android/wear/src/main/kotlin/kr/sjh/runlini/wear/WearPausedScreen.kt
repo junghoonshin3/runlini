@@ -1,14 +1,12 @@
 package kr.sjh.runlini.wear
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -22,57 +20,54 @@ internal fun WearPausedScreen(
     onResume: () -> Unit,
     onStop: () -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    WearRunPageFrame(
         verticalArrangement = Arrangement.Center,
-    ) {
-        item {
-            Text(
-                text = "PAUSED",
-                color = RunliniWearColors.Chalk,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
-            WearHeroMetric(
-                label = "TIME",
-                value = WearRunFormatters.elapsed(state.elapsedMs),
-                valueColor = RunliniWearColors.Chalk,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
-            WearMetricTile(
-                label = "DIST",
-                value = WearRunFormatters.distance(state.distanceM),
-            )
-        }
-        if (state.isGhostRun) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            item { WearGhostStatusPanel(state = state) }
-        }
-        item { Spacer(modifier = Modifier.height(12.dp)) }
-        item {
+    ) { spec ->
+        val compact = spec.profile == WearLayoutProfile.Compact
+        val spacerHeight = if (compact) 5.dp else 8.dp
+        val buttonHeight = if (compact) 32.dp else 38.dp
+
+        Text(
+            text = "일시정지",
+            color = RunliniWearColors.Chalk,
+            fontSize = if (compact) 19.sp else 22.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(spacerHeight))
+        WearPrimaryMetric(
+            label = "시간",
+            value = WearRunFormatters.elapsed(state.elapsedMs),
+            valueColor = RunliniWearColors.Chalk,
+            profile = spec.profile,
+        )
+        Spacer(modifier = Modifier.height(spacerHeight))
+        WearCompactMetric(
+            label = "거리",
+            value = WearRunFormatters.distance(state.distanceM),
+            modifier = Modifier.fillMaxWidth(),
+            valueColor = RunliniWearColors.VoltGreen,
+        )
+        Spacer(modifier = Modifier.height(if (compact) 7.dp else 10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
             WearActionButton(
-                label = "RESUME",
+                label = "재개",
                 color = RunliniWearColors.VoltGreen,
                 textColor = RunliniWearColors.Black,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
+                height = buttonHeight,
                 onClick = onResume,
             )
-        }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
+            Spacer(modifier = Modifier.width(6.dp))
             WearActionButton(
-                label = "STOP",
+                label = "종료",
                 color = RunliniWearColors.ElectricRed,
                 textColor = RunliniWearColors.Chalk,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
+                height = buttonHeight,
                 onClick = onStop,
             )
         }

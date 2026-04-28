@@ -9,6 +9,7 @@ import androidx.health.services.client.HealthServices
 import androidx.health.services.client.clearUpdateCallback
 import androidx.health.services.client.endExercise
 import androidx.health.services.client.getCapabilities
+import androidx.health.services.client.getCurrentExerciseInfo
 import androidx.health.services.client.pauseExercise
 import androidx.health.services.client.resumeExercise
 import androidx.health.services.client.startExercise
@@ -19,6 +20,7 @@ import androidx.health.services.client.data.ExerciseConfig
 import androidx.health.services.client.data.ExerciseEvent
 import androidx.health.services.client.data.ExerciseLapSummary
 import androidx.health.services.client.data.ExerciseState
+import androidx.health.services.client.data.ExerciseTrackedStatus
 import androidx.health.services.client.data.ExerciseType
 import androidx.health.services.client.data.LocationAccuracy
 import androidx.health.services.client.data.LocationData
@@ -43,6 +45,7 @@ class HealthServicesRunController(
         PendingDraftQueue(WearPendingDraftStore(context)),
     private val draftSender: WearDraftSender = WearDraftSender(context),
     private val ghostStore: WearGhostConfigStore = WearGhostConfigStore(context),
+    private val activeRunStore: WearActiveRunStore = WearActiveRunStore(context),
     private val ghostGapCalculator: WearGhostGapCalculator = WearGhostGapCalculator(),
     private val deviceName: String =
         "${Build.MANUFACTURER.trim()} ${Build.MODEL.trim()}".trim(),
@@ -56,6 +59,7 @@ class HealthServicesRunController(
     val state: StateFlow<WearRunState> = _state.asStateFlow()
 
     private var tickerJob: Job? = null
+    private var lastCheckpointRealtimeMs: Long = 0L
 
     private val callback = object : ExerciseUpdateCallback {
         override fun onExerciseUpdateReceived(update: androidx.health.services.client.data.ExerciseUpdate) {
@@ -74,7 +78,7 @@ class HealthServicesRunController(
                 sample,
                 nowRealtimeMs(),
             )
-            _state.value = applyGhostFrame(next)
+            setState(applyGhostFrame(next))
         }
 
         override fun onAvailabilityChanged(
@@ -89,7 +93,72 @@ class HealthServicesRunController(
         override fun onRegistered() = Unit
 
         override fun onRegistrationFailed(throwable: Throwable) {
-            _state.value = reducer.fail(_state.value, "센서 연결 실패")
+            setState(reducer.fail(_state.value, "센서 연결 실패"))
+        }
+    }
+
+    fun recoverActiveRun() {
+        scope.launch {
+            val pendingCount = pendingQueue.pendingCount()
+            val ghostConfig = ghostStore.current()
+            val recovered = activeRunStore.restore(
+                nowRealtimeMs = nowRealtimeMs(),
+                pendingDraftCount = pendingCount,
+                fallbackGhostConfig = ghostConfig,
+            )
+
+            val exerciseInfo = runCatching {
+                exerciseClient.getCurrentExerciseInfo()
+            }.getOrNull()
+            when (exerciseInfo?.exerciseTrackedStatus) {
+                ExerciseTrackedStatus.OTHER_APP_IN_PROGRESS -> {
+                    stopTicker()
+                    _state.value = reducer.fail(
+                        reducer.ready(
+                            pendingDraftCount = pendingCount,
+                            ghostConfig = ghostConfig,
+                        ),
+                        "다른 운동이 진행 중이에요",
+                    )
+                    return@launch
+                }
+                ExerciseTrackedStatus.OWNED_EXERCISE_IN_PROGRESS -> {
+                    if (
+                        exerciseInfo.exerciseType == ExerciseType.RUNNING &&
+                        recovered != null &&
+                        recovered.phase != WearRunPhase.Reviewing
+                    ) {
+                        val callbackRegistered = runCatching {
+                            exerciseClient.setUpdateCallback(callback)
+                        }.isSuccess
+                        if (!callbackRegistered) {
+                            restoreCheckpointWithoutExercise(recovered)
+                            return@launch
+                        }
+                        setState(applyGhostFrame(recovered), forceCheckpoint = true)
+                        if (recovered.phase == WearRunPhase.Running) {
+                            startTicker()
+                        }
+                    } else if (recovered == null) {
+                        _state.value = reducer.fail(
+                            reducer.ready(
+                                pendingDraftCount = pendingCount,
+                                ghostConfig = ghostConfig,
+                            ),
+                            "진행 중 기록 복구 정보가 없어요",
+                        )
+                    } else {
+                        restoreCheckpointWithoutExercise(recovered)
+                    }
+                }
+                else -> {
+                    if (recovered != null) {
+                        restoreCheckpointWithoutExercise(recovered)
+                    } else {
+                        refreshPendingDraftCount()
+                    }
+                }
+            }
         }
     }
 
@@ -109,11 +178,14 @@ class HealthServicesRunController(
     private fun startRunInternal(ghostConfig: WearGhostConfig?) {
         scope.launch {
             val startedAt = System.currentTimeMillis()
-            _state.value = reducer.start(
-                _state.value,
-                startedAt,
-                nowRealtimeMs(),
-                ghostConfig,
+            setState(
+                reducer.start(
+                    _state.value,
+                    startedAt,
+                    nowRealtimeMs(),
+                    ghostConfig,
+                ),
+                forceCheckpoint = true,
             )
             startTicker()
             try {
@@ -122,6 +194,7 @@ class HealthServicesRunController(
             } catch (error: Throwable) {
                 stopTicker()
                 runCatching { exerciseClient.clearUpdateCallback(callback) }
+                activeRunStore.clear()
                 _state.value = reducer.fail(
                     WearRunState(
                         pendingDraftCount = pendingQueue.pendingCount(),
@@ -136,14 +209,14 @@ class HealthServicesRunController(
     fun pauseRun() {
         scope.launch {
             runCatching { exerciseClient.pauseExercise() }
-            _state.value = reducer.pause(_state.value, nowRealtimeMs())
+            setState(reducer.pause(_state.value, nowRealtimeMs()), forceCheckpoint = true)
         }
     }
 
     fun resumeRun() {
         scope.launch {
             runCatching { exerciseClient.resumeExercise() }
-            _state.value = reducer.resume(_state.value, nowRealtimeMs())
+            setState(reducer.resume(_state.value, nowRealtimeMs()), forceCheckpoint = true)
             startTicker()
         }
     }
@@ -151,12 +224,15 @@ class HealthServicesRunController(
     fun stopRun() {
         scope.launch {
             runCatching { exerciseClient.endExercise() }
-            _state.value = applyGhostFrame(
-                reducer.review(
-                    _state.value,
-                    System.currentTimeMillis(),
-                    nowRealtimeMs(),
+            setState(
+                applyGhostFrame(
+                    reducer.review(
+                        _state.value,
+                        System.currentTimeMillis(),
+                        nowRealtimeMs(),
+                    ),
                 ),
+                forceCheckpoint = true,
             )
             stopTicker()
         }
@@ -175,6 +251,7 @@ class HealthServicesRunController(
                 "저장됨 · 폰 연결 시 전송"
             }
             clearCallback()
+            activeRunStore.clear()
             _state.value = reducer.ready(
                 message,
                 pendingQueue.pendingCount(),
@@ -186,6 +263,7 @@ class HealthServicesRunController(
     fun discardDraft() {
         scope.launch {
             clearCallback()
+            activeRunStore.clear()
             _state.value = reducer.ready(
                 "삭제됨",
                 pendingQueue.pendingCount(),
@@ -221,7 +299,7 @@ class HealthServicesRunController(
             val pendingCount = pendingQueue.pendingCount()
             val current = _state.value
             if (current.phase != WearRunPhase.Ready) {
-                _state.value = current.copy(pendingDraftCount = pendingCount)
+                setState(current.copy(pendingDraftCount = pendingCount))
                 return@launch
             }
             val message = if (showStatus) {
@@ -249,9 +327,11 @@ class HealthServicesRunController(
         }
     }
 
-    fun dispose() {
+    fun dispose(clearExerciseCallback: Boolean = true) {
         stopTicker()
-        scope.launch { clearCallback() }
+        if (clearExerciseCallback) {
+            scope.launch { clearCallback() }
+        }
     }
 
     private suspend fun clearCallback() {
@@ -267,6 +347,7 @@ class HealthServicesRunController(
             DataType.LOCATION,
             DataType.PACE,
             DataType.SPEED,
+            DataType.STEPS_PER_MINUTE,
         )
         val supported = runCatching {
             exerciseClient
@@ -290,6 +371,7 @@ class HealthServicesRunController(
                 _state.value = applyGhostFrame(
                     reducer.tick(_state.value, nowRealtimeMs()),
                 )
+                persistActiveState(_state.value)
                 delay(1000)
             }
         }
@@ -315,6 +397,43 @@ class HealthServicesRunController(
         tickerJob = null
     }
 
+    private fun setState(state: WearRunState, forceCheckpoint: Boolean = false) {
+        _state.value = state
+        persistActiveState(state, forceCheckpoint)
+    }
+
+    private fun persistActiveState(state: WearRunState, force: Boolean = false) {
+        if (state.phase == WearRunPhase.Ready) return
+        val now = nowRealtimeMs()
+        if (!force && state.phase == WearRunPhase.Running && now - lastCheckpointRealtimeMs < 5_000L) {
+            return
+        }
+        activeRunStore.save(state, now)
+        lastCheckpointRealtimeMs = now
+    }
+
+    private fun restoreCheckpointWithoutExercise(recovered: WearRunState) {
+        stopTicker()
+        val hasRecordData = recovered.elapsedMs > 0 || recovered.distanceM > 0 || recovered.points.isNotEmpty()
+        if (!hasRecordData) {
+            activeRunStore.clear()
+            _state.value = reducer.ready(
+                pendingDraftCount = pendingQueue.pendingCount(),
+                ghostConfig = ghostStore.current(),
+            )
+            return
+        }
+        val reviewState = recovered.copy(
+            phase = WearRunPhase.Reviewing,
+            endedAtEpochMs = recovered.endedAtEpochMs ?: System.currentTimeMillis(),
+            elapsedBeforeActiveSegmentMs = recovered.elapsedMs,
+            activeSegmentStartedRealtimeMs = null,
+            statusMessage = "기록 복구됨",
+            errorMessage = null,
+        )
+        setState(applyGhostFrame(reviewState), forceCheckpoint = true)
+    }
+
     private fun DataPointContainer.toMetricSample(activeDurationMs: Long?): WearMetricSample {
         val heartRate = getData(DataType.HEART_RATE_BPM).lastOrNull()?.value?.roundToInt()
         val calories = getData(DataType.CALORIES_TOTAL)?.total?.toDouble()
@@ -323,6 +442,7 @@ class HealthServicesRunController(
             value / 1000.0
         }
         val speed = getData(DataType.SPEED).lastOrNull()?.value
+        val cadence = getData(DataType.STEPS_PER_MINUTE).lastOrNull()?.value?.toDouble()
         val points = getData(DataType.LOCATION).map { point ->
             val location: LocationData = point.value
             val accuracy = point.accuracy as? LocationAccuracy
@@ -342,6 +462,7 @@ class HealthServicesRunController(
             distanceM = distance,
             paceSecPerKm = pace,
             speedMps = speed,
+            cadenceSpm = cadence,
             heartRateBpm = heartRate,
             caloriesKcal = calories,
             points = points,

@@ -4,14 +4,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,43 +59,35 @@ internal fun WearActiveRunPager(
 
 @Composable
 private fun WearCorePage(state: WearRunState) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        item {
-            WearHeroMetric(
-                label = "DIST",
-                value = WearRunFormatters.distance(state.distanceM),
-                valueColor = RunliniWearColors.VoltGreen,
+    WearRunPageFrame(reservePageIndicator = true) { spec ->
+        state.ghostFrame?.let { frame ->
+            WearStatusPill(
+                label = WearRunFormatters.ghostResult(frame),
+                color = ghostColor(frame.status),
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
-            Text(
-                text = WearRunFormatters.elapsed(state.elapsedMs),
-                color = RunliniWearColors.Chalk,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
+
+        WearPrimaryMetric(
+            label = "거리",
+            value = WearRunFormatters.distance(state.distanceM),
+            valueColor = RunliniWearColors.VoltGreen,
+            profile = spec.profile,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            WearCompactMetric(
+                label = "시간",
+                value = WearRunFormatters.elapsed(state.elapsedMs),
+                modifier = Modifier.weight(1f),
             )
-        }
-        item { Spacer(modifier = Modifier.height(10.dp)) }
-        item {
-            WearMetricTile(
-                label = "NOW",
+            WearCompactMetric(
+                label = "현재 페이스",
                 value = WearRunFormatters.pace(state.currentPaceSecPerKm),
-                valueColor = RunliniWearColors.Chalk,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(6.dp)) }
-        item {
-            WearMetricTile(
-                label = "AVG",
-                value = WearRunFormatters.pace(state.averagePaceSecPerKm),
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -107,91 +97,76 @@ private fun WearCorePage(state: WearRunState) {
 private fun WearGhostPage(state: WearRunState) {
     val frame = state.ghostFrame
     val color = ghostColor(frame?.status)
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        item {
+    WearRunPageFrame(reservePageIndicator = true) { spec ->
+        WearStatusPill(
+            label = WearRunFormatters.ghostStatusLabel(frame?.status),
+            color = color,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        WearPrimaryMetric(
+            label = "격차",
+            value = WearRunFormatters.ghostGap(frame),
+            valueColor = color,
+            profile = spec.profile,
+        )
+        state.ghostConfig?.sourceSummary?.let { summary ->
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = WearRunFormatters.ghostStatusLabel(frame?.status),
-                color = color,
-                fontSize = 22.sp,
+                text = summary,
+                color = RunliniWearColors.Muted,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-        item {
-            WearHeroMetric(
-                label = "GAP",
-                value = WearRunFormatters.ghostGap(frame),
-                valueColor = color,
-            )
-        }
-        state.ghostConfig?.sourceSummary?.let { summary ->
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            item {
-                Text(
-                    text = summary,
-                    color = RunliniWearColors.Muted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
     }
 }
 
 @Composable
 private fun WearDetailsPage(state: WearRunState) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        item {
-            Text(
-                text = "DETAIL",
-                color = RunliniWearColors.Chalk,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-            )
-        }
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-        item {
-            WearMetricTile(
-                label = "HR",
+    WearRunPageFrame(reservePageIndicator = true) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            WearCompactMetric(
+                label = "심박수",
                 value = WearRunFormatters.heartRate(state.heartRateBpm),
+                modifier = Modifier.weight(1f),
             )
-        }
-        item { Spacer(modifier = Modifier.height(6.dp)) }
-        item {
-            WearMetricTile(
-                label = "CAL",
+            WearCompactMetric(
+                label = "칼로리",
                 value = WearRunFormatters.calories(state.caloriesKcal),
+                modifier = Modifier.weight(1f),
             )
         }
-        item { Spacer(modifier = Modifier.height(6.dp)) }
-        item {
-            WearMetricTile(
-                label = "SPD",
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            WearCompactMetric(
+                label = "평균 페이스",
+                value = WearRunFormatters.pace(state.averagePaceSecPerKm),
+                modifier = Modifier.weight(1f),
+            )
+            WearCompactMetric(
+                label = "케이던스",
+                value = WearRunFormatters.cadence(state.cadenceSpm),
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            WearCompactMetric(
+                label = "속도",
                 value = WearRunFormatters.speed(state.speedMps),
-            )
-        }
-        item { Spacer(modifier = Modifier.height(6.dp)) }
-        item {
-            WearMetricTile(
-                label = "DIST",
-                value = WearRunFormatters.distance(state.distanceM),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -202,34 +177,27 @@ private fun WearRunControlsPage(
     onPause: () -> Unit,
     onStop: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 18.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = "CONTROL",
-            color = RunliniWearColors.Chalk,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+    WearRunPageFrame(reservePageIndicator = true) { spec ->
+        val buttonHeight = if (spec.profile == WearLayoutProfile.Regular) {
+            52.dp
+        } else {
+            48.dp
+        }
         WearActionButton(
-            label = "PAUSE",
+            label = "일시정지",
             color = RunliniWearColors.Chalk,
             textColor = RunliniWearColors.Black,
             modifier = Modifier.fillMaxWidth(),
+            height = buttonHeight,
             onClick = onPause,
         )
         Spacer(modifier = Modifier.height(10.dp))
         WearActionButton(
-            label = "STOP",
+            label = "종료",
             color = RunliniWearColors.ElectricRed,
             textColor = RunliniWearColors.Chalk,
             modifier = Modifier.fillMaxWidth(),
+            height = buttonHeight,
             onClick = onStop,
         )
     }

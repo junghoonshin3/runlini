@@ -11,6 +11,7 @@ class WearRunFormattersTest {
         assertEquals("1.23 km", WearRunFormatters.distance(1_234.0))
         assertEquals("5:07/km", WearRunFormatters.pace(307.0))
         assertEquals("12.0 km/h", WearRunFormatters.speed(3.333))
+        assertEquals("172 spm", WearRunFormatters.cadence(171.6))
         assertEquals("+0:12", WearRunFormatters.ghostGap(ghostFrame(12_000L)))
         assertEquals("-1:05", WearRunFormatters.ghostGap(ghostFrame(-65_000L)))
     }
@@ -19,6 +20,7 @@ class WearRunFormattersTest {
     fun formatsMissingMetricsAsDashes() {
         assertEquals("--", WearRunFormatters.pace(null))
         assertEquals("--", WearRunFormatters.speed(null))
+        assertEquals("--", WearRunFormatters.cadence(null))
         assertEquals("--", WearRunFormatters.heartRate(null))
         assertEquals("--", WearRunFormatters.calories(null))
         assertEquals("--", WearRunFormatters.ghostGap(null))
