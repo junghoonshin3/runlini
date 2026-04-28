@@ -5,11 +5,11 @@ import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 String formatGhostRaceStatus(GhostRaceStatus status) {
   switch (status) {
     case GhostRaceStatus.ahead:
-      return 'AHEAD';
+      return '이기는 중';
     case GhostRaceStatus.behind:
-      return 'BEHIND';
+      return '따라가는 중';
     case GhostRaceStatus.level:
-      return 'LEVEL';
+      return '접전';
     case GhostRaceStatus.offRoute:
       return '경로 이탈';
     case GhostRaceStatus.unavailable:

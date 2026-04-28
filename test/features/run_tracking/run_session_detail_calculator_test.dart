@@ -70,4 +70,37 @@ void main() {
     expect(detail.splits.length, greaterThanOrEqualTo(2));
     expect(detail.splits.first.paceSecPerKm, greaterThan(0));
   });
+
+  test('uses custom split distance when provided', () {
+    final session = RunSession(
+      id: 'mile-split-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 12),
+      distanceM: 2000,
+      durationMs: 720000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.018,
+          timestampRelMs: 720000,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(
+      session,
+      splitDistanceM: 1609.344,
+    );
+
+    expect(detail.splits.first.distanceM, closeTo(1609.344, 0.1));
+    expect(detail.splits.first.paceSecPerKm, greaterThan(0));
+  });
 }

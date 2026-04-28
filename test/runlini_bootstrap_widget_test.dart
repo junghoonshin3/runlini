@@ -13,10 +13,11 @@ import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
-  testWidgets('shows the running tab by default', (WidgetTester tester) async {
+  testWidgets('shows the history tab by default', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          disableStartupWeightPromptOverride,
           runSessionListProvider.overrideWith(
             (Ref ref) async => sampleRunSessions(),
           ),
@@ -27,15 +28,22 @@ void main() {
         child: const RunliniApp(),
       ),
     );
-    await pumpUntilFound(tester, find.byKey(const Key('run-map')));
+    await pumpUntilFound(tester, find.byKey(const Key('history-list')));
 
-    expect(find.text('기록'), findsOneWidget);
+    expect(find.text('기록'), findsWidgets);
     expect(find.text('러닝'), findsOneWidget);
-    expect(find.byKey(const Key('run-map')), findsOneWidget);
-    expect(find.byKey(const Key('settings-button')), findsOneWidget);
-    expect(find.byKey(const Key('current-location-button')), findsOneWidget);
-    expect(find.byKey(const Key('start-stop-button')), findsOneWidget);
-    expect(find.text('START'), findsOneWidget);
+    expect(find.text('설정'), findsOneWidget);
+    expect(find.byKey(const Key('history-list')), findsOneWidget);
+    expect(
+      find.byKey(const Key('history-session-fixture_morning_tempo')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('run-map')), findsNothing);
+    expect(find.byKey(const Key('settings-button')), findsNothing);
+    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('current-location-button')), findsNothing);
+    expect(find.byKey(const Key('start-stop-button')), findsNothing);
+    expect(find.text('START'), findsNothing);
     expect(find.byKey(const Key('run-status-label')), findsNothing);
     expect(find.byKey(const Key('ghost-status-label')), findsNothing);
     expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
@@ -51,6 +59,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -72,6 +81,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byKey(const Key('run-map')), findsNothing);
@@ -90,6 +100,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          disableStartupWeightPromptOverride,
           staticMapStateOverride(
             fallbackMapCenter: const MapCoordinate(
               latitude: 37.0,
@@ -109,6 +120,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await openRunningTab(tester);
     await pumpUntilFound(tester, find.byKey(const Key('runner-marker-layer')));
 
     expect(find.byKey(const Key('run-map')), findsOneWidget);
@@ -124,6 +136,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -148,6 +161,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.byKey(const Key('run-map')), findsNothing);
@@ -166,6 +180,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          disableStartupWeightPromptOverride,
           staticMapStateOverride(
             fallbackMapCenter: const MapCoordinate(
               latitude: 37.0,
@@ -183,6 +198,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await openRunningTab(tester);
     await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
     expect(find.byKey(const Key('run-map')), findsOneWidget);

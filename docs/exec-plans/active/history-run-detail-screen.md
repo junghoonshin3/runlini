@@ -28,6 +28,7 @@ post-run view used after finishing a workout.
 - [x] Re-run guardrails, analyze, and tests after the delete update.
 - [x] Redesign the shared detail body away from the reference-app layout.
 - [x] Replace custom chart bars with `fl_chart` line charts over elapsed time.
+- [x] Stabilize the detail header unit spacing and mobile split-row layout.
 
 ## Decisions
 
@@ -46,6 +47,10 @@ post-run view used after finishing a workout.
   rendering.
 - Ghost-enabled runs stay in the same detail screen and show an optional ghost
   comparison section only when stored on the session.
+- Header summary values use separate chips for distance, time, and pace so
+  units and values do not crowd together.
+- Split rows use a mobile list layout: the main row emphasizes split number and
+  pace, while elevation and heart-rate metadata move to a secondary line.
 
 ## Implementation Steps
 
@@ -57,6 +62,8 @@ post-run view used after finishing a workout.
 5. Update product spec wording for history detail.
 6. Add pace samples to the detail calculator and render a read-only pace chart.
 7. Add `deleteSession` to the repository contract and wire it to history detail.
+8. Replace the fixed-column split table with a responsive split list and add
+   narrow-screen widget coverage.
 
 ## Validation
 

@@ -49,4 +49,7 @@ class FixtureRunSessionRepository implements RunSessionRepository {
     sessions.removeWhere((existing) => existing.id == id);
     _cachedSessions = sessions;
   }
+
+  @override
+  Future<bool> isDeletedExternalSession(RunSession session) async => false;
 }

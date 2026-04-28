@@ -12,10 +12,11 @@ Runlini should feel like a running app that answers one question instantly:
   - distance
   - average pace
   - average speed
-  - calories placeholder until a real source lands
+  - active calories estimated from user body weight and accepted GPS distance
   - map
   - current location
-  - pre-start 3-2-1 countdown before recording begins
+  - configurable pre-start countdown from 3 to 10 seconds before recording
+    begins
   - start, pause, stop, then save/discard review controls in v1
 - Post-run summary with:
   - total distance
@@ -27,11 +28,24 @@ Runlini should feel like a running app that answers one question instantly:
     disabled
   - touchable line charts for pace over time, speed, elevation when GPS
     altitude is available, and heart rate when watch or health data is
-    available
+    available; touch selects a large ring point and tooltip without a guide line
   - optional ghost comparison summary when the run was recorded against a
     selected ghost
-  - calories when available
+  - active calories when body weight is set or Health data provides calories
 - History list with:
+  - local DB records as the single visible source of truth
+  - top distance progress ring for this week, this month, and this year
+  - configurable weekly, monthly, and yearly distance goals for the progress
+    ring
+  - weekly-default history calendar that expands into a monthly calendar
+  - day cells with small circular progress markers based on the monthly goal
+    divided by days in the selected month
+  - app-local saved runs visible even when health export is unavailable or
+    skipped
+  - clear backup badges: Health-backed, app-only, or backup failed
+  - empty-state recovery CTA for restoring recent Health records after reinstall
+    or data clearing
+  - Health Connect / HealthKit records synced into local DB after connection
   - date
   - distance
   - total time
@@ -40,21 +54,33 @@ Runlini should feel like a running app that answers one question instantly:
   - tap-through detail view with route, splits, speed, elevation, and heart-rate
     sections in Runlini's compact data-lab style
   - saved-run deletion with a confirmation step
+  - Settings tab controls for display units, distance goals, local privacy
+    display, running shoes, countdown length, and location tracking quality
+  - no bundled local fixture records in the user-visible list
 - HealthKit and Health Connect workout export
   - export begins on `START`
   - export finishes only after `저장하기`
+  - local save succeeds first; Health backup success, skip, or failure is shown
+    as a separate status
+  - failed Health backup can be retried from run detail or Settings
   - export capture is canceled when the runner discards the draft
-- Architecture that can later accept watch-driven sessions
+  - imported health workouts are upserted into the same local `RunSession`
+    model as app-local runs
+  - app startup may run a quiet health sync only when permission is already
+    granted
+- Architecture that accepts watch-driven sessions through shared watch draft /
+  snapshot / event contracts
 - Clear fallback handling when GPS or permissions are unavailable
 
 ### 2. Runlini Differentiation
 
 - Ghost race against a previous run
+- Pre-start ghost selection chip above `START`
 - Selected ghost route preview before the run starts
 - Gradient-style pace-colored ghost route segments based on the selected run's baseline pace
 - Live ahead/behind gap in seconds
 - Live ghost distance gap and off-route feedback while running
-- Current-time ghost marker on the running map
+- Optional current-time ghost marker on the running map, off by default
 - Clear pace-state feedback tied to the ghost
 - Pace-colored route rendering
 - Post-run replay against the ghost session
@@ -68,6 +94,7 @@ Runlini should feel like a running app that answers one question instantly:
 - Audio cues for pace, distance, and ghost gap
 - Pre-run readiness details such as weather, daylight, and GPS readiness
 - Sensor and watch connection status
+- Wear OS / watchOS apps with pre-run, running, and finish review screens
 
 ## Delivery Order
 

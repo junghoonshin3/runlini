@@ -23,6 +23,8 @@ losing architecture, design intent, or validation discipline.
 - [x] Start live GPS subscription explicitly after the startup bootstrap path settles
 - [x] Recenter from in-memory or last-known device location first so the current-location button moves immediately
 - [x] Keep the running tab subscribed to live GPS so the map follows the latest location before and during a run
+- [x] Open the app on the history tab by default so saved runs are the first
+      surface users see
 - [ ] Implement live recording, map rendering, and persistent storage
 - [ ] Implement ghost selection, interpolation UI, and haptics
 - [ ] Implement Health Connect and HealthKit sync flows
@@ -41,6 +43,8 @@ losing architecture, design intent, or validation discipline.
 - Startup location fetch errors must never block the map; they degrade to the fixture fallback center with no live marker until GPS recovers.
 - Do not start the live GPS stream from provider construction. First let the startup bootstrap settle, then sync the live subscription from the visible running tab or active-run state.
 - Keep the running tab subscribed to live GPS while visible, and continue that subscription on other tabs only while an active run is in progress.
+- The default app tab is `history`; running-map bootstrap work starts only
+  after the user switches to the running tab.
 
 ## Validation
 

@@ -3,6 +3,7 @@ import 'package:runlini/features/ghost_racer/service/ghost_race_gap_service.dart
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_map_view_state.dart';
 
 final ghostRaceGapServiceProvider = Provider<GhostRaceGapService>(
@@ -39,7 +40,10 @@ final ghostAwareRunMapViewStateProvider = Provider<RunMapViewState?>((Ref ref) {
   }
 
   final ghostRaceFrame = ref.watch(ghostRaceFrameProvider);
+  final showGhostMarker =
+      ref.watch(runSettingsControllerProvider).value?.showGhostMarker ?? false;
   return mapViewState.copyWith(
-    ghostMarkerPoint: ghostRaceFrame?.ghostMarkerPoint,
+    ghostMarkerPoint: showGhostMarker ? ghostRaceFrame?.ghostMarkerPoint : null,
+    clearGhostMarkerPoint: !showGhostMarker,
   );
 });

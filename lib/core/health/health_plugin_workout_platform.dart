@@ -2,28 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
+import 'package:runlini/core/health/health_run_permission_scope.dart';
 import 'package:runlini/core/health/health_workout_platform.dart';
 
 class HealthPluginWorkoutPlatform implements HealthWorkoutPlatform {
-  static const _workoutTypes = <HealthDataType>[
-    HealthDataType.WORKOUT,
-    HealthDataType.WORKOUT_ROUTE,
-  ];
-  static const _workoutPermissions = <HealthDataAccess>[
-    HealthDataAccess.READ_WRITE,
-    HealthDataAccess.READ_WRITE,
-  ];
-  static const _androidWorkoutLookupTypes = <HealthDataType>[
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.TOTAL_CALORIES_BURNED,
-    HealthDataType.STEPS,
-  ];
-  static const _androidWorkoutLookupPermissions = <HealthDataAccess>[
-    HealthDataAccess.READ,
-    HealthDataAccess.READ,
-    HealthDataAccess.READ,
-  ];
-
   HealthPluginWorkoutPlatform({Health? health}) : _health = health ?? Health();
 
   final Health _health;
@@ -39,16 +21,27 @@ class HealthPluginWorkoutPlatform implements HealthWorkoutPlatform {
   }
 
   @override
-  Future<bool> isAvailable() async {
+  Future<HealthConnectAvailability> checkAvailability() async {
     if (!Platform.isAndroid && !Platform.isIOS) {
-      return false;
+      return HealthConnectAvailability.unavailable;
     }
     if (!Platform.isAndroid) {
-      return true;
+      return HealthConnectAvailability.available;
     }
 
-    return await _health.getHealthConnectSdkStatus() ==
-        HealthConnectSdkStatus.sdkAvailable;
+    final status = await _health.getHealthConnectSdkStatus();
+    return switch (status) {
+      HealthConnectSdkStatus.sdkAvailable =>
+        HealthConnectAvailability.available,
+      HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired =>
+        HealthConnectAvailability.providerUpdateRequired,
+      _ => HealthConnectAvailability.unavailable,
+    };
+  }
+
+  @override
+  Future<void> installHealthConnect() {
+    return _health.installHealthConnect();
   }
 
   @override
@@ -64,10 +57,8 @@ class HealthPluginWorkoutPlatform implements HealthWorkoutPlatform {
   static List<HealthDataType> permissionTypesForPlatform({
     required bool isAndroid,
   }) {
-    return List<HealthDataType>.unmodifiable(
-      isAndroid
-          ? <HealthDataType>[..._workoutTypes, ..._androidWorkoutLookupTypes]
-          : _workoutTypes,
+    return HealthRunPermissionScope.permissionTypesForPlatform(
+      isAndroid: isAndroid,
     );
   }
 
@@ -75,13 +66,8 @@ class HealthPluginWorkoutPlatform implements HealthWorkoutPlatform {
   static List<HealthDataAccess> permissionAccessesForPlatform({
     required bool isAndroid,
   }) {
-    return List<HealthDataAccess>.unmodifiable(
-      isAndroid
-          ? <HealthDataAccess>[
-              ..._workoutPermissions,
-              ..._androidWorkoutLookupPermissions,
-            ]
-          : _workoutPermissions,
+    return HealthRunPermissionScope.permissionAccessesForPlatform(
+      isAndroid: isAndroid,
     );
   }
 
@@ -163,5 +149,10 @@ class HealthPluginWorkoutPlatform implements HealthWorkoutPlatform {
   @override
   Future<void> discardWorkoutRoute(String builderId) async {
     await _health.discardWorkoutRoute(builderId);
+  }
+
+  @override
+  Future<bool> deleteWorkoutByUuid({required String uuid}) {
+    return _health.deleteByUUID(uuid: uuid, type: HealthDataType.WORKOUT);
   }
 }

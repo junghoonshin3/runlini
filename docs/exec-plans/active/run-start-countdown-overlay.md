@@ -36,6 +36,9 @@ countdown completes.
 - The real run start happens only after `1` completes.
 - Idle `START` first runs the health-permission preflight. The countdown begins
   only after that permission flow returns.
+- If the preflight reports that Health Connect needs installation or update,
+  the runner chooses between installing Health Connect and starting an app-local
+  run before countdown begins.
 - `STOP` still bypasses countdown and moves directly to the finish review.
 - There is no cancel path, sound, or haptic in v1.
 - The scrim stays static while each visible number animates locally with a

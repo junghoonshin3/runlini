@@ -15,14 +15,20 @@ abstract class DeviceLocationClient {
 abstract class LocationStreamClient implements DeviceLocationClient {
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   });
 }
 
 enum LocationTrackingMode {
-  passive(androidInterval: Duration(seconds: 3), distanceFilterM: 5),
-  workout(androidInterval: Duration(seconds: 1), distanceFilterM: 3);
+  passive,
+  workout;
 
-  const LocationTrackingMode({
+  bool get usesBackgroundTracking => this == LocationTrackingMode.workout;
+}
+
+@immutable
+class LocationTrackingConfig {
+  const LocationTrackingConfig({
     required this.androidInterval,
     required this.distanceFilterM,
   });
@@ -30,7 +36,32 @@ enum LocationTrackingMode {
   final Duration androidInterval;
   final int distanceFilterM;
 
-  bool get usesBackgroundTracking => this == LocationTrackingMode.workout;
+  static const passiveDefault = LocationTrackingConfig(
+    androidInterval: Duration(seconds: 3),
+    distanceFilterM: 5,
+  );
+
+  static const workoutDefault = LocationTrackingConfig(
+    androidInterval: Duration(seconds: 1),
+    distanceFilterM: 3,
+  );
+
+  static LocationTrackingConfig defaultFor(LocationTrackingMode mode) {
+    return switch (mode) {
+      LocationTrackingMode.passive => passiveDefault,
+      LocationTrackingMode.workout => workoutDefault,
+    };
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LocationTrackingConfig &&
+        other.androidInterval == androidInterval &&
+        other.distanceFilterM == distanceFilterM;
+  }
+
+  @override
+  int get hashCode => Object.hash(androidInterval, distanceFilterM);
 }
 
 class GeolocatorRunLocationClient
@@ -77,6 +108,7 @@ class GeolocatorRunLocationClient
   @override
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   }) async* {
     final ready = await _ensureReady();
     if (!ready) {
@@ -84,7 +116,10 @@ class GeolocatorRunLocationClient
     }
 
     yield* Geolocator.getPositionStream(
-      locationSettings: _streamLocationSettings(mode),
+      locationSettings: _streamLocationSettings(
+        mode,
+        config ?? LocationTrackingConfig.defaultFor(mode),
+      ),
     ).map(_toLiveLocationSample);
   }
 
@@ -108,13 +143,16 @@ class GeolocatorRunLocationClient
     }
   }
 
-  LocationSettings _streamLocationSettings(LocationTrackingMode mode) {
+  LocationSettings _streamLocationSettings(
+    LocationTrackingMode mode,
+    LocationTrackingConfig config,
+  ) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return AndroidSettings(
           accuracy: LocationAccuracy.bestForNavigation,
-          distanceFilter: mode.distanceFilterM,
-          intervalDuration: mode.androidInterval,
+          distanceFilter: config.distanceFilterM,
+          intervalDuration: config.androidInterval,
           foregroundNotificationConfig: mode.usesBackgroundTracking
               ? const ForegroundNotificationConfig(
                   notificationTitle: 'Runlini is tracking your run',
@@ -130,7 +168,7 @@ class GeolocatorRunLocationClient
         return AppleSettings(
           accuracy: LocationAccuracy.bestForNavigation,
           activityType: ActivityType.fitness,
-          distanceFilter: mode.distanceFilterM,
+          distanceFilter: config.distanceFilterM,
           pauseLocationUpdatesAutomatically: false,
           allowBackgroundLocationUpdates: mode.usesBackgroundTracking,
           showBackgroundLocationIndicator: mode.usesBackgroundTracking,
@@ -138,7 +176,7 @@ class GeolocatorRunLocationClient
       default:
         return LocationSettings(
           accuracy: LocationAccuracy.bestForNavigation,
-          distanceFilter: mode.distanceFilterM,
+          distanceFilter: config.distanceFilterM,
         );
     }
   }
@@ -151,6 +189,8 @@ class GeolocatorRunLocationClient
       source: RunPointSource.deviceGps,
       paceSecPerKm: _paceFromSpeed(position.speed),
       speedMps: position.speed > 0 ? position.speed : null,
+      horizontalAccuracyM: _positiveOrNull(position.accuracy),
+      speedAccuracyMps: _positiveOrNull(position.speedAccuracy),
       elevationM: position.altitude.isFinite ? position.altitude : null,
     );
   }
@@ -161,6 +201,10 @@ class GeolocatorRunLocationClient
     }
 
     return 1000 / speedMetersPerSecond;
+  }
+
+  double? _positiveOrNull(double value) {
+    return value.isFinite && value > 0 ? value : null;
   }
 }
 

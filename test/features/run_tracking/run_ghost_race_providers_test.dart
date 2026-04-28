@@ -5,14 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
+import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 import 'package:runlini/features/run_tracking/state/run_ghost_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_map_static_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+
+import 'run_playback_provider_harness.dart';
 
 class _TestDeviceLocationClient implements DeviceLocationClient {
   const _TestDeviceLocationClient();
@@ -40,6 +45,7 @@ class _TrackingLocationStreamClient implements LocationStreamClient {
   @override
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   }) => _controller.stream;
 
   Future<void> emit(LiveLocationSample sample) async {
@@ -62,14 +68,21 @@ class _NoopHealthWorkoutRecorder implements HealthWorkoutRecorder {
   Future<void> cancelRunCapture() async {}
 
   @override
-  Future<void> finishRunCapture({
+  Future<HealthWorkoutExportResult> finishRunCapture({
     required DateTime startedAt,
     required DateTime endedAt,
     required List<RunPoint> recordedPoints,
-  }) async {}
+  }) async {
+    return const HealthWorkoutExportResult.synced();
+  }
 
   @override
-  Future<void> prepareRunCapture() async {}
+  Future<void> openHealthConnectInstall() async {}
+
+  @override
+  Future<HealthRunPreparationResult> prepareRunCapture() async {
+    return HealthRunPreparationResult.ready;
+  }
 }
 
 LiveLocationSample _sample({
@@ -116,6 +129,8 @@ Future<void> _settleAsync() async {
 }
 
 Future<void> _startVisibleLiveTracking(ProviderContainer container) async {
+  container.read(appTabProvider.notifier).setTab(AppTab.running);
+  await _settleAsync();
   container.read(liveLocationProvider);
   await container.read(liveLocationProvider.notifier).syncTracking();
   await _settleAsync();
@@ -123,13 +138,14 @@ Future<void> _startVisibleLiveTracking(ProviderContainer container) async {
 
 void main() {
   test(
-    'ghost race frame uses accepted recorded points and exposes a map marker',
+    'ghost race frame keeps marker calculated but hides it by default',
     () async {
       final startedAt = DateTime(2026, 4, 20, 6);
       var now = startedAt;
       final tickerController = StreamController<int>.broadcast();
       final streamClient = _TrackingLocationStreamClient();
       final ghostSession = _ghostSession();
+      final settingsRepository = TestRunSettingsRepository();
       final container = ProviderContainer(
         overrides: [
           deviceLocationClientProvider.overrideWithValue(
@@ -143,6 +159,7 @@ void main() {
           liveRunMetricsTickerProvider.overrideWith(
             (Ref ref) => tickerController.stream,
           ),
+          runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
           runMapStaticStateProvider.overrideWith((Ref ref) async {
             return RunMapStaticState(
               fallbackMapCenter: const MapCoordinate(latitude: 0, longitude: 0),
@@ -188,7 +205,18 @@ void main() {
 
       final mapViewState = container.read(ghostAwareRunMapViewStateProvider);
       expect(mapViewState, isNotNull);
-      expect(mapViewState!.ghostMarkerPoint, frame.ghostMarkerPoint);
+      expect(mapViewState!.ghostMarkerPoint, isNull);
+
+      await container.read(runSettingsControllerProvider.future);
+      await container
+          .read(runSettingsControllerProvider.notifier)
+          .setShowGhostMarker(true);
+      await _settleAsync();
+
+      final visibleMapViewState = container.read(
+        ghostAwareRunMapViewStateProvider,
+      );
+      expect(visibleMapViewState!.ghostMarkerPoint, frame.ghostMarkerPoint);
     },
   );
 

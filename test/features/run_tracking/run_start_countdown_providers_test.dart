@@ -70,4 +70,32 @@ void main() {
       const RunStartCountdownState.inactive(),
     );
   });
+
+  test('uses the configured countdown length', () async {
+    final container = ProviderContainer(
+      overrides: [
+        runStartCountdownSecondsProvider.overrideWithValue(5),
+        runStartCountdownStepDurationProvider.overrideWithValue(
+          const Duration(milliseconds: 1),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final seenSeconds = <int>[];
+    container.listen(runStartCountdownControllerProvider, (previous, next) {
+      final remainingSeconds = next.remainingSeconds;
+      if (remainingSeconds != null) {
+        seenSeconds.add(remainingSeconds);
+      }
+    });
+
+    final result = await container
+        .read(runStartCountdownControllerProvider.notifier)
+        .startAfterCountdown(
+          onStart: () async => RunTrackingToggleResult.started,
+        );
+
+    expect(result, RunTrackingToggleResult.started);
+    expect(seenSeconds, <int>[5, 4, 3, 2, 1]);
+  });
 }

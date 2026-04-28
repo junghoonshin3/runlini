@@ -1,0 +1,87 @@
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:runlini/core/wear/watch_ghost_config_client.dart';
+import 'package:runlini/features/run_tracking/types/run_point.dart';
+import 'package:runlini/features/run_tracking/types/watch_ghost_config.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  const channel = MethodChannel('runlini/wear_ghost_config');
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
+  });
+
+  test('sends runnable ghost config over the Android method channel', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+          calls.add(call);
+          return null;
+        });
+    const client = MethodChannelWatchGhostConfigClient(isAndroidOverride: true);
+
+    await client.sendGhostConfig(_config());
+
+    expect(calls.single.method, 'sendGhostConfig');
+    expect(calls.single.arguments, containsPair('id', 'ghost-1'));
+    expect(calls.single.arguments.toString(), contains('"points"'));
+  });
+
+  test('clears ghost config over the Android method channel', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+          calls.add(call);
+          return null;
+        });
+    const client = MethodChannelWatchGhostConfigClient(isAndroidOverride: true);
+
+    await client.clearGhostConfig();
+
+    expect(calls.single.method, 'clearGhostConfig');
+  });
+
+  test('does nothing on non-Android platforms', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+          calls.add(call);
+          return null;
+        });
+    const client = MethodChannelWatchGhostConfigClient(
+      isAndroidOverride: false,
+    );
+
+    await client.sendGhostConfig(_config());
+    await client.clearGhostConfig();
+
+    expect(calls, isEmpty);
+  });
+}
+
+WatchGhostConfig _config() {
+  return WatchGhostConfig(
+    id: 'ghost-1',
+    startedAt: DateTime.utc(2026, 4, 28, 7),
+    durationMs: 600000,
+    distanceM: 2000,
+    sourceSummary: '한강 2K',
+    points: const <RunPoint>[
+      RunPoint(
+        latitude: 37,
+        longitude: 127,
+        timestampRelMs: 0,
+        source: RunPointSource.deviceGps,
+      ),
+      RunPoint(
+        latitude: 37.001,
+        longitude: 127.001,
+        timestampRelMs: 600000,
+        source: RunPointSource.deviceGps,
+      ),
+    ],
+  );
+}

@@ -3,17 +3,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:runlini/core/health/health_plugin_workout_platform.dart';
+import 'package:runlini/core/health/health_workout_export_result.dart';
 import 'package:runlini/core/health/health_workout_platform.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 
+export 'package:runlini/core/health/health_workout_export_result.dart';
 export 'package:runlini/core/health/health_workout_platform.dart';
 
+enum HealthRunPreparationResult {
+  ready,
+  installRequired,
+  unavailable,
+  permissionDenied,
+}
+
 abstract class HealthWorkoutRecorder {
-  Future<void> prepareRunCapture();
+  Future<HealthRunPreparationResult> prepareRunCapture();
+
+  Future<void> openHealthConnectInstall();
 
   Future<void> beginRunCapture();
 
-  Future<void> finishRunCapture({
+  Future<HealthWorkoutExportResult> finishRunCapture({
     required DateTime startedAt,
     required DateTime endedAt,
     required List<RunPoint> recordedPoints,
@@ -31,18 +42,30 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
   final HealthWorkoutPlatform _platform;
   String? _activeRouteBuilderId;
   bool _hasPreparedRunPermissions = false;
-  bool _preparedRunPermissionsGranted = false;
+  HealthRunPreparationResult _preparedRunPermissionsResult =
+      HealthRunPreparationResult.unavailable;
 
   @override
-  Future<void> prepareRunCapture() async {
+  Future<HealthRunPreparationResult> prepareRunCapture() async {
     await cancelRunCapture();
     try {
-      _preparedRunPermissionsGranted = await _requestRunPermissions();
+      _preparedRunPermissionsResult = await _requestRunPermissions();
       _hasPreparedRunPermissions = true;
+      return _preparedRunPermissionsResult;
     } catch (error) {
       debugPrint('Runlini health export permission prep skipped: $error');
-      _preparedRunPermissionsGranted = false;
+      _preparedRunPermissionsResult = HealthRunPreparationResult.unavailable;
       _hasPreparedRunPermissions = true;
+      return _preparedRunPermissionsResult;
+    }
+  }
+
+  @override
+  Future<void> openHealthConnectInstall() async {
+    try {
+      await _platform.installHealthConnect();
+    } catch (error) {
+      debugPrint('Runlini Health Connect install prompt skipped: $error');
     }
   }
 
@@ -50,12 +73,12 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
   Future<void> beginRunCapture() async {
     await cancelRunCapture();
     try {
-      final permissionsGranted = _hasPreparedRunPermissions
-          ? _preparedRunPermissionsGranted
+      final permissionResult = _hasPreparedRunPermissions
+          ? _preparedRunPermissionsResult
           : await _requestRunPermissions();
       _hasPreparedRunPermissions = false;
-      _preparedRunPermissionsGranted = false;
-      if (!permissionsGranted) {
+      _preparedRunPermissionsResult = HealthRunPreparationResult.unavailable;
+      if (permissionResult != HealthRunPreparationResult.ready) {
         return;
       }
 
@@ -66,16 +89,24 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
     }
   }
 
-  Future<bool> _requestRunPermissions() async {
-    if (!await _platform.isAvailable()) {
-      return false;
+  Future<HealthRunPreparationResult> _requestRunPermissions() async {
+    final availability = await _platform.checkAvailability();
+    if (availability == HealthConnectAvailability.providerUpdateRequired) {
+      return HealthRunPreparationResult.installRequired;
     }
+    if (availability != HealthConnectAvailability.available) {
+      return HealthRunPreparationResult.unavailable;
+    }
+
     await _platform.configure();
-    return _platform.requestRunPermissions();
+    final granted = await _platform.requestRunPermissions();
+    return granted
+        ? HealthRunPreparationResult.ready
+        : HealthRunPreparationResult.permissionDenied;
   }
 
   @override
-  Future<void> finishRunCapture({
+  Future<HealthWorkoutExportResult> finishRunCapture({
     required DateTime startedAt,
     required DateTime endedAt,
     required List<RunPoint> recordedPoints,
@@ -83,7 +114,9 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
     final builderId = _activeRouteBuilderId;
     _activeRouteBuilderId = null;
     if (builderId == null) {
-      return;
+      return const HealthWorkoutExportResult.skipped(
+        'Health export was not started.',
+      );
     }
 
     try {
@@ -97,7 +130,9 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
       );
       if (!wroteWorkout) {
         await _platform.discardWorkoutRoute(builderId);
-        return;
+        return const HealthWorkoutExportResult.failed(
+          'Health workout write failed.',
+        );
       }
 
       final workoutUuid = await _platform.findWorkoutUuid(
@@ -106,7 +141,9 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
       );
       if (workoutUuid == null) {
         await _platform.discardWorkoutRoute(builderId);
-        return;
+        return const HealthWorkoutExportResult.synced(
+          message: 'Health workout was written, but record id was unavailable.',
+        );
       }
 
       final routeLocations = _toWorkoutRouteLocations(
@@ -115,7 +152,7 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
       );
       if (routeLocations.isEmpty) {
         await _platform.discardWorkoutRoute(builderId);
-        return;
+        return HealthWorkoutExportResult.synced(externalId: workoutUuid);
       }
 
       final inserted = await _platform.insertWorkoutRouteData(
@@ -124,16 +161,21 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
       );
       if (!inserted) {
         await _platform.discardWorkoutRoute(builderId);
-        return;
+        return HealthWorkoutExportResult.synced(
+          externalId: workoutUuid,
+          message: 'Health workout was backed up without route data.',
+        );
       }
 
       await _platform.finishWorkoutRoute(
         builderId: builderId,
         workoutUuid: workoutUuid,
       );
+      return HealthWorkoutExportResult.synced(externalId: workoutUuid);
     } catch (error) {
       debugPrint('Runlini health export finish skipped: $error');
       await _platform.discardWorkoutRoute(builderId);
+      return HealthWorkoutExportResult.failed(error.toString());
     }
   }
 
@@ -192,6 +234,10 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
             timestamp: startedAt.add(
               Duration(milliseconds: point.timestampRelMs),
             ),
+            horizontalAccuracy: point.horizontalAccuracyM,
+            speed: point.speedMps,
+            speedAccuracy: point.speedAccuracyMps,
+            altitude: point.elevationM,
           ),
         )
         .toList(growable: false);

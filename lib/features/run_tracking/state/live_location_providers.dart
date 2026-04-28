@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
+import 'package:runlini/features/run_tracking/state/run_location_tracking_settings.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_core_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 
@@ -14,12 +16,20 @@ class LiveLocationController extends Notifier<LiveLocationSample?> {
   StreamSubscription<LiveLocationSample>? _locationSubscription;
   LiveLocationSample? _latestSample;
   LocationTrackingMode? _activeTrackingMode;
+  LocationTrackingConfig? _activeTrackingConfig;
   bool _workoutTrackingEnabled = false;
 
   @override
   LiveLocationSample? build() {
     ref.listen<AppTab>(appTabProvider, (AppTab? previous, AppTab next) {
       if (previous != next) {
+        unawaited(_syncTracking());
+      }
+    });
+    ref.listen(runSettingsControllerProvider, (previous, next) {
+      final previousPreset = previous?.value?.locationTrackingPreset;
+      final nextPreset = next.value?.locationTrackingPreset;
+      if (nextPreset != null && previousPreset != nextPreset) {
         unawaited(_syncTracking());
       }
     });
@@ -114,7 +124,10 @@ class LiveLocationController extends Notifier<LiveLocationSample?> {
       }
       final nextMode = _desiredTrackingMode();
       if (nextMode != null) {
-        if (_locationSubscription != null && _activeTrackingMode == nextMode) {
+        final nextConfig = ref.read(locationTrackingConfigProvider(nextMode));
+        if (_locationSubscription != null &&
+            _activeTrackingMode == nextMode &&
+            _activeTrackingConfig == nextConfig) {
           return;
         }
         await _stopTracking();
@@ -122,9 +135,10 @@ class LiveLocationController extends Notifier<LiveLocationSample?> {
           return;
         }
         _activeTrackingMode = nextMode;
+        _activeTrackingConfig = nextConfig;
         _locationSubscription = ref
             .read(locationStreamClientProvider)
-            .watchLocationSamples(mode: nextMode)
+            .watchLocationSamples(mode: nextMode, config: nextConfig)
             .listen(
               _ingestSample,
               onError: (Object error, StackTrace stackTrace) {
@@ -177,6 +191,7 @@ class LiveLocationController extends Notifier<LiveLocationSample?> {
     await _locationSubscription?.cancel();
     _locationSubscription = null;
     _activeTrackingMode = null;
+    _activeTrackingConfig = null;
   }
 
   void _setSample(LiveLocationSample sample) {

@@ -1,9 +1,17 @@
 import 'package:health/health.dart';
 
+enum HealthConnectAvailability {
+  available,
+  providerUpdateRequired,
+  unavailable,
+}
+
 abstract class HealthWorkoutPlatform {
   Future<void> configure();
 
-  Future<bool> isAvailable();
+  Future<HealthConnectAvailability> checkAvailability();
+
+  Future<void> installHealthConnect();
 
   Future<bool> requestRunPermissions();
 
@@ -31,4 +39,6 @@ abstract class HealthWorkoutPlatform {
   });
 
   Future<void> discardWorkoutRoute(String builderId);
+
+  Future<bool> deleteWorkoutByUuid({required String uuid});
 }

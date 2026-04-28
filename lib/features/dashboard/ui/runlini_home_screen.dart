@@ -3,24 +3,81 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
+import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
+import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
+import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
-import 'package:runlini/features/run_tracking/ui/history_tab_screen.dart';
-import 'package:runlini/features/run_tracking/ui/running_tab_screen.dart';
+import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
+import 'package:runlini/features/run_tracking/ui/history/history_tab_screen.dart';
+import 'package:runlini/features/run_tracking/ui/running/running_tab_screen.dart';
+import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
+import 'package:runlini/features/settings/ui/startup_weight_screen.dart';
 
-class RunliniHomeScreen extends ConsumerWidget {
+class RunliniHomeScreen extends ConsumerStatefulWidget {
   const RunliniHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RunliniHomeScreen> createState() => _RunliniHomeScreenState();
+}
+
+class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
+    with WidgetsBindingObserver {
+  bool _healthSyncScheduled = false;
+  bool _wearDraftSyncScheduled = false;
+  bool _wearGhostConfigSyncScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncWearDrafts();
+      _syncWearGhostConfig();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentTab = ref.watch(appTabProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
+    final settingsState = ref.watch(runSettingsControllerProvider);
+    final promptEnabled = ref.watch(startupWeightPromptEnabledProvider);
+
+    if (promptEnabled &&
+        settingsState.isLoading &&
+        settingsState.value == null) {
+      return const _StartupLoadingScreen();
+    }
+
+    if (promptEnabled && settingsState.value?.bodyWeightKg == null) {
+      return const StartupWeightScreen();
+    }
+
+    _scheduleHealthSync();
+    _scheduleWearDraftSync();
+    _scheduleWearGhostConfigSync();
 
     return Stack(
       children: [
         Scaffold(
           body: IndexedStack(
             index: currentTab.index,
-            children: const [HistoryTabScreen(), RunningTabScreen()],
+            children: const [
+              HistoryTabScreen(),
+              RunningTabScreen(),
+              SettingsTabScreen(),
+            ],
           ),
           bottomNavigationBar: DecoratedBox(
             decoration: const BoxDecoration(
@@ -51,134 +108,98 @@ class RunliniHomeScreen extends ConsumerWidget {
                   icon: Icon(Icons.directions_run_rounded),
                   label: '러닝',
                 ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings_rounded),
+                  label: '설정',
+                ),
               ],
             ),
           ),
         ),
         if (countdownState.isActive)
-          _RunStartCountdownOverlay(
+          RunStartCountdownOverlay(
             remainingSeconds: countdownState.remainingSeconds!,
           ),
       ],
     );
   }
-}
 
-class _RunStartCountdownOverlay extends StatelessWidget {
-  const _RunStartCountdownOverlay({required this.remainingSeconds});
+  void _scheduleHealthSync() {
+    if (_healthSyncScheduled) {
+      return;
+    }
+    _healthSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(healthSyncControllerProvider.notifier).syncIfAuthorized();
+    });
+  }
 
-  final int remainingSeconds;
+  void _scheduleWearDraftSync() {
+    if (_wearDraftSyncScheduled) {
+      return;
+    }
+    _wearDraftSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _syncWearDrafts();
+    });
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned.fill(
-          child: ModalBarrier(
-            key: Key('run-start-countdown-overlay'),
-            color: Color(0xCC000000),
-            dismissible: false,
-          ),
-        ),
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.center,
-            child: SizedBox(
-              key: const Key('run-start-countdown-number'),
-              child: _AnimatedCountdownNumber(
-                key: ValueKey<int>(remainingSeconds),
-                remainingSeconds: remainingSeconds,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  void _scheduleWearGhostConfigSync() {
+    if (_wearGhostConfigSyncScheduled) {
+      return;
+    }
+    _wearGhostConfigSyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _syncWearGhostConfig();
+    });
+  }
+
+  void _syncWearDrafts() {
+    if (!mounted) {
+      return;
+    }
+    ref.read(wearDraftSyncControllerProvider.notifier).syncPendingDrafts();
+  }
+
+  Future<void> _syncWearGhostConfig() async {
+    if (!mounted) {
+      return;
+    }
+    try {
+      final session = await ref.read(selectedGhostSessionProvider.future);
+      if (!mounted) {
+        return;
+      }
+      await ref.read(watchGhostConfigSyncServiceProvider).syncSession(session);
+    } catch (_) {
+      // Wear config sync is best-effort and retried on foreground.
+    }
   }
 }
 
-class _AnimatedCountdownNumber extends StatefulWidget {
-  const _AnimatedCountdownNumber({super.key, required this.remainingSeconds});
-
-  final int remainingSeconds;
-
-  @override
-  State<_AnimatedCountdownNumber> createState() =>
-      _AnimatedCountdownNumberState();
-}
-
-class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
-    with SingleTickerProviderStateMixin {
-  static const Duration _animationDuration = Duration(seconds: 1);
-
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: _animationDuration,
-  )..forward();
-
-  late final Animation<double> _opacity = TweenSequence<double>([
-    TweenSequenceItem<double>(
-      tween: Tween<double>(
-        begin: 0,
-        end: 1,
-      ).chain(CurveTween(curve: Curves.easeOutCubic)),
-      weight: 18,
-    ),
-    TweenSequenceItem<double>(tween: ConstantTween<double>(1), weight: 56),
-    TweenSequenceItem<double>(
-      tween: Tween<double>(
-        begin: 1,
-        end: 0,
-      ).chain(CurveTween(curve: Curves.easeInCubic)),
-      weight: 26,
-    ),
-  ]).animate(_controller);
-
-  late final Animation<double> _scale = TweenSequence<double>([
-    TweenSequenceItem<double>(
-      tween: Tween<double>(
-        begin: 0.82,
-        end: 1,
-      ).chain(CurveTween(curve: Curves.easeOutCubic)),
-      weight: 18,
-    ),
-    TweenSequenceItem<double>(tween: ConstantTween<double>(1), weight: 56),
-    TweenSequenceItem<double>(
-      tween: Tween<double>(
-        begin: 1,
-        end: 0.94,
-      ).chain(CurveTween(curve: Curves.easeInCubic)),
-      weight: 26,
-    ),
-  ]).animate(_controller);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _StartupLoadingScreen extends StatelessWidget {
+  const _StartupLoadingScreen();
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.displayLarge?.copyWith(
-      color: AppColors.chalk,
-      fontSize: 168,
-      fontWeight: FontWeight.w900,
-    );
-
-    return AnimatedBuilder(
-      animation: _controller,
-      child: Text(
-        '${widget.remainingSeconds}',
-        key: const Key('run-start-countdown-label'),
-        style: textStyle,
+    return const Scaffold(
+      backgroundColor: AppColors.black,
+      body: Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(color: AppColors.voltGreen),
+        ),
       ),
-      builder: (BuildContext context, Widget? child) {
-        return Opacity(
-          opacity: _opacity.value,
-          child: Transform.scale(scale: _scale.value, child: child),
-        );
-      },
     );
   }
 }

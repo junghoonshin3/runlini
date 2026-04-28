@@ -10,6 +10,8 @@ class LiveLocationSample {
     required this.source,
     this.paceSecPerKm,
     this.speedMps,
+    this.horizontalAccuracyM,
+    this.speedAccuracyMps,
     this.elevationM,
     this.heartRateBpm,
   });
@@ -19,6 +21,8 @@ class LiveLocationSample {
   final DateTime capturedAt;
   final double? paceSecPerKm;
   final double? speedMps;
+  final double? horizontalAccuracyM;
+  final double? speedAccuracyMps;
   final double? elevationM;
   final int? heartRateBpm;
   final RunPointSource source;
@@ -30,6 +34,8 @@ class LiveLocationSample {
       timestampRelMs: elapsedMs < 0 ? 0 : elapsedMs,
       paceSecPerKm: paceSecPerKm,
       speedMps: speedMps,
+      horizontalAccuracyM: horizontalAccuracyM,
+      speedAccuracyMps: speedAccuracyMps,
       elevationM: elevationM,
       heartRateBpm: heartRateBpm,
       source: source,
@@ -48,6 +54,8 @@ class LiveLocationSample {
         other.capturedAt == capturedAt &&
         other.paceSecPerKm == paceSecPerKm &&
         other.speedMps == speedMps &&
+        other.horizontalAccuracyM == horizontalAccuracyM &&
+        other.speedAccuracyMps == speedAccuracyMps &&
         other.elevationM == elevationM &&
         other.heartRateBpm == heartRateBpm &&
         other.source == source;
@@ -60,6 +68,8 @@ class LiveLocationSample {
     capturedAt,
     paceSecPerKm,
     speedMps,
+    horizontalAccuracyM,
+    speedAccuracyMps,
     elevationM,
     heartRateBpm,
     source,

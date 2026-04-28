@@ -35,6 +35,7 @@ class _EmptyLocationStreamClient implements LocationStreamClient {
   @override
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   }) => const Stream<LiveLocationSample>.empty();
 }
 

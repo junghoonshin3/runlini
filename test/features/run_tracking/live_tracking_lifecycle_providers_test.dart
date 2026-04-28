@@ -3,16 +3,50 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
+import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 
 import 'run_playback_provider_harness.dart';
 
 void main() {
+  test('maps location tracking presets to passive and workout configs', () {
+    expect(
+      locationTrackingConfigForPreset(
+        RunLocationTrackingPreset.batterySaver,
+        LocationTrackingMode.passive,
+      ),
+      const LocationTrackingConfig(
+        androidInterval: Duration(seconds: 5),
+        distanceFilterM: 10,
+      ),
+    );
+    expect(
+      locationTrackingConfigForPreset(
+        RunLocationTrackingPreset.balanced,
+        LocationTrackingMode.workout,
+      ),
+      LocationTrackingConfig.workoutDefault,
+    );
+    expect(
+      locationTrackingConfigForPreset(
+        RunLocationTrackingPreset.highAccuracy,
+        LocationTrackingMode.workout,
+      ),
+      const LocationTrackingConfig(
+        androidInterval: Duration(seconds: 1),
+        distanceFilterM: 1,
+      ),
+    );
+  });
+
   test(
     'idle live tracking stops when the user leaves the running tab',
     () async {
@@ -34,6 +68,8 @@ void main() {
       await settleAsync();
       expect(streamClient.activeSubscriptions, 0);
 
+      container.read(appTabProvider.notifier).setTab(AppTab.running);
+      await settleAsync();
       await container.read(liveLocationProvider.notifier).syncTracking();
       await settleAsync();
       expect(streamClient.activeSubscriptions, 1);
@@ -132,6 +168,46 @@ void main() {
     },
   );
 
+  test('changing the location preset restarts active live tracking', () async {
+    final streamClient = TrackingLocationStreamClient();
+    final settingsRepository = _FakeRunSettingsRepository();
+    final container = ProviderContainer(
+      overrides: [
+        deviceLocationClientProvider.overrideWithValue(
+          TestDeviceLocationClient(),
+        ),
+        locationStreamClientProvider.overrideWithValue(streamClient),
+        runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
+      ],
+    );
+    addTearDown(() async {
+      await streamClient.close();
+      container.dispose();
+    });
+
+    await container.read(runSettingsControllerProvider.future);
+    await startVisibleLiveTracking(container);
+    expect(streamClient.watchCallCount, 1);
+    expect(streamClient.lastWatchMode, LocationTrackingMode.passive);
+    expect(streamClient.lastWatchConfig, LocationTrackingConfig.passiveDefault);
+
+    await container
+        .read(runSettingsControllerProvider.notifier)
+        .setLocationTrackingPreset(RunLocationTrackingPreset.highAccuracy);
+    await settleAsync();
+
+    expect(streamClient.activeSubscriptions, 1);
+    expect(streamClient.watchCallCount, greaterThanOrEqualTo(2));
+    expect(streamClient.lastWatchMode, LocationTrackingMode.passive);
+    expect(
+      streamClient.lastWatchConfig,
+      const LocationTrackingConfig(
+        androidInterval: Duration(seconds: 2),
+        distanceFilterM: 3,
+      ),
+    );
+  });
+
   test('live location refresh does not reload static map state', () async {
     var sessionListBuildCount = 0;
     final refreshedSample = playbackSample(
@@ -186,4 +262,28 @@ void main() {
     expect(container.read(runMapViewStateProvider), isNotNull);
     expect(sessionListBuildCount, 1);
   });
+}
+
+class _FakeRunSettingsRepository implements RunSettingsRepository {
+  RunSettingsState settings = const RunSettingsState();
+
+  @override
+  Future<RunSettingsState> loadSettings() async => settings;
+
+  @override
+  Future<void> saveSettings(RunSettingsState settings) async {
+    this.settings = settings;
+  }
+
+  @override
+  Future<List<RunShoe>> listShoes() async => const <RunShoe>[];
+
+  @override
+  Future<void> saveShoe(RunShoe shoe) async {}
+
+  @override
+  Future<void> retireShoe(String id) async {}
+
+  @override
+  Future<void> deleteShoe(String id) async {}
 }

@@ -3,7 +3,7 @@ import 'package:runlini/features/dashboard/types/app_tab.dart';
 
 class AppTabNotifier extends Notifier<AppTab> {
   @override
-  AppTab build() => AppTab.running;
+  AppTab build() => AppTab.history;
 
   void setTab(AppTab tab) {
     state = tab;
@@ -13,3 +13,5 @@ class AppTabNotifier extends Notifier<AppTab> {
 final appTabProvider = NotifierProvider<AppTabNotifier, AppTab>(
   AppTabNotifier.new,
 );
+
+final startupWeightPromptEnabledProvider = Provider<bool>((Ref ref) => true);

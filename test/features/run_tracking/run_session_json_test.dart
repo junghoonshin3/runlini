@@ -17,6 +17,7 @@ void main() {
     });
 
     expect(session.ghostSummary, isNull);
+    expect(session.captureSource, RunSessionCaptureSource.phoneGps);
   });
 
   test('round trips ghost summary metadata', () {
@@ -31,9 +32,10 @@ void main() {
           latitude: 37.0,
           longitude: 127.0,
           timestampRelMs: 0,
-          source: RunPointSource.deviceGps,
+          source: RunPointSource.watchOs,
         ),
       ],
+      captureSource: RunSessionCaptureSource.watchOs,
       ghostSummary: const RunSessionGhostSummary(
         result: RunSessionGhostResult.ahead,
         timeGapMs: 12000,
@@ -46,6 +48,8 @@ void main() {
     final restored = RunSession.fromJson(session.toJson());
 
     expect(restored.ghostSummary?.result, RunSessionGhostResult.ahead);
+    expect(restored.captureSource, RunSessionCaptureSource.watchOs);
+    expect(restored.points.single.source, RunPointSource.watchOs);
     expect(restored.ghostSummary?.timeGapMs, 12000);
     expect(restored.ghostSummary?.distanceGapM, 42);
     expect(restored.ghostSummary?.ghostSessionId, 'fixture-ghost');

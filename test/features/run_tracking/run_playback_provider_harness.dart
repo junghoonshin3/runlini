@@ -3,11 +3,16 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
+import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
+import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 
 class TestDeviceLocationClient implements DeviceLocationClient {
   TestDeviceLocationClient({
@@ -55,11 +60,16 @@ class TrackingLocationStreamClient implements LocationStreamClient {
   int _activeSubscriptions = 0;
   int watchCallCount = 0;
   final List<LocationTrackingMode> watchModes = <LocationTrackingMode>[];
+  final List<LocationTrackingConfig?> watchConfigs =
+      <LocationTrackingConfig?>[];
 
   int get activeSubscriptions => _activeSubscriptions;
 
   LocationTrackingMode? get lastWatchMode =>
       watchModes.isEmpty ? null : watchModes.last;
+
+  LocationTrackingConfig? get lastWatchConfig =>
+      watchConfigs.isEmpty ? null : watchConfigs.last;
 
   void _handleListen() {
     _activeSubscriptions += 1;
@@ -78,9 +88,11 @@ class TrackingLocationStreamClient implements LocationStreamClient {
   @override
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   }) {
     watchCallCount += 1;
     watchModes.add(mode);
+    watchConfigs.add(config);
     return _controller.stream;
   }
 
@@ -99,15 +111,19 @@ class TestHealthWorkoutRecorder implements HealthWorkoutRecorder {
   int beginCalls = 0;
   int finishCalls = 0;
   int cancelCalls = 0;
+  int installCalls = 0;
   DateTime? lastStartedAt;
   DateTime? lastEndedAt;
   List<RunPoint> lastRecordedPoints = const <RunPoint>[];
   Object? beginError;
   Object? finishError;
+  HealthWorkoutExportResult finishResult =
+      const HealthWorkoutExportResult.synced(externalId: 'test-workout');
 
   @override
-  Future<void> prepareRunCapture() async {
+  Future<HealthRunPreparationResult> prepareRunCapture() async {
     prepareCalls += 1;
+    return HealthRunPreparationResult.ready;
   }
 
   @override
@@ -124,7 +140,12 @@ class TestHealthWorkoutRecorder implements HealthWorkoutRecorder {
   }
 
   @override
-  Future<void> finishRunCapture({
+  Future<void> openHealthConnectInstall() async {
+    installCalls += 1;
+  }
+
+  @override
+  Future<HealthWorkoutExportResult> finishRunCapture({
     required DateTime startedAt,
     required DateTime endedAt,
     required List<RunPoint> recordedPoints,
@@ -136,6 +157,7 @@ class TestHealthWorkoutRecorder implements HealthWorkoutRecorder {
     if (finishError != null) {
       throw finishError!;
     }
+    return finishResult;
   }
 }
 
@@ -169,6 +191,35 @@ class TestRunSessionRepository implements RunSessionRepository {
   Future<void> deleteSession(String id) async {
     savedSessions.removeWhere((existing) => existing.id == id);
   }
+
+  @override
+  Future<bool> isDeletedExternalSession(RunSession session) async => false;
+}
+
+class TestRunSettingsRepository implements RunSettingsRepository {
+  TestRunSettingsRepository([this.settings = const RunSettingsState()]);
+
+  RunSettingsState settings;
+
+  @override
+  Future<RunSettingsState> loadSettings() async => settings;
+
+  @override
+  Future<void> saveSettings(RunSettingsState settings) async {
+    this.settings = settings;
+  }
+
+  @override
+  Future<List<RunShoe>> listShoes() async => const <RunShoe>[];
+
+  @override
+  Future<void> saveShoe(RunShoe shoe) async {}
+
+  @override
+  Future<void> retireShoe(String id) async {}
+
+  @override
+  Future<void> deleteShoe(String id) async {}
 }
 
 LiveLocationSample playbackSample({
@@ -176,12 +227,16 @@ LiveLocationSample playbackSample({
   required double longitude,
   required DateTime capturedAt,
   double? paceSecPerKm,
+  double? speedMps,
+  double? horizontalAccuracyM,
 }) {
   return LiveLocationSample(
     latitude: latitude,
     longitude: longitude,
     capturedAt: capturedAt,
     paceSecPerKm: paceSecPerKm,
+    speedMps: speedMps,
+    horizontalAccuracyM: horizontalAccuracyM,
     source: RunPointSource.deviceGps,
   );
 }
@@ -192,6 +247,8 @@ Future<void> settleAsync() async {
 }
 
 Future<void> startVisibleLiveTracking(ProviderContainer container) async {
+  container.read(appTabProvider.notifier).setTab(AppTab.running);
+  await settleAsync();
   container.read(liveLocationProvider);
   await container.read(liveLocationProvider.notifier).syncTracking();
   await settleAsync();

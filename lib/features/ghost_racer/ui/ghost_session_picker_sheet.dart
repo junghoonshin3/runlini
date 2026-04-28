@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
-import 'package:runlini/features/run_tracking/ui/run_session_summary_tile.dart';
+import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
 
 class GhostSessionPickerSheet extends StatelessWidget {
   const GhostSessionPickerSheet({super.key, required this.summaries});
@@ -43,24 +43,51 @@ class GhostSessionPickerSheet extends StatelessWidget {
               ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
             ),
             const SizedBox(height: 18),
-            SizedBox(
-              height: 420,
-              child: ListView.separated(
-                itemCount: summaries.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final summary = summaries[index];
-                  return RunSessionSummaryTile(
-                    key: Key('ghost-session-item-${summary.id}'),
-                    summary: summary,
-                    onTap: () => Navigator.of(context).pop(summary),
-                  );
-                },
-                separatorBuilder: (BuildContext context, int index) =>
-                    const SizedBox(height: 12),
+            if (summaries.isEmpty)
+              const _EmptyGhostSessionState()
+            else
+              SizedBox(
+                height: 420,
+                child: ListView.separated(
+                  itemCount: summaries.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final summary = summaries[index];
+                    return RunSessionSummaryTile(
+                      key: Key('ghost-session-item-${summary.id}'),
+                      summary: summary,
+                      onTap: () => Navigator.of(context).pop(summary),
+                    );
+                  },
+                  separatorBuilder: (BuildContext context, int index) =>
+                      const SizedBox(height: 12),
+                ),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmptyGhostSessionState extends StatelessWidget {
+  const _EmptyGhostSessionState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('ghost-session-empty-state'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.panel,
+        border: Border.all(color: AppColors.muted, width: 3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '고스트로 사용할 기록이 아직 없어요.',
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(color: AppColors.muted),
       ),
     );
   }

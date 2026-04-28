@@ -33,5 +33,93 @@ void main() {
 
       expect(filtered, hasLength(2));
     });
+
+    test('drops points with poor horizontal accuracy', () {
+      final filtered = sanitizer.filter(const [
+        RunPoint(
+          latitude: 37.0,
+          longitude: 127.0,
+          timestampRelMs: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.0002,
+          longitude: 127.0,
+          timestampRelMs: 10 * 1000,
+          horizontalAccuracyM: 50,
+          source: RunPointSource.simulated,
+        ),
+      ]);
+
+      expect(filtered, hasLength(1));
+    });
+
+    test('drops stationary GPS drift inside the accuracy radius', () {
+      final filtered = sanitizer.filter(const [
+        RunPoint(
+          latitude: 37.0,
+          longitude: 127.0,
+          timestampRelMs: 0,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00009,
+          longitude: 127.0,
+          timestampRelMs: 10 * 1000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+      ]);
+
+      expect(filtered, hasLength(1));
+    });
+
+    test('accepts movement once it escapes the stationary noise radius', () {
+      final filtered = sanitizer.filter(const [
+        RunPoint(
+          latitude: 37.0,
+          longitude: 127.0,
+          timestampRelMs: 0,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00009,
+          longitude: 127.0,
+          timestampRelMs: 10 * 1000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.0002,
+          longitude: 127.0,
+          timestampRelMs: 20 * 1000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+      ]);
+
+      expect(filtered, hasLength(2));
+      expect(filtered.last.latitude, 37.0002);
+    });
+
+    test('loads legacy point json without accuracy fields', () {
+      final point = RunPoint.fromJson(const <String, dynamic>{
+        'lat': 37.0,
+        'lng': 127.0,
+        'timestampRelMs': 0,
+        'source': 'simulated',
+      });
+
+      expect(point.horizontalAccuracyM, isNull);
+      expect(point.speedAccuracyMps, isNull);
+    });
   });
 }

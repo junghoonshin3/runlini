@@ -22,6 +22,8 @@
 	<string>Runlini reads your workout entries so the runs you save can stay consistent with Apple Health.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Runlini writes your runs to Apple Health so your workout history stays in sync across apps and devices.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Runlini lets you choose a shoe image for your local running shoe list.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

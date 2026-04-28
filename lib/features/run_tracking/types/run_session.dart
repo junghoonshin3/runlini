@@ -1,6 +1,12 @@
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
 
+enum RunSessionRecordSource { appLocal, healthConnect, healthKit }
+
+enum RunSessionCaptureSource { phoneGps, wearOs, watchOs }
+
+enum RunSessionSyncStatus { localOnly, synced, syncSkipped, syncFailed }
+
 class RunSession {
   const RunSession({
     required this.id,
@@ -10,8 +16,15 @@ class RunSession {
     required this.sourceSummary,
     required this.points,
     this.averageCadenceSpm,
+    this.caloriesKcal,
     this.endedAt,
+    this.recordSource = RunSessionRecordSource.appLocal,
+    this.captureSource = RunSessionCaptureSource.phoneGps,
+    this.externalId,
+    this.lastSyncedAt,
+    this.syncStatus = RunSessionSyncStatus.localOnly,
     this.ghostSummary,
+    this.shoeId,
   });
 
   final String id;
@@ -22,7 +35,53 @@ class RunSession {
   final String sourceSummary;
   final List<RunPoint> points;
   final double? averageCadenceSpm;
+  final double? caloriesKcal;
+  final RunSessionRecordSource recordSource;
+  final RunSessionCaptureSource captureSource;
+  final String? externalId;
+  final DateTime? lastSyncedAt;
+  final RunSessionSyncStatus syncStatus;
   final RunSessionGhostSummary? ghostSummary;
+  final String? shoeId;
+
+  RunSession copyWith({
+    String? id,
+    DateTime? startedAt,
+    DateTime? endedAt,
+    double? distanceM,
+    int? durationMs,
+    String? sourceSummary,
+    List<RunPoint>? points,
+    double? averageCadenceSpm,
+    double? caloriesKcal,
+    RunSessionRecordSource? recordSource,
+    RunSessionCaptureSource? captureSource,
+    String? externalId,
+    DateTime? lastSyncedAt,
+    RunSessionSyncStatus? syncStatus,
+    RunSessionGhostSummary? ghostSummary,
+    String? shoeId,
+    bool clearShoeId = false,
+  }) {
+    return RunSession(
+      id: id ?? this.id,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      distanceM: distanceM ?? this.distanceM,
+      durationMs: durationMs ?? this.durationMs,
+      sourceSummary: sourceSummary ?? this.sourceSummary,
+      points: points ?? this.points,
+      averageCadenceSpm: averageCadenceSpm ?? this.averageCadenceSpm,
+      caloriesKcal: caloriesKcal ?? this.caloriesKcal,
+      recordSource: recordSource ?? this.recordSource,
+      captureSource: captureSource ?? this.captureSource,
+      externalId: externalId ?? this.externalId,
+      lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      ghostSummary: ghostSummary ?? this.ghostSummary,
+      shoeId: clearShoeId ? null : shoeId ?? this.shoeId,
+    );
+  }
 
   factory RunSession.fromJson(Map<String, dynamic> json) {
     return RunSession(
@@ -40,11 +99,32 @@ class RunSession {
           )
           .toList(growable: false),
       averageCadenceSpm: (json['averageCadenceSpm'] as num?)?.toDouble(),
+      caloriesKcal: (json['caloriesKcal'] as num?)?.toDouble(),
+      recordSource: _enumByName(
+        RunSessionRecordSource.values,
+        json['recordSource'] as String?,
+        RunSessionRecordSource.appLocal,
+      ),
+      captureSource: _enumByName(
+        RunSessionCaptureSource.values,
+        json['captureSource'] as String?,
+        RunSessionCaptureSource.phoneGps,
+      ),
+      externalId: json['externalId'] as String?,
+      lastSyncedAt: json['lastSyncedAt'] == null
+          ? null
+          : DateTime.parse(json['lastSyncedAt'] as String),
+      syncStatus: _enumByName(
+        RunSessionSyncStatus.values,
+        json['syncStatus'] as String?,
+        RunSessionSyncStatus.localOnly,
+      ),
       ghostSummary: json['ghostSummary'] == null
           ? null
           : RunSessionGhostSummary.fromJson(
               json['ghostSummary'] as Map<String, dynamic>,
             ),
+      shoeId: json['shoeId'] as String?,
     );
   }
 
@@ -57,10 +137,33 @@ class RunSession {
       'durationMs': durationMs,
       'sourceSummary': sourceSummary,
       'averageCadenceSpm': averageCadenceSpm,
+      'caloriesKcal': caloriesKcal,
+      'recordSource': recordSource.name,
+      'captureSource': captureSource.name,
+      'externalId': externalId,
+      'lastSyncedAt': lastSyncedAt?.toIso8601String(),
+      'syncStatus': syncStatus.name,
       'ghostSummary': ghostSummary?.toJson(),
+      'shoeId': shoeId,
       'points': points
           .map((RunPoint point) => point.toJson())
           .toList(growable: false),
     };
+  }
+
+  static T _enumByName<T extends Enum>(
+    List<T> values,
+    String? name,
+    T fallback,
+  ) {
+    if (name == null) {
+      return fallback;
+    }
+    for (final value in values) {
+      if (value.name == name) {
+        return value;
+      }
+    }
+    return fallback;
   }
 }

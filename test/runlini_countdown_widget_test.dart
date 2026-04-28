@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,16 +11,14 @@ import 'helpers/runlini_widget_harness.dart';
 
 void main() {
   testWidgets(
-    'start requests health permissions before showing the countdown',
+    'start shows countdown immediately without Health permission preflight',
     (WidgetTester tester) async {
-      final prepareCompleter = Completer<void>();
-      final healthRecorder = FakeHealthWorkoutRecorder(
-        prepareCompleter: prepareCompleter,
-      );
+      final healthRecorder = FakeHealthWorkoutRecorder();
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -46,28 +42,19 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
-      expect(healthRecorder.prepareCalls, 1);
+      expect(healthRecorder.prepareCalls, 0);
       expect(healthRecorder.beginCalls, 0);
-      expect(
-        find.byKey(const Key('run-start-countdown-overlay')),
-        findsNothing,
-      );
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
-
-      prepareCompleter.complete();
-      await tester.pump();
-
       expect(
         find.byKey(const Key('run-start-countdown-overlay')),
         findsOneWidget,
       );
       expect(find.text('3'), findsOneWidget);
-      expect(healthRecorder.beginCalls, 0);
 
       await tester.pump(const Duration(milliseconds: 30));
       await tester.pump();
@@ -77,7 +64,7 @@ void main() {
         findsNothing,
       );
       expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
-      expect(healthRecorder.beginCalls, 1);
+      expect(healthRecorder.beginCalls, 0);
     },
   );
 
@@ -87,6 +74,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -106,6 +94,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       await tester.tap(find.byKey(const Key('start-stop-button')));
@@ -143,6 +132,7 @@ void main() {
       expect(find.byKey(const Key('ghost-status-label')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       expect(find.text('STOP'), findsOneWidget);
     },
   );
@@ -153,6 +143,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -172,11 +163,13 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
+      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       await tester.tapAt(tester.getCenter(find.text('기록')));
       await tester.pump();
       expect(find.byKey(const Key('history-list')), findsNothing);
@@ -189,7 +182,7 @@ void main() {
         tester.getCenter(find.byKey(const Key('settings-button'))),
       );
       await tester.pump();
-      expect(find.text('Settings'), findsNothing);
+      expect(find.byKey(const Key('settings-tab-screen')), findsNothing);
       expect(
         find.byKey(const Key('run-start-countdown-overlay')),
         findsOneWidget,
@@ -206,6 +199,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -226,6 +220,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       await tester.tap(find.byKey(const Key('start-stop-button')));

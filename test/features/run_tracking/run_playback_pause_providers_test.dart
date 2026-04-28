@@ -87,7 +87,7 @@ void main() {
       now = startedAt.add(const Duration(seconds: 20));
       await container.read(runPlaybackControllerProvider.notifier).stop();
 
-      expect(healthRecorder.beginCalls, 1);
+      expect(healthRecorder.beginCalls, 0);
       expect(healthRecorder.finishCalls, 0);
       expect(
         container.read(runPlaybackControllerProvider).status,
@@ -104,13 +104,7 @@ void main() {
           .read(runPlaybackControllerProvider.notifier)
           .saveFinishedRun();
 
-      expect(healthRecorder.finishCalls, 1);
-      expect(healthRecorder.lastStartedAt, startedAt);
-      expect(
-        healthRecorder.lastEndedAt,
-        startedAt.add(const Duration(seconds: 20)),
-      );
-      expect(healthRecorder.lastRecordedPoints, hasLength(3));
+      expect(healthRecorder.finishCalls, 0);
     },
   );
 
@@ -163,7 +157,7 @@ void main() {
             ?.durationMs,
         4000,
       );
-      expect(healthRecorder.beginCalls, 1);
+      expect(healthRecorder.beginCalls, 0);
       expect(healthRecorder.finishCalls, 0);
     },
   );

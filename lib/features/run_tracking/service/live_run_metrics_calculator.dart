@@ -1,18 +1,24 @@
 import 'dart:math' as math;
 
 import 'package:latlong2/latlong.dart';
+import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 
 class LiveRunMetricsCalculator {
-  const LiveRunMetricsCalculator();
+  const LiveRunMetricsCalculator({
+    this.calorieCalculator = const RunCalorieCalculator(),
+  });
 
   static const Distance _distance = Distance();
+
+  final RunCalorieCalculator calorieCalculator;
 
   LiveRunMetrics calculate({
     required RunPlaybackState playbackState,
     required DateTime now,
+    required double? bodyWeightKg,
   }) {
     if (!playbackState.hasActiveSession) {
       return const LiveRunMetrics(
@@ -20,7 +26,7 @@ class LiveRunMetricsCalculator {
         elapsedMs: 0,
         averagePaceSecPerKm: null,
         averageSpeedKmh: 0,
-        caloriesLabel: '-- kcal',
+        caloriesKcal: null,
         isPaused: false,
       );
     }
@@ -42,7 +48,10 @@ class LiveRunMetricsCalculator {
       elapsedMs: elapsedMs,
       averagePaceSecPerKm: averagePaceSecPerKm,
       averageSpeedKmh: averageSpeedKmh,
-      caloriesLabel: '-- kcal',
+      caloriesKcal: calorieCalculator.activeCaloriesKcal(
+        distanceM: distanceMeters,
+        bodyWeightKg: bodyWeightKg,
+      ),
       isPaused: playbackState.isPaused,
     );
   }

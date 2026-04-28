@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/features/run_tracking/service/finished_run_session_builder.dart';
+import 'package:runlini/features/run_tracking/service/run_health_export_status_mapper.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_core_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
@@ -14,6 +16,11 @@ import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.da
 final finishedRunSessionBuilderProvider = Provider<FinishedRunSessionBuilder>(
   (Ref ref) => const FinishedRunSessionBuilder(),
 );
+
+final runHealthExportStatusMapperProvider =
+    Provider<RunHealthExportStatusMapper>(
+      (Ref ref) => const RunHealthExportStatusMapper(),
+    );
 
 class RunPlaybackController extends Notifier<RunPlaybackState> {
   @override
@@ -37,11 +44,6 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
       activeSessionId: 'live_${startedAt.millisecondsSinceEpoch}',
     );
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(true);
-    try {
-      await ref.read(healthWorkoutRecorderProvider).beginRunCapture();
-    } catch (error) {
-      debugPrint('Runlini health export start failed: $error');
-    }
     return RunTrackingToggleResult.started;
   }
 
@@ -70,6 +72,10 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     final endedAt = ref.read(runPlaybackClockProvider)();
     final recordedPoints = List<RunPoint>.from(state.recordedPoints);
     final durationMs = state.elapsedAt(endedAt);
+    final bodyWeightKg = ref
+        .read(runSettingsControllerProvider)
+        .value
+        ?.bodyWeightKg;
     final pendingSession = ref
         .read(finishedRunSessionBuilderProvider)
         .build(
@@ -80,6 +86,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
           endedAt: endedAt,
           durationMs: durationMs,
           recordedPoints: recordedPoints,
+          bodyWeightKg: bodyWeightKg,
           ghostSummary: ghostSummary,
         );
     state = state.copyWith(
@@ -90,35 +97,48 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     );
   }
 
-  Future<void> saveFinishedRun() async {
+  Future<HealthWorkoutExportResult?> saveFinishedRun() async {
     final pendingSession = state.pendingFinishedSession;
     if (state.status != RunScreenStatus.reviewing || pendingSession == null) {
-      return;
+      return null;
     }
 
+    final defaultShoeId = ref
+        .read(runSettingsControllerProvider)
+        .value
+        ?.defaultShoeId;
+    final sessionToSave = pendingSession.copyWith(shoeId: defaultShoeId);
+
     try {
-      await ref.read(runSessionRepositoryProvider).saveSession(pendingSession);
+      await ref.read(runSessionRepositoryProvider).saveSession(sessionToSave);
       ref.invalidate(runSessionListProvider);
       ref.invalidate(runSessionSummaryListProvider);
     } catch (error) {
       debugPrint('Runlini local run save failed: $error');
-      return;
+      return null;
     }
 
+    const exportResult = HealthWorkoutExportResult.skipped(
+      'Health backup is available from Settings.',
+    );
+
+    final syncedSession = ref
+        .read(runHealthExportStatusMapperProvider)
+        .apply(
+          session: sessionToSave,
+          result: exportResult,
+          now: ref.read(runPlaybackClockProvider)(),
+        );
     try {
-      await ref
-          .read(healthWorkoutRecorderProvider)
-          .finishRunCapture(
-            startedAt: pendingSession.startedAt,
-            endedAt:
-                pendingSession.endedAt ?? ref.read(runPlaybackClockProvider)(),
-            recordedPoints: pendingSession.points,
-          );
+      await ref.read(runSessionRepositoryProvider).saveSession(syncedSession);
+      ref.invalidate(runSessionListProvider);
+      ref.invalidate(runSessionSummaryListProvider);
     } catch (error) {
-      debugPrint('Runlini health export finish failed: $error');
+      debugPrint('Runlini health export status save failed: $error');
     }
 
     state = const RunPlaybackState.idle();
+    return exportResult;
   }
 
   Future<void> discardFinishedRun() async {

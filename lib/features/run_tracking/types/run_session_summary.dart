@@ -8,6 +8,7 @@ class RunSessionSummary {
     required this.durationMs,
     required this.averagePaceSecPerKm,
     required this.sourceSummary,
+    required this.syncStatus,
     this.averageCadenceSpm,
   });
 
@@ -17,6 +18,7 @@ class RunSessionSummary {
   final int durationMs;
   final double averagePaceSecPerKm;
   final String sourceSummary;
+  final RunSessionSyncStatus syncStatus;
   final double? averageCadenceSpm;
 
   double get distanceKm => distanceM / 1000;
@@ -34,6 +36,7 @@ class RunSessionSummary {
       durationMs: session.durationMs,
       averagePaceSecPerKm: averagePace,
       sourceSummary: session.sourceSummary,
+      syncStatus: session.syncStatus,
       averageCadenceSpm: session.averageCadenceSpm,
     );
   }

@@ -4,7 +4,10 @@ import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
+import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 import 'run_playback_provider_harness.dart';
 
@@ -89,6 +92,9 @@ void main() {
         locationStreamClientProvider.overrideWithValue(streamClient),
         healthWorkoutRecorderProvider.overrideWithValue(healthRecorder),
         runSessionRepositoryProvider.overrideWithValue(sessionRepository),
+        runSettingsRepositoryProvider.overrideWithValue(
+          TestRunSettingsRepository(const RunSettingsState(bodyWeightKg: 70)),
+        ),
         runPlaybackClockProvider.overrideWithValue(() => now),
       ],
     );
@@ -97,6 +103,7 @@ void main() {
       container.dispose();
     });
 
+    await container.read(runSettingsControllerProvider.future);
     await startVisibleLiveTracking(container);
     await streamClient.emit(seedSample);
     await container.read(runPlaybackControllerProvider.notifier).start();
@@ -104,7 +111,7 @@ void main() {
     now = DateTime(2026, 4, 20, 6, 0, 8);
     await container.read(runPlaybackControllerProvider.notifier).stop();
 
-    expect(healthRecorder.beginCalls, 1);
+    expect(healthRecorder.beginCalls, 0);
     expect(healthRecorder.finishCalls, 0);
     expect(healthRecorder.cancelCalls, 0);
     expect(sessionRepository.savedSessions, isEmpty);
@@ -112,10 +119,11 @@ void main() {
       container.read(runPlaybackControllerProvider).status,
       RunScreenStatus.reviewing,
     );
-    expect(
-      container.read(runPlaybackControllerProvider).pendingFinishedSession,
-      isNotNull,
-    );
+    final pendingSession = container
+        .read(runPlaybackControllerProvider)
+        .pendingFinishedSession;
+    expect(pendingSession, isNotNull);
+    expect(pendingSession!.caloriesKcal, isNotNull);
 
     await streamClient.emit(
       playbackSample(
@@ -134,17 +142,20 @@ void main() {
         .saveFinishedRun();
 
     expect(sessionRepository.savedSessions, hasLength(1));
-    expect(healthRecorder.finishCalls, 1);
-    expect(healthRecorder.lastStartedAt, DateTime(2026, 4, 20, 6, 0, 3));
-    expect(healthRecorder.lastEndedAt, DateTime(2026, 4, 20, 6, 0, 8));
-    expect(healthRecorder.lastRecordedPoints, hasLength(2));
+    expect(sessionRepository.savedSessions.single.caloriesKcal, isNotNull);
+    expect(
+      sessionRepository.savedSessions.single.syncStatus,
+      RunSessionSyncStatus.syncSkipped,
+    );
+    expect(sessionRepository.savedSessions.single.externalId, isNull);
+    expect(healthRecorder.finishCalls, 0);
     expect(
       container.read(runPlaybackControllerProvider).status,
       RunScreenStatus.idle,
     );
   });
 
-  test('health export failures do not block run start or save', () async {
+  test('run start and save do not request Health backup permissions', () async {
     final seedSample = playbackSample(
       latitude: 37.0,
       longitude: 127.0,
@@ -163,6 +174,9 @@ void main() {
         locationStreamClientProvider.overrideWithValue(streamClient),
         healthWorkoutRecorderProvider.overrideWithValue(healthRecorder),
         runSessionRepositoryProvider.overrideWithValue(sessionRepository),
+        runSettingsRepositoryProvider.overrideWithValue(
+          TestRunSettingsRepository(),
+        ),
       ],
     );
     addTearDown(() async {
@@ -186,8 +200,13 @@ void main() {
       container.read(runPlaybackControllerProvider).status,
       RunScreenStatus.idle,
     );
-    expect(healthRecorder.beginCalls, 1);
-    expect(healthRecorder.finishCalls, 1);
+    expect(healthRecorder.prepareCalls, 0);
+    expect(healthRecorder.beginCalls, 0);
+    expect(healthRecorder.finishCalls, 0);
+    expect(
+      sessionRepository.savedSessions.single.syncStatus,
+      RunSessionSyncStatus.syncSkipped,
+    );
   });
 
   test('discarding a finished draft cancels health capture', () async {
@@ -207,6 +226,9 @@ void main() {
         locationStreamClientProvider.overrideWithValue(streamClient),
         healthWorkoutRecorderProvider.overrideWithValue(healthRecorder),
         runSessionRepositoryProvider.overrideWithValue(sessionRepository),
+        runSettingsRepositoryProvider.overrideWithValue(
+          TestRunSettingsRepository(),
+        ),
       ],
     );
     addTearDown(() async {
@@ -230,59 +252,4 @@ void main() {
       RunScreenStatus.idle,
     );
   });
-
-  test(
-    'running live samples update live location immediately while spikes stay out of the recorded track',
-    () async {
-      final seedSample = playbackSample(
-        latitude: 37.0,
-        longitude: 127.0,
-        capturedAt: DateTime(2026, 4, 20, 6, 0, 0),
-      );
-      final acceptedSample = playbackSample(
-        latitude: 37.0001,
-        longitude: 127.0001,
-        capturedAt: DateTime(2026, 4, 20, 6, 0, 5),
-      );
-      final spikeSample = playbackSample(
-        latitude: 37.01,
-        longitude: 127.01,
-        capturedAt: DateTime(2026, 4, 20, 6, 0, 6),
-      );
-      final streamClient = TrackingLocationStreamClient();
-      final now = DateTime(2026, 4, 20, 6, 0, 0);
-      final container = ProviderContainer(
-        overrides: [
-          deviceLocationClientProvider.overrideWithValue(
-            TestDeviceLocationClient(),
-          ),
-          locationStreamClientProvider.overrideWithValue(streamClient),
-          runPlaybackClockProvider.overrideWithValue(() => now),
-        ],
-      );
-      addTearDown(() async {
-        await streamClient.close();
-        container.dispose();
-      });
-
-      await startVisibleLiveTracking(container);
-      await streamClient.emit(seedSample);
-      await container.read(runPlaybackControllerProvider.notifier).start();
-      await streamClient.emit(acceptedSample);
-
-      expect(container.read(liveLocationProvider), acceptedSample);
-      expect(
-        container.read(runPlaybackControllerProvider).recordedPoints,
-        hasLength(2),
-      );
-
-      await streamClient.emit(spikeSample);
-
-      expect(container.read(liveLocationProvider), spikeSample);
-      expect(
-        container.read(runPlaybackControllerProvider).recordedPoints,
-        hasLength(2),
-      );
-    },
-  );
 }

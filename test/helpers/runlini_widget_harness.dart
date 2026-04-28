@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
@@ -12,29 +14,27 @@ import 'package:runlini/features/run_tracking/types/run_map_static_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
+final disableStartupWeightPromptOverride = startupWeightPromptEnabledProvider
+    .overrideWithValue(false);
+
 class SilentLocationStreamClient implements LocationStreamClient {
   const SilentLocationStreamClient();
-
   @override
   Future<LiveLocationSample?> fetchLastKnownSample() async => null;
-
   @override
   Future<LiveLocationSample?> fetchCurrentSample() async => null;
-
   @override
   Stream<LiveLocationSample> watchLocationSamples({
     LocationTrackingMode mode = LocationTrackingMode.passive,
+    LocationTrackingConfig? config,
   }) => const Stream<LiveLocationSample>.empty();
 }
 
 class FakeDeviceLocationClient implements DeviceLocationClient {
   const FakeDeviceLocationClient({this.lastKnownSample});
-
   final LiveLocationSample? lastKnownSample;
-
   @override
   Future<LiveLocationSample?> fetchLastKnownSample() async => lastKnownSample;
-
   @override
   Future<LiveLocationSample?> fetchCurrentSample() async => null;
 }
@@ -75,18 +75,26 @@ class ThrowingDeviceLocationClient implements DeviceLocationClient {
 }
 
 class FakeHealthWorkoutRecorder implements HealthWorkoutRecorder {
-  FakeHealthWorkoutRecorder({this.prepareCompleter});
+  FakeHealthWorkoutRecorder({
+    this.prepareCompleter,
+    this.prepareResult = HealthRunPreparationResult.ready,
+    this.finishResult = const HealthWorkoutExportResult.synced(),
+  });
 
   final Completer<void>? prepareCompleter;
+  final HealthRunPreparationResult prepareResult;
+  final HealthWorkoutExportResult finishResult;
   int prepareCalls = 0;
   int beginCalls = 0;
   int finishCalls = 0;
   int cancelCalls = 0;
+  int installCalls = 0;
 
   @override
-  Future<void> prepareRunCapture() async {
+  Future<HealthRunPreparationResult> prepareRunCapture() async {
     prepareCalls += 1;
     await prepareCompleter?.future;
+    return prepareResult;
   }
 
   @override
@@ -95,17 +103,23 @@ class FakeHealthWorkoutRecorder implements HealthWorkoutRecorder {
   }
 
   @override
+  Future<void> openHealthConnectInstall() async {
+    installCalls += 1;
+  }
+
+  @override
   Future<void> cancelRunCapture() async {
     cancelCalls += 1;
   }
 
   @override
-  Future<void> finishRunCapture({
+  Future<HealthWorkoutExportResult> finishRunCapture({
     required DateTime startedAt,
     required DateTime endedAt,
     required List<RunPoint> recordedPoints,
   }) async {
     finishCalls += 1;
+    return finishResult;
   }
 }
 
@@ -142,6 +156,9 @@ class FakeRunSessionRepository implements RunSessionRepository {
   Future<void> deleteSession(String id) async {
     _sessions.removeWhere((existing) => existing.id == id);
   }
+
+  @override
+  Future<bool> isDeletedExternalSession(RunSession session) async => false;
 }
 
 LiveLocationSample sample({
@@ -169,6 +186,21 @@ Future<void> pumpUntilFound(
       return;
     }
   }
+}
+
+Future<void> openHistoryTab(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.list_alt_rounded));
+  await tester.pump();
+}
+
+Future<void> openRunningTab(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.directions_run_rounded));
+  await tester.pump();
+}
+
+Future<void> openSettingsTab(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.settings_rounded));
+  await tester.pump();
 }
 
 dynamic staticMapStateOverride({
@@ -218,23 +250,20 @@ RunSession ghostSession() {
   );
 }
 
-List<RunSession> sampleRunSessions() {
-  final startedAt = DateTime.utc(2026, 4, 19, 6);
-  return <RunSession>[
-    _sampleRunSession(
-      id: 'fixture_morning_tempo',
-      startedAt: startedAt,
-      latOffset: 0,
-      lngOffset: 0,
-    ),
-    _sampleRunSession(
-      id: 'fixture_han_river_push',
-      startedAt: startedAt.subtract(const Duration(days: 1)),
-      latOffset: 0.01,
-      lngOffset: 0.01,
-    ),
-  ];
-}
+List<RunSession> sampleRunSessions() => <RunSession>[
+  _sampleRunSession(
+    id: 'fixture_morning_tempo',
+    startedAt: DateTime.utc(2026, 4, 19, 6),
+    latOffset: 0,
+    lngOffset: 0,
+  ),
+  _sampleRunSession(
+    id: 'fixture_han_river_push',
+    startedAt: DateTime.utc(2026, 4, 18, 6),
+    latOffset: 0.01,
+    lngOffset: 0.01,
+  ),
+];
 
 RunSession _sampleRunSession({
   required String id,
@@ -261,7 +290,6 @@ RunSession _sampleRunSession({
   return RunSession(
     id: id,
     startedAt: startedAt,
-    endedAt: startedAt.add(const Duration(minutes: 10)),
     distanceM: 1000,
     durationMs: 600000,
     sourceSummary: 'fixture:test',

@@ -8,8 +8,14 @@ class RunSessionDetailCalculator {
 
   static const Distance _distance = Distance();
 
-  RunSessionDetail calculate(RunSession session) {
+  RunSessionDetail calculate(
+    RunSession session, {
+    double splitDistanceM = 1000,
+  }) {
     final distanceKm = session.distanceM / 1000;
+    final safeSplitDistanceM = splitDistanceM.isFinite && splitDistanceM > 0
+        ? splitDistanceM
+        : 1000.0;
     return RunSessionDetail(
       distanceKm: distanceKm,
       durationMs: session.durationMs,
@@ -17,10 +23,12 @@ class RunSessionDetailCalculator {
           ? null
           : (session.durationMs / 1000) / distanceKm,
       averageSpeedKmh: _averageSpeed(distanceKm, session.durationMs),
-      caloriesLabel: '-- kcal',
+      caloriesLabel: session.caloriesKcal == null
+          ? '-- kcal'
+          : '${session.caloriesKcal!.round()} kcal',
       averageHeartRateBpm: _averageHeartRate(session.points),
       elevationGainM: _elevationGain(session.points),
-      splits: _splits(session.points),
+      splits: _splits(session.points, splitDistanceM: safeSplitDistanceM),
       paceSamplesSecPerKm: _paceSamples(session.points),
       speedSamplesKmh: _speedSamples(session.points),
       elevationSamplesM: session.points
@@ -161,7 +169,10 @@ class RunSessionDetailCalculator {
     return samples;
   }
 
-  List<RunSplitDetail> _splits(List<RunPoint> points) {
+  List<RunSplitDetail> _splits(
+    List<RunPoint> points, {
+    required double splitDistanceM,
+  }) {
     if (points.length < 2) {
       return const <RunSplitDetail>[];
     }
@@ -177,21 +188,25 @@ class RunSessionDetailCalculator {
     var previousBoundaryMs = 0;
     var index = 1;
     while (previousBoundaryM < totalMeters) {
-      final nextBoundaryM = (previousBoundaryM + 1000).clamp(0, totalMeters);
+      final nextBoundaryM = (previousBoundaryM + splitDistanceM).clamp(
+        0,
+        totalMeters,
+      );
       final boundaryMs = _elapsedAtDistance(
         points: points,
         cumulativeMeters: cumulativeMeters,
         targetM: nextBoundaryM.toDouble(),
       );
-      final splitDistanceM = nextBoundaryM - previousBoundaryM;
+      final actualSplitDistanceM = nextBoundaryM - previousBoundaryM;
       final splitDurationMs = boundaryMs - previousBoundaryMs;
-      if (splitDistanceM > 0 && splitDurationMs > 0) {
+      if (actualSplitDistanceM > 0 && splitDurationMs > 0) {
         splits.add(
           RunSplitDetail(
             index: index,
-            distanceM: splitDistanceM.toDouble(),
+            distanceM: actualSplitDistanceM.toDouble(),
             durationMs: splitDurationMs,
-            paceSecPerKm: (splitDurationMs / 1000) / (splitDistanceM / 1000),
+            paceSecPerKm:
+                (splitDurationMs / 1000) / (actualSplitDistanceM / 1000),
           ),
         );
       }

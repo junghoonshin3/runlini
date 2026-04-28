@@ -3,7 +3,8 @@
 ## Purpose
 
 Add a live metrics panel that appears once a run starts, showing distance,
-elapsed time, average pace, average speed, and a calories placeholder. Keep the
+elapsed time, average pace, average speed, and active calories when body weight
+is available. Keep the
 pre-run map clear with no top status banner, and keep the panel visible with a
 clear paused state while paused.
 
@@ -20,6 +21,8 @@ clear paused state while paused.
 - [x] Swap the top running HUD from the status banner to a metrics panel
 - [x] Remove the pre-run top `RUN / GHOST` banner
 - [x] Add provider and widget coverage for running metrics behavior
+- [x] Apply display unit settings to live distance, pace, and speed values
+- [x] Estimate active calories from body weight and accepted GPS distance
 - [x] Update the product spec to describe the live run HUD
 - [x] Run guardrails, analyze, and tests
 
@@ -29,11 +32,14 @@ clear paused state while paused.
   `RunScreenStatus.running` and `RunScreenStatus.paused`.
 - Idle and countdown do not render a top status banner.
 - Distance, average pace, and average speed use only accepted recorded points.
+- Distance, average pace, and average speed are displayed with the user's
+  selected display settings while the internal values stay metric.
 - Elapsed time uses pause-aware active running time, refreshed by a 1-second
   ticker provider.
 - `startedAt` anchors to the real run-start moment after countdown completion,
   not to the timestamp of a stale cached/live GPS sample.
-- Calories stay as the static `-- kcal` placeholder in v1.
+- Calories use `bodyWeightKg * distanceKm * 1.0` when body weight is set, and
+  stay `-- kcal` when it is not.
 - Ghost status is hidden while the metrics panel is visible.
 - While paused, the panel stays mounted, shows a `PAUSED` label, and freezes
   elapsed time plus average metrics until resume.

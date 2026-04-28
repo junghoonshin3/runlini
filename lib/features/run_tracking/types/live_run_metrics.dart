@@ -7,7 +7,7 @@ class LiveRunMetrics {
     required this.elapsedMs,
     required this.averagePaceSecPerKm,
     required this.averageSpeedKmh,
-    required this.caloriesLabel,
+    required this.caloriesKcal,
     required this.isPaused,
   });
 
@@ -15,6 +15,6 @@ class LiveRunMetrics {
   final int elapsedMs;
   final double? averagePaceSecPerKm;
   final double averageSpeedKmh;
-  final String caloriesLabel;
+  final double? caloriesKcal;
   final bool isPaused;
 }

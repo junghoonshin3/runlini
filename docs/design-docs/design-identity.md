@@ -15,3 +15,11 @@ Instant race clarity for runners in motion.
 - Post-run detail screens should feel like a Runlini data lab: compact headers,
   bordered metric plates, route plates, and readable line charts instead of
   reference-app-style hero distance pages.
+
+## App Icon
+
+- The store icon should read as running at phone-home-screen size.
+- Use a runner silhouette, a GPS route line, and a location dot as the primary
+  mark.
+- Keep the icon on true black with volt green and electric red accents.
+- Do not include text, map labels, or tiny route detail in launcher assets.

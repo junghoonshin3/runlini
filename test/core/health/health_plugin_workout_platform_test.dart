@@ -3,7 +3,7 @@ import 'package:health/health.dart';
 import 'package:runlini/core/health/health_plugin_workout_platform.dart';
 
 void main() {
-  test('android permission request includes workout lookup read types', () {
+  test('android permission request uses one combined run health scope', () {
     expect(
       HealthPluginWorkoutPlatform.permissionTypesForPlatform(isAndroid: true),
       const <HealthDataType>[
@@ -12,6 +12,7 @@ void main() {
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.TOTAL_CALORIES_BURNED,
         HealthDataType.STEPS,
+        HealthDataType.HEART_RATE,
       ],
     );
     expect(
@@ -21,6 +22,7 @@ void main() {
       const <HealthDataAccess>[
         HealthDataAccess.READ_WRITE,
         HealthDataAccess.READ_WRITE,
+        HealthDataAccess.READ_WRITE,
         HealthDataAccess.READ,
         HealthDataAccess.READ,
         HealthDataAccess.READ,
@@ -28,12 +30,16 @@ void main() {
     );
   });
 
-  test('non-android permission request stays scoped to workout export', () {
+  test('non-android permission request uses the same run health scope', () {
     expect(
       HealthPluginWorkoutPlatform.permissionTypesForPlatform(isAndroid: false),
       const <HealthDataType>[
         HealthDataType.WORKOUT,
         HealthDataType.WORKOUT_ROUTE,
+        HealthDataType.DISTANCE_DELTA,
+        HealthDataType.TOTAL_CALORIES_BURNED,
+        HealthDataType.STEPS,
+        HealthDataType.HEART_RATE,
       ],
     );
     expect(
@@ -43,6 +49,10 @@ void main() {
       const <HealthDataAccess>[
         HealthDataAccess.READ_WRITE,
         HealthDataAccess.READ_WRITE,
+        HealthDataAccess.READ_WRITE,
+        HealthDataAccess.READ,
+        HealthDataAccess.READ,
+        HealthDataAccess.READ,
       ],
     );
   });

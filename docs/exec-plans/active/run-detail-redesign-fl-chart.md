@@ -19,6 +19,8 @@ the custom bar charts with time-based `fl_chart` line charts.
 - [x] Convert chart data to elapsed-time samples.
 - [x] Replace custom bar charts with `fl_chart` line charts.
 - [x] Redesign the shared detail panel with Runlini-specific visual language.
+- [x] Remove the default chart touch guide line and use a large ring dot for
+      selected points.
 - [x] Update tests and docs.
 - [x] Run guardrails, analyze, and tests.
 
@@ -27,7 +29,8 @@ the custom bar charts with time-based `fl_chart` line charts.
 - Keep one `RunSession` type; ghost-enabled runs store optional metadata.
 - v1 saves only the final ghost comparison summary, not the full comparison
   timeline.
-- Charts use line + touch tooltip only; no zoom or pan in this pass.
+- Charts use line + touch tooltip only; no zoom or pan in this pass. Touched
+  points show a large ring dot without the default vertical guide line.
 - Pace values remain real seconds-per-kilometer and are labeled as lower-is-
   faster instead of visually inverting the meaning.
 - The detail route section uses the platform map SDK on Android/iOS, but only

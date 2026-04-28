@@ -1,0 +1,34 @@
+package kr.sjh.runlini.wear
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class WearRunFormattersTest {
+    @Test
+    fun formatsElapsedDistancePaceAndGhostGapForWatch() {
+        assertEquals("01:05", WearRunFormatters.elapsed(65_000L))
+        assertEquals("1:01:05", WearRunFormatters.elapsed(3_665_000L))
+        assertEquals("1.23 km", WearRunFormatters.distance(1_234.0))
+        assertEquals("5:07/km", WearRunFormatters.pace(307.0))
+        assertEquals("12.0 km/h", WearRunFormatters.speed(3.333))
+        assertEquals("+0:12", WearRunFormatters.ghostGap(ghostFrame(12_000L)))
+        assertEquals("-1:05", WearRunFormatters.ghostGap(ghostFrame(-65_000L)))
+    }
+
+    @Test
+    fun formatsMissingMetricsAsDashes() {
+        assertEquals("--", WearRunFormatters.pace(null))
+        assertEquals("--", WearRunFormatters.speed(null))
+        assertEquals("--", WearRunFormatters.heartRate(null))
+        assertEquals("--", WearRunFormatters.calories(null))
+        assertEquals("--", WearRunFormatters.ghostGap(null))
+    }
+
+    private fun ghostFrame(gapMs: Long): WearGhostFrame {
+        return WearGhostFrame(
+            status = WearGhostStatus.Ahead,
+            timeGapMs = gapMs,
+            distanceGapM = 24.0,
+        )
+    }
+}

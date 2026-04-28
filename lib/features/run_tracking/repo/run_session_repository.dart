@@ -5,4 +5,6 @@ abstract class RunSessionRepository {
   Future<void> deleteSession(String id);
   Future<RunSession?> findById(String id);
   Future<List<RunSession>> listSessions();
+
+  Future<bool> isDeletedExternalSession(RunSession session) async => false;
 }

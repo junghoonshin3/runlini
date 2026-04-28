@@ -31,6 +31,7 @@ class RunMapViewState {
     List<MapCoordinate>? ghostPolylinePoints,
     List<MapPolylineSegment>? ghostPolylineSegments,
     MapCoordinate? ghostMarkerPoint,
+    bool clearGhostMarkerPoint = false,
     RunSession? selectedGhostSession,
   }) {
     return RunMapViewState(
@@ -42,7 +43,9 @@ class RunMapViewState {
       ghostPolylinePoints: ghostPolylinePoints ?? this.ghostPolylinePoints,
       ghostPolylineSegments:
           ghostPolylineSegments ?? this.ghostPolylineSegments,
-      ghostMarkerPoint: ghostMarkerPoint ?? this.ghostMarkerPoint,
+      ghostMarkerPoint: clearGhostMarkerPoint
+          ? null
+          : ghostMarkerPoint ?? this.ghostMarkerPoint,
       selectedGhostSession: selectedGhostSession ?? this.selectedGhostSession,
     );
   }

@@ -1,1 +1,1 @@
-enum AppTab { history, running }
+enum AppTab { history, running, settings }

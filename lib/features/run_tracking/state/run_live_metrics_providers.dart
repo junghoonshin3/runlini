@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/features/run_tracking/service/live_run_metrics_calculator.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 
 final liveRunMetricsCalculatorProvider = Provider<LiveRunMetricsCalculator>(
@@ -32,5 +33,6 @@ final liveRunMetricsProvider = Provider<LiveRunMetrics?>((Ref ref) {
       .calculate(
         playbackState: playbackState,
         now: ref.watch(runPlaybackClockProvider)(),
+        bodyWeightKg: ref.watch(runBodyWeightKgProvider),
       );
 });

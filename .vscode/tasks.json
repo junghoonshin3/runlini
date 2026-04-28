@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Android: list devices",
+      "type": "process",
+      "command": "${env:HOME}/Library/Android/sdk/platform-tools/adb",
+      "args": ["devices"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Wear: start emulator",
+      "type": "process",
+      "command": "${env:HOME}/Library/Android/sdk/emulator/emulator",
+      "args": ["-avd", "Wear_OS_Large_Round"],
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Wear: assemble debug",
+      "type": "process",
+      "command": "./gradlew",
+      "args": [":wear:assembleDebug"],
+      "options": {
+        "cwd": "${workspaceFolder}/android"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Wear: install debug",
+      "type": "process",
+      "command": "${env:HOME}/Library/Android/sdk/platform-tools/adb",
+      "args": [
+        "-s",
+        "${input:wearDeviceId}",
+        "install",
+        "-r",
+        "${workspaceFolder}/build/wear/outputs/apk/debug/wear-debug.apk"
+      ],
+      "dependsOn": ["Wear: assemble debug"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Wear: launch debug",
+      "type": "process",
+      "command": "${env:HOME}/Library/Android/sdk/platform-tools/adb",
+      "args": [
+        "-s",
+        "${input:wearDeviceId}",
+        "shell",
+        "am",
+        "start",
+        "-n",
+        "kr.sjh.runlini/kr.sjh.runlini.wear.MainActivity"
+      ],
+      "dependsOn": ["Wear: install debug"],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "wearDeviceId",
+      "type": "promptString",
+      "description": "Wear OS emulator/device id from adb devices. If only the watch is running, it is usually emulator-5554; if a phone emulator is already running, it is usually emulator-5556.",
+      "default": "emulator-5554"
+    }
+  ]
+}

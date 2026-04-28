@@ -8,8 +8,10 @@ import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 import 'helpers/runlini_widget_harness.dart';
 
@@ -24,6 +26,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -43,6 +46,13 @@ void main() {
               const SilentLocationStreamClient(),
             ),
             runSessionRepositoryProvider.overrideWithValue(sessionRepository),
+            runDisplaySettingsProvider.overrideWithValue(
+              const RunDisplaySettings(
+                distanceUnit: RunDistanceUnit.mi,
+                paceUnit: RunPaceUnit.minPerMi,
+                speedUnit: RunSpeedUnit.mph,
+              ),
+            ),
             runStartCountdownStepDurationProvider.overrideWithValue(
               const Duration(milliseconds: 10),
             ),
@@ -52,10 +62,12 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsOneWidget);
+      expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
       expect(find.byKey(const Key('pause-run-button')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);
 
@@ -68,11 +80,12 @@ void main() {
       expect(find.byKey(const Key('run-status-label')), findsNothing);
       expect(find.byKey(const Key('ghost-status-label')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);
-      expect(find.text('0.00 km'), findsOneWidget);
+      expect(find.text('0.00 mi'), findsOneWidget);
       expect(find.text('0:00:00'), findsOneWidget);
-      expect(find.text('--:-- /km'), findsOneWidget);
-      expect(find.text('0.0 km/h'), findsOneWidget);
+      expect(find.text('--:-- /mi'), findsOneWidget);
+      expect(find.text('0.0 mph'), findsOneWidget);
       expect(find.text('-- kcal'), findsOneWidget);
 
       now = startedAt.add(const Duration(seconds: 1));
@@ -110,10 +123,12 @@ void main() {
       expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       await tester.tap(find.byKey(const Key('save-run-button')));
       await tester.pump();
 
       expect(find.byKey(const Key('settings-button')), findsOneWidget);
+      expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
       expect(find.text('START'), findsOneWidget);
     },
   );
@@ -125,6 +140,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          disableStartupWeightPromptOverride,
           staticMapStateOverride(
             fallbackMapCenter: const MapCoordinate(latitude: 0, longitude: 0),
             selectedGhostSession: selectedGhostSession,
@@ -145,6 +161,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await openRunningTab(tester);
     await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
     expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
@@ -158,11 +175,11 @@ void main() {
     expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-status-label')), findsOneWidget);
-    expect(find.text('LEVEL'), findsOneWidget);
+    expect(find.text('접전'), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-time-gap-value')), findsOneWidget);
     expect(find.text('0:00'), findsOneWidget);
     expect(find.text('고스트와 같은 위치'), findsOneWidget);
-    expect(find.byKey(const Key('ghost-marker-layer')), findsOneWidget);
+    expect(find.byKey(const Key('ghost-marker-layer')), findsNothing);
   });
 
   testWidgets(
@@ -171,6 +188,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -190,6 +208,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       await tester.tap(find.byKey(const Key('start-stop-button')));
@@ -214,6 +233,7 @@ void main() {
       expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);
       expect(find.byKey(const Key('save-run-button')), findsOneWidget);
     },
@@ -228,6 +248,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            disableStartupWeightPromptOverride,
             staticMapStateOverride(
               fallbackMapCenter: const MapCoordinate(
                 latitude: 37.0,
@@ -253,6 +274,7 @@ void main() {
         ),
       );
       await tester.pump();
+      await openRunningTab(tester);
       await tester.pump(const Duration(milliseconds: 20));
 
       expect(find.byKey(const Key('run-map')), findsOneWidget);

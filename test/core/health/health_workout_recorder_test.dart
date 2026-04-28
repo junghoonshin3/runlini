@@ -4,7 +4,7 @@ import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 
 class _FakeHealthWorkoutPlatform implements HealthWorkoutPlatform {
-  bool available = true;
+  HealthConnectAvailability availability = HealthConnectAvailability.available;
   bool permissionsGranted = true;
   bool writeWorkoutSucceeded = true;
   bool insertRouteSucceeded = true;
@@ -17,6 +17,8 @@ class _FakeHealthWorkoutPlatform implements HealthWorkoutPlatform {
   int writeWorkoutCalls = 0;
   int finishRouteCalls = 0;
   int discardRouteCalls = 0;
+  int installCalls = 0;
+  int deleteWorkoutCalls = 0;
   int? lastTotalDistanceMeters;
   List<WorkoutRouteLocation> lastInsertedLocations = <WorkoutRouteLocation>[];
 
@@ -28,6 +30,12 @@ class _FakeHealthWorkoutPlatform implements HealthWorkoutPlatform {
   @override
   Future<void> discardWorkoutRoute(String builderId) async {
     discardRouteCalls += 1;
+  }
+
+  @override
+  Future<bool> deleteWorkoutByUuid({required String uuid}) async {
+    deleteWorkoutCalls += 1;
+    return true;
   }
 
   @override
@@ -56,7 +64,12 @@ class _FakeHealthWorkoutPlatform implements HealthWorkoutPlatform {
   }
 
   @override
-  Future<bool> isAvailable() async => available;
+  Future<HealthConnectAvailability> checkAvailability() async => availability;
+
+  @override
+  Future<void> installHealthConnect() async {
+    installCalls += 1;
+  }
 
   @override
   Future<bool> requestRunPermissions() async {
@@ -127,13 +140,30 @@ void main() {
     },
   );
 
+  test(
+    'prepare run capture reports Health Connect install requirement',
+    () async {
+      final platform = _FakeHealthWorkoutPlatform()
+        ..availability = HealthConnectAvailability.providerUpdateRequired;
+      final recorder = PlatformHealthWorkoutRecorder(platform: platform);
+
+      final result = await recorder.prepareRunCapture();
+
+      expect(result, HealthRunPreparationResult.installRequired);
+      expect(platform.configureCalls, 0);
+      expect(platform.permissionCalls, 0);
+      await recorder.openHealthConnectInstall();
+      expect(platform.installCalls, 1);
+    },
+  );
+
   test('finish run writes workout and route from recorded points', () async {
     final platform = _FakeHealthWorkoutPlatform();
     final recorder = PlatformHealthWorkoutRecorder(platform: platform);
     final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
 
     await recorder.beginRunCapture();
-    await recorder.finishRunCapture(
+    final result = await recorder.finishRunCapture(
       startedAt: startedAt,
       endedAt: startedAt.add(const Duration(minutes: 10)),
       recordedPoints: const <RunPoint>[
@@ -152,6 +182,8 @@ void main() {
       ],
     );
 
+    expect(result.kind, HealthWorkoutExportResultKind.synced);
+    expect(result.externalId, 'workout-1');
     expect(platform.configureCalls, 1);
     expect(platform.permissionCalls, 1);
     expect(platform.startRouteCalls, 1);
@@ -165,6 +197,21 @@ void main() {
     );
     expect(platform.finishRouteCalls, 1);
     expect(platform.discardRouteCalls, 0);
+  });
+
+  test('finish run reports skipped when no route capture started', () async {
+    final platform = _FakeHealthWorkoutPlatform();
+    final recorder = PlatformHealthWorkoutRecorder(platform: platform);
+    final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
+
+    final result = await recorder.finishRunCapture(
+      startedAt: startedAt,
+      endedAt: startedAt.add(const Duration(minutes: 10)),
+      recordedPoints: const <RunPoint>[],
+    );
+
+    expect(result.kind, HealthWorkoutExportResultKind.skipped);
+    expect(platform.writeWorkoutCalls, 0);
   });
 
   test('cancel run discards an active route builder', () async {

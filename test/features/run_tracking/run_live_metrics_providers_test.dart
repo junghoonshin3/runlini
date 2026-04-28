@@ -3,57 +3,31 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
+import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
-class _TestDeviceLocationClient implements DeviceLocationClient {
-  @override
-  Future<LiveLocationSample?> fetchCurrentSample() async => null;
-
-  @override
-  Future<LiveLocationSample?> fetchLastKnownSample() async => null;
-}
-
-class _TrackingLocationStreamClient implements LocationStreamClient {
-  _TrackingLocationStreamClient() {
-    _controller = StreamController<LiveLocationSample>.broadcast();
-  }
-
-  late final StreamController<LiveLocationSample> _controller;
-
-  @override
-  Future<LiveLocationSample?> fetchCurrentSample() async => null;
-
-  @override
-  Future<LiveLocationSample?> fetchLastKnownSample() async => null;
-
-  @override
-  Stream<LiveLocationSample> watchLocationSamples({
-    LocationTrackingMode mode = LocationTrackingMode.passive,
-  }) => _controller.stream;
-
-  Future<void> emit(LiveLocationSample sample) async {
-    _controller.add(sample);
-    await Future<void>.delayed(Duration.zero);
-  }
-
-  Future<void> close() async {
-    await _controller.close();
-  }
-}
+import 'run_playback_provider_harness.dart';
 
 LiveLocationSample _sample({
   required double latitude,
   required double longitude,
   required DateTime capturedAt,
+  double? speedMps,
+  double? horizontalAccuracyM,
 }) {
   return LiveLocationSample(
     latitude: latitude,
     longitude: longitude,
     capturedAt: capturedAt,
+    speedMps: speedMps,
+    horizontalAccuracyM: horizontalAccuracyM,
     source: RunPointSource.deviceGps,
   );
 }
@@ -64,6 +38,8 @@ Future<void> _settleAsync() async {
 }
 
 Future<void> _startVisibleLiveTracking(ProviderContainer container) async {
+  container.read(appTabProvider.notifier).setTab(AppTab.running);
+  await _settleAsync();
   container.read(liveLocationProvider);
   await container.read(liveLocationProvider.notifier).syncTracking();
   await _settleAsync();
@@ -76,13 +52,16 @@ void main() {
       final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
       var now = startedAt;
       final tickerController = StreamController<int>.broadcast();
-      final streamClient = _TrackingLocationStreamClient();
+      final streamClient = TrackingLocationStreamClient();
       final container = ProviderContainer(
         overrides: [
           deviceLocationClientProvider.overrideWithValue(
-            _TestDeviceLocationClient(),
+            TestDeviceLocationClient(),
           ),
           locationStreamClientProvider.overrideWithValue(streamClient),
+          runSettingsRepositoryProvider.overrideWithValue(
+            TestRunSettingsRepository(),
+          ),
           runPlaybackClockProvider.overrideWithValue(() => now),
           liveRunMetricsTickerProvider.overrideWith(
             (Ref ref) => tickerController.stream,
@@ -110,7 +89,7 @@ void main() {
       expect(initialMetrics.elapsedMs, 0);
       expect(initialMetrics.averagePaceSecPerKm, isNull);
       expect(initialMetrics.averageSpeedKmh, 0);
-      expect(initialMetrics.caloriesLabel, '-- kcal');
+      expect(initialMetrics.caloriesKcal, isNull);
       expect(initialMetrics.isPaused, isFalse);
 
       now = startedAt.add(const Duration(seconds: 2));
@@ -128,13 +107,16 @@ void main() {
       final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
       var now = startedAt;
       final tickerController = StreamController<int>.broadcast();
-      final streamClient = _TrackingLocationStreamClient();
+      final streamClient = TrackingLocationStreamClient();
       final container = ProviderContainer(
         overrides: [
           deviceLocationClientProvider.overrideWithValue(
-            _TestDeviceLocationClient(),
+            TestDeviceLocationClient(),
           ),
           locationStreamClientProvider.overrideWithValue(streamClient),
+          runSettingsRepositoryProvider.overrideWithValue(
+            TestRunSettingsRepository(const RunSettingsState(bodyWeightKg: 70)),
+          ),
           runPlaybackClockProvider.overrideWithValue(() => now),
           liveRunMetricsTickerProvider.overrideWith(
             (Ref ref) => tickerController.stream,
@@ -180,7 +162,7 @@ void main() {
       expect(metrics.averagePaceSecPerKm, isNotNull);
       expect(metrics.averagePaceSecPerKm!, closeTo(600, 20));
       expect(metrics.averageSpeedKmh, closeTo(6.0, 0.2));
-      expect(metrics.caloriesLabel, '-- kcal');
+      expect(metrics.caloriesKcal, closeTo(70, 3));
       expect(metrics.isPaused, isFalse);
     },
   );
@@ -189,13 +171,16 @@ void main() {
     final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
     var now = startedAt;
     final tickerController = StreamController<int>.broadcast();
-    final streamClient = _TrackingLocationStreamClient();
+    final streamClient = TrackingLocationStreamClient();
     final container = ProviderContainer(
       overrides: [
         deviceLocationClientProvider.overrideWithValue(
-          _TestDeviceLocationClient(),
+          TestDeviceLocationClient(),
         ),
         locationStreamClientProvider.overrideWithValue(streamClient),
+        runSettingsRepositoryProvider.overrideWithValue(
+          TestRunSettingsRepository(),
+        ),
         runPlaybackClockProvider.overrideWithValue(() => now),
         liveRunMetricsTickerProvider.overrideWith(
           (Ref ref) => tickerController.stream,
@@ -251,13 +236,16 @@ void main() {
       final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
       var now = startedAt;
       final tickerController = StreamController<int>.broadcast();
-      final streamClient = _TrackingLocationStreamClient();
+      final streamClient = TrackingLocationStreamClient();
       final container = ProviderContainer(
         overrides: [
           deviceLocationClientProvider.overrideWithValue(
-            _TestDeviceLocationClient(),
+            TestDeviceLocationClient(),
           ),
           locationStreamClientProvider.overrideWithValue(streamClient),
+          runSettingsRepositoryProvider.overrideWithValue(
+            TestRunSettingsRepository(const RunSettingsState(bodyWeightKg: 70)),
+          ),
           runPlaybackClockProvider.overrideWithValue(() => now),
           liveRunMetricsTickerProvider.overrideWith(
             (Ref ref) => tickerController.stream,

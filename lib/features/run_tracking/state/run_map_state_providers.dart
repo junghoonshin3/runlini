@@ -9,6 +9,11 @@ import 'package:runlini/features/run_tracking/types/run_map_static_state.dart';
 import 'package:runlini/features/run_tracking/types/run_map_view_state.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
+const _defaultFallbackMapCenter = MapCoordinate(
+  latitude: 37.5665,
+  longitude: 126.9780,
+);
+
 class RunMapRecenterTickController extends Notifier<int> {
   @override
   int build() => 0;
@@ -39,7 +44,7 @@ final runMapStaticStateProvider = FutureProvider<RunMapStaticState>((
   }
 
   return RunMapStaticState(
-    fallbackMapCenter: sessions.first.points.first.toMapCoordinate(),
+    fallbackMapCenter: _fallbackMapCenter(sessions),
     ghostPolylinePoints: selectedGhostSession == null
         ? const <MapCoordinate>[]
         : mapCoordinatesFromRunPoints(selectedGhostSession.points),
@@ -51,6 +56,15 @@ final runMapStaticStateProvider = FutureProvider<RunMapStaticState>((
     selectedGhostSession: selectedGhostSession,
   );
 });
+
+MapCoordinate _fallbackMapCenter(List<RunSession> sessions) {
+  for (final session in sessions) {
+    if (session.points.isNotEmpty) {
+      return session.points.first.toMapCoordinate();
+    }
+  }
+  return _defaultFallbackMapCenter;
+}
 
 final currentRunnerPolylinePointsProvider = Provider<List<MapCoordinate>>((
   Ref ref,
