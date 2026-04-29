@@ -5,20 +5,36 @@ workflow should protect the codebase without slowing down fast iteration.
 
 ## Branch Strategy
 
-- Use a mixed strategy.
-- Small, focused work can happen on the current branch or directly on `main`.
-- If the work's nature calls for isolation, create the branch before doing the
-  work and keep the changes there until they are ready to merge.
-- A short-lived branch is required for risky or long-running work:
+- Use strict task branches by default.
+- `main` should stay stable and should not collect active feature work.
+- One branch should represent one coherent task, fix, or docs update.
+- Start each new task by checking the worktree:
+
+```bash
+git status --short --branch
+```
+
+- If the worktree is dirty, decide whether the existing changes belong to the
+  new task before creating or switching branches.
+- If the existing changes do not belong to the new task, first commit them,
+  stash them, or move them to their own branch.
+- Do not create an independent task branch from a dirty worktree. `git switch
+  -c` carries uncommitted changes into the new branch, which mixes unrelated
+  work and makes review harder.
+- Short-lived branches are required for:
   - database migrations
   - large refactors
   - native platform changes
   - multi-session features
   - work that needs review before it lands on `main`
+- Small docs-only edits may happen on the current branch only when the worktree
+  is clean or the docs edit clearly belongs to that branch.
 - Keep branch names short and purpose-driven:
   - `feature/wear-ghost-start`
   - `fix/history-today-filter`
   - `docs/git-workflow`
+- If a branch name no longer describes the work on it, stop and split the work
+  before adding more commits.
 
 ## Commit Boundaries
 
@@ -35,6 +51,12 @@ workflow should protect the codebase without slowing down fast iteration.
 
 Use Conventional Commit types with Korean summaries.
 
+Format:
+
+```text
+<type>(optional-scope): <Korean summary>
+```
+
 Allowed default types:
 
 - `feat`
@@ -44,7 +66,25 @@ Allowed default types:
 - `test`
 - `chore`
 
-Scopes are optional. Prefer short messages:
+Message rules:
+
+- Write the type in English and the summary in Korean.
+- Keep the first line short and specific. Aim for 50 characters or fewer after
+  the type.
+- Describe what changed, not what command was run.
+- Use a noun-style or concise action-style Korean summary:
+  - good: `기록탭 오늘 기록 표시`
+  - good: `워치 재진입 복구`
+  - bad: `수정함`
+  - bad: `테스트 돌림`
+- Do not end the subject with a period.
+- Use a scope only when it makes the affected area clearer:
+  - `feat(wear): 러닝 재진입 복구`
+  - `fix(history): Health 기록 로컬 날짜 표시`
+- Add a commit body only when the title cannot explain the risk or intent.
+  Keep the body focused on why the change exists and any important validation.
+
+Prefer short messages:
 
 ```text
 feat: 기록탭 오늘 기록 표시
@@ -53,7 +93,7 @@ docs: Git 워크플로우 정리
 test: 기록탭 오늘 보기 검증 추가
 ```
 
-Avoid vague messages such as `update`, `fix`, or `changes`.
+Avoid vague messages such as `update`, `fix`, `changes`, `wip`, or `작업`.
 
 ## Validation
 
