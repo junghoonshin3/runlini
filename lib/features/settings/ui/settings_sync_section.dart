@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/health/health_route_client.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
@@ -29,11 +30,8 @@ class SettingsSyncSection extends ConsumerWidget {
     final sessions =
         ref.watch(runSessionListProvider).value ?? const <RunSession>[];
     final failedCount = sessions.where((RunSession session) {
-      return session.syncStatus == RunSessionSyncStatus.syncFailed;
-    }).length;
-    final unsyncedAppCount = sessions.where((RunSession session) {
       return session.recordSource == RunSessionRecordSource.appLocal &&
-          session.syncStatus != RunSessionSyncStatus.synced;
+          session.syncStatus == RunSessionSyncStatus.syncFailed;
     }).length;
     final isAndroid = platform == TargetPlatform.android;
     final isHealthBusy =
@@ -50,20 +48,35 @@ class SettingsSyncSection extends ConsumerWidget {
           SettingsSyncCard(
             title: healthLabel,
             status: _healthStatusText(syncState, connectionState, isHealthBusy),
-            actionKey: const Key('settings-health-import-button'),
-            actionLabel: isHealthBusy
-                ? '처리 중...'
-                : healthConnected
-                ? '최근 기록 가져오기'
-                : '$healthLabel 연결',
-            onPressed: isHealthBusy
-                ? null
-                : () => _runHealthAction(
-                    context,
-                    ref,
-                    connected: healthConnected,
-                    platform: platform,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SettingsCompactButton(
+                  key: const Key('settings-health-import-button'),
+                  label: isHealthBusy
+                      ? '처리 중...'
+                      : healthConnected
+                      ? '최근 기록 가져오기'
+                      : '$healthLabel 연결',
+                  onPressed: isHealthBusy
+                      ? null
+                      : () => _runHealthAction(
+                          context,
+                          ref,
+                          connected: healthConnected,
+                          platform: platform,
+                        ),
+                ),
+                if (failedCount > 0) ...[
+                  const SizedBox(height: 10),
+                  _FailedBackupRetry(
+                    failedCount: failedCount,
+                    isBusy: isHealthBusy || isBackupBusy,
+                    onRetry: () => _retryFailedBackups(context, ref),
                   ),
+                ],
+              ],
+            ),
           ),
           if (isAndroid) ...[
             const SizedBox(height: 10),
@@ -80,35 +93,6 @@ class SettingsSyncSection extends ConsumerWidget {
                   : () => _syncWearRecords(context, ref),
             ),
           ],
-          const SizedBox(height: 10),
-          SettingsSyncCard(
-            title: '백업',
-            status: failedCount > 0
-                ? '실패 $failedCount개'
-                : '대기 $unsyncedAppCount개',
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                SettingsCompactButton(
-                  key: const Key('settings-health-backup-button'),
-                  label: '앱 기록 백업 ($unsyncedAppCount)',
-                  onPressed:
-                      isHealthBusy || isBackupBusy || unsyncedAppCount == 0
-                      ? null
-                      : () => _backupUnsyncedRuns(context, ref),
-                ),
-                SettingsCompactButton(
-                  key: const Key('settings-health-retry-failed-button'),
-                  label: '백업 실패 재시도 ($failedCount)',
-                  danger: failedCount > 0,
-                  onPressed: isHealthBusy || isBackupBusy || failedCount == 0
-                      ? null
-                      : () => _retryFailedBackups(context, ref),
-                ),
-              ],
-            ),
-          ),
           if (syncState.hasError)
             const SettingsSyncErrorText(label: 'Health 동기화 실패'),
           if (wearSyncState.hasError)
@@ -260,16 +244,41 @@ class SettingsSyncSection extends ConsumerWidget {
       context,
     ).showSnackBar(SnackBar(content: Text('$count개의 기록을 Health에 다시 백업했어요.')));
   }
+}
 
-  Future<void> _backupUnsyncedRuns(BuildContext context, WidgetRef ref) async {
-    final count = await ref
-        .read(healthBackupControllerProvider.notifier)
-        .backupUnsyncedAppSessions();
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$count개의 앱 기록을 Health에 백업했어요.')));
+class _FailedBackupRetry extends StatelessWidget {
+  const _FailedBackupRetry({
+    required this.failedCount,
+    required this.isBusy,
+    required this.onRetry,
+  });
+
+  final int failedCount;
+  final bool isBusy;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          '백업 실패 $failedCount개',
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        SettingsCompactButton(
+          key: const Key('settings-health-retry-failed-button'),
+          label: '다시 시도',
+          danger: true,
+          onPressed: isBusy ? null : onRetry,
+        ),
+      ],
+    );
   }
 }

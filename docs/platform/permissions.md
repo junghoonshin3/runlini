@@ -34,7 +34,8 @@
 - Settings > 연동 exposes Health Connect as the Android Health connection
   entry point. The primary action opens the Health Connect permission request
   when access is missing and changes to a recent-record import action after
-  connection.
+  connection. Manual app-record backup is hidden from the normal Settings flow;
+  failed Health backups expose a small retry action in the Health entry.
 - On Android 13 and lower, Health Connect is delivered as the separate
   `com.google.android.apps.healthdata` app. Runlini does not prompt for install
   during app startup; install or permission UI appears only from explicit user
@@ -95,6 +96,8 @@
   permission failure.
 - Health backup status is stored on the local run record, so skipped or failed
   export can be shown and retried without hiding the saved run.
+- Settings should not show a standalone backup entry. Retry appears only when
+  a local run has failed Health backup.
 - Health-imported records must show their import origin instead of the app-local
   backup label: Health Connect records use the Health Connect/source app label,
   and HealthKit records use 건강 앱/source app labeling.
