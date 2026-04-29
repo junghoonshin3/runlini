@@ -77,6 +77,8 @@ Current Android native V1 implementation:
 - Settings > 연동 exposes a manual `워치 기록 동기화` action that drains the
   phone pending inbox; the watch ready screen shows pending draft count and
   offers `다시 보내기`.
+- The phone also drains the same pending Wear inbox opportunistically on app
+  launch, foreground resume, and History pull-to-refresh.
 - Phone-selected Ghost Rider records are sent to the watch on
   `/runlini/phone/ghost_config` as a `ghostJson` asset. The watch caches the
   selected ghost route and can start an independent ghost run without a live
@@ -175,6 +177,9 @@ Recommended architecture:
   discard the completed draft.
 - The Wear OS app uses a watch-native flow: ready launch hub, swipeable active
   run pages, a dedicated controls page, paused focus screen, and finish review.
+- The finish review is a scrollable workout summary so small round screens can
+  show richer metrics without clipping save/delete actions. Ghost result is
+  shown only for ghost-started runs with a final ghost frame.
 - Active run pages are core metrics, optional ghost status, detail metrics, and
   controls. Pause / stop actions live on the controls page to reduce accidental
   taps.

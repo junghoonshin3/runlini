@@ -32,7 +32,7 @@ class RunSessionDetailCalculator {
       paceSamplesSecPerKm: _paceSamples(session.points),
       speedSamplesKmh: _speedSamples(session.points),
       elevationSamplesM: session.points
-          .where((point) => point.elevationM != null)
+          .where((point) => _isUsableElevation(point.elevationM))
           .map(
             (point) => RunMetricSample(
               elapsedMs: point.timestampRelMs,
@@ -71,7 +71,8 @@ class RunSessionDetailCalculator {
   double? _elevationGain(List<RunPoint> points) {
     final elevations = points
         .map((point) => point.elevationM)
-        .whereType<double>();
+        .where(_isUsableElevation)
+        .cast<double>();
     if (elevations.length < 2) {
       return null;
     }
@@ -85,6 +86,10 @@ class RunSessionDetailCalculator {
       previous = elevation;
     }
     return gain;
+  }
+
+  bool _isUsableElevation(double? elevation) {
+    return elevation != null && elevation.isFinite && elevation.abs() <= 12000;
   }
 
   List<RunMetricSample> _speedSamples(List<RunPoint> points) {

@@ -51,29 +51,51 @@ internal data class WearReviewSummaryModel(
     val elapsed: String,
     val distance: String,
     val averagePace: String,
+    val heartRate: String,
     val averageCadence: String,
     val calories: String,
+    val speed: String,
     val ghostResult: String?,
     val pendingLabel: String?,
+    val detailMetrics: List<WearReviewMetric>,
+)
+
+internal data class WearReviewMetric(
+    val label: String,
+    val value: String,
 )
 
 internal object WearReviewSummaryModelBuilder {
     fun from(state: WearRunState): WearReviewSummaryModel {
+        val heartRate = WearRunFormatters.heartRate(state.heartRateBpm)
+        val averageCadence = WearRunFormatters.cadence(state.averageCadenceSpm)
+        val calories = WearRunFormatters.calories(state.caloriesKcal)
+        val speed = WearRunFormatters.speed(state.speedMps)
+        val pendingLabel = if (state.pendingDraftCount > 0) {
+            "전송 대기 ${state.pendingDraftCount}개"
+        } else {
+            null
+        }
         return WearReviewSummaryModel(
             elapsed = WearRunFormatters.elapsed(state.elapsedMs),
             distance = WearRunFormatters.distance(state.distanceM),
             averagePace = WearRunFormatters.pace(state.averagePaceSecPerKm),
-            averageCadence = WearRunFormatters.cadence(state.averageCadenceSpm),
-            calories = WearRunFormatters.calories(state.caloriesKcal),
-            ghostResult = if (state.isGhostRun) {
+            heartRate = heartRate,
+            averageCadence = averageCadence,
+            calories = calories,
+            speed = speed,
+            ghostResult = if (state.isGhostRun && state.ghostFrame != null) {
                 WearRunFormatters.ghostResult(state.ghostFrame)
             } else {
                 null
             },
-            pendingLabel = if (state.pendingDraftCount > 0) {
-                "전송 대기 ${state.pendingDraftCount}개"
-            } else {
-                null
+            pendingLabel = pendingLabel,
+            detailMetrics = buildList {
+                add(WearReviewMetric("칼로리", calories))
+                add(WearReviewMetric("심박수", heartRate))
+                add(WearReviewMetric("케이던스", averageCadence))
+                add(WearReviewMetric("속도", speed))
+                pendingLabel?.let { add(WearReviewMetric("동기화", it)) }
             },
         )
     }

@@ -7,6 +7,7 @@ import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
 import 'package:runlini/features/health_sync/types/health_sync_status.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
@@ -146,6 +147,9 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
 
   Future<void> _refreshHistory() async {
     await ref.read(healthSyncControllerProvider.notifier).syncIfAuthorized();
+    await ref
+        .read(wearDraftSyncControllerProvider.notifier)
+        .syncPendingDrafts();
     ref.invalidate(runSessionListProvider);
     await ref.read(runSessionListProvider.future);
   }

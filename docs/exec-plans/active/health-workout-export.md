@@ -34,13 +34,19 @@ data when available, without blocking the app's own run capture.
 - Treat `저장하기` as a local DB save first. Health backup runs afterward and
   updates the same local record to `synced`, `syncSkipped`, or `syncFailed`.
 - A Health backup failure never rolls back the local saved run. The runner sees
-  `저장됨 · Health 백업 실패` and can retry from the run detail or Settings tab.
+  `저장됨 · Health Connect 전송 실패` or `저장됨 · 건강 앱 전송 실패` and can
+  retry from the run detail or Settings tab.
 - Build workout routes from accepted `recordedPoints` plus `startedAt`, so the
   health export matches the route the app actually chose to keep.
+- Sanitize route export samples before passing them to Health: invalid
+  coordinates, non-monotonic timestamps, absurd elevation, and non-finite speed
+  or accuracy are dropped or nulled.
 - App-side pause/resume remains local-only in v1. Health export still writes a
   single workout spanning the first `START` through the finish-review save.
 - Create the workout-route builder at run start, then write/finalize the
-  workout only when the runner taps `저장하기`.
+  workout only when the runner taps `저장하기`. If route builder setup or route
+  finalization fails, still write the workout body and treat that as a
+  successful Health send.
 - If the runner taps `기록 버리기`, discard the active workout-route builder
   instead of writing a workout.
 - Request `WORKOUT` and `WORKOUT_ROUTE` permissions together through the

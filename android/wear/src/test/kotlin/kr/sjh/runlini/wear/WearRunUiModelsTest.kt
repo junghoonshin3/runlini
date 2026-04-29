@@ -87,8 +87,11 @@ class WearRunUiModelsTest {
                 elapsedMs = 600_000L,
                 distanceM = 2_000.0,
                 averagePaceSecPerKm = 300.0,
+                heartRateBpm = 156,
                 averageCadenceSpm = 171.8,
                 caloriesKcal = 123.0,
+                speedMps = 3.33,
+                pendingDraftCount = 1,
                 isGhostRun = true,
                 ghostConfig = ghostConfig(),
                 ghostFrame = WearGhostFrame(
@@ -104,7 +107,65 @@ class WearRunUiModelsTest {
         assertEquals("5:00/km", model.averagePace)
         assertEquals("172 spm", model.averageCadence)
         assertEquals("123 kcal", model.calories)
+        assertEquals("156 bpm", model.heartRate)
+        assertEquals("12.0 km/h", model.speed)
         assertEquals("뒤처지는 중 -0:08", model.ghostResult)
+        assertEquals("전송 대기 1개", model.pendingLabel)
+        assertEquals(
+            listOf(
+                WearReviewMetric("칼로리", "123 kcal"),
+                WearReviewMetric("심박수", "156 bpm"),
+                WearReviewMetric("케이던스", "172 spm"),
+                WearReviewMetric("속도", "12.0 km/h"),
+                WearReviewMetric("동기화", "전송 대기 1개"),
+            ),
+            model.detailMetrics,
+        )
+    }
+
+    @Test
+    fun reviewSummaryHidesGhostResultForNormalRun() {
+        val model = WearReviewSummaryModelBuilder.from(
+            WearRunState(
+                elapsedMs = 180_000L,
+                distanceM = 600.0,
+                averagePaceSecPerKm = 300.0,
+                heartRateBpm = null,
+                averageCadenceSpm = null,
+                caloriesKcal = null,
+                speedMps = null,
+                isGhostRun = false,
+            ),
+        )
+
+        assertNull(model.ghostResult)
+        assertNull(model.pendingLabel)
+        assertEquals("--", model.heartRate)
+        assertEquals("--", model.averageCadence)
+        assertEquals("--", model.calories)
+        assertEquals("--", model.speed)
+        assertEquals(
+            listOf(
+                WearReviewMetric("칼로리", "--"),
+                WearReviewMetric("심박수", "--"),
+                WearReviewMetric("케이던스", "--"),
+                WearReviewMetric("속도", "--"),
+            ),
+            model.detailMetrics,
+        )
+    }
+
+    @Test
+    fun reviewSummaryHidesGhostResultUntilGhostFrameExists() {
+        val model = WearReviewSummaryModelBuilder.from(
+            WearRunState(
+                isGhostRun = true,
+                ghostConfig = ghostConfig(),
+                ghostFrame = null,
+            ),
+        )
+
+        assertNull(model.ghostResult)
     }
 
     private fun ghostConfig(): WearGhostConfig {

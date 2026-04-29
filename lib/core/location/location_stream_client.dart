@@ -191,7 +191,7 @@ class GeolocatorRunLocationClient
       speedMps: position.speed > 0 ? position.speed : null,
       horizontalAccuracyM: _positiveOrNull(position.accuracy),
       speedAccuracyMps: _positiveOrNull(position.speedAccuracy),
-      elevationM: position.altitude.isFinite ? position.altitude : null,
+      elevationM: _elevationOrNull(position.altitude),
     );
   }
 
@@ -205,6 +205,10 @@ class GeolocatorRunLocationClient
 
   double? _positiveOrNull(double value) {
     return value.isFinite && value > 0 ? value : null;
+  }
+
+  double? _elevationOrNull(double value) {
+    return value.isFinite && value.abs() <= 12000 ? value : null;
   }
 }
 

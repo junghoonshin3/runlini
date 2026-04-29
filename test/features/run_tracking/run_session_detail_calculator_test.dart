@@ -103,4 +103,36 @@ void main() {
     expect(detail.splits.first.distanceM, closeTo(1609.344, 0.1));
     expect(detail.splits.first.paceSecPerKm, greaterThan(0));
   });
+
+  test('ignores impossible elevation sentinel values', () {
+    final session = RunSession(
+      id: 'bad-elevation-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 1),
+      distanceM: 100,
+      durationMs: 60000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          elevationM: double.maxFinite,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.001,
+          timestampRelMs: 60000,
+          elevationM: -double.maxFinite,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(session);
+
+    expect(detail.elevationGainM, isNull);
+    expect(detail.elevationSamplesM, isEmpty);
+  });
 }

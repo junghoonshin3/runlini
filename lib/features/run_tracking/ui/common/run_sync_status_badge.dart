@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
 class RunSyncStatusBadge extends StatelessWidget {
@@ -8,11 +10,13 @@ class RunSyncStatusBadge extends StatelessWidget {
     required this.status,
     this.recordSource = RunSessionRecordSource.appLocal,
     this.sourceSummary = '',
+    this.targetPlatform,
   });
 
   final RunSessionSyncStatus status;
   final RunSessionRecordSource recordSource;
   final String sourceSummary;
+  final TargetPlatform? targetPlatform;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,7 @@ class RunSyncStatusBadge extends StatelessWidget {
           status,
           recordSource: recordSource,
           sourceSummary: sourceSummary,
+          targetPlatform: targetPlatform,
         ),
         style: TextStyle(
           color: color,
@@ -46,6 +51,7 @@ String runSyncStatusLabel(
   RunSessionSyncStatus status, {
   RunSessionRecordSource recordSource = RunSessionRecordSource.appLocal,
   String sourceSummary = '',
+  TargetPlatform? targetPlatform,
 }) {
   if (recordSource == RunSessionRecordSource.healthConnect) {
     return _healthSourceLabel(
@@ -59,9 +65,10 @@ String runSyncStatusLabel(
       fallback: '건강 앱에서 가져옴',
     );
   }
+  final platform = targetPlatform ?? defaultTargetPlatform;
   return switch (status) {
-    RunSessionSyncStatus.synced => 'Health 백업됨',
-    RunSessionSyncStatus.syncFailed => '백업 실패',
+    RunSessionSyncStatus.synced => healthDestinationSavedLabel(platform),
+    RunSessionSyncStatus.syncFailed => healthDestinationFailedLabel(platform),
     RunSessionSyncStatus.localOnly ||
     RunSessionSyncStatus.syncSkipped => '앱에만 저장됨',
   };

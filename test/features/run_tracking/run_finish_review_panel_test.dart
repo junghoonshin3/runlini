@@ -112,6 +112,16 @@ void main() {
     expect(find.text('Hidden'), findsWidgets);
   });
 
+  testWidgets('shows empty elevation chart for invalid elevation sentinels', (
+    tester,
+  ) async {
+    await _pumpPanel(tester, _badElevationSession());
+
+    expect(find.text('고도 데이터가 아직 없어요.'), findsOneWidget);
+    expect(find.textContaining('Infinity'), findsNothing);
+    expect(find.textContaining('e+308'), findsNothing);
+  });
+
   testWidgets('chart touch indicator uses ring dot without guide line', (
     tester,
   ) async {
@@ -218,6 +228,33 @@ RunSession _splitSession() {
         timestampRelMs: 1200000,
         paceSecPerKm: 430,
         source: RunPointSource.simulated,
+      ),
+    ],
+  );
+}
+
+RunSession _badElevationSession() {
+  return RunSession(
+    id: 'bad-elevation-session',
+    startedAt: DateTime.utc(2026, 4, 21, 6),
+    endedAt: DateTime.utc(2026, 4, 21, 6, 1),
+    distanceM: 120,
+    durationMs: 60000,
+    sourceSummary: 'fixture:test',
+    points: const [
+      RunPoint(
+        latitude: 37.0,
+        longitude: 127.0,
+        timestampRelMs: 0,
+        elevationM: double.maxFinite,
+        source: RunPointSource.deviceGps,
+      ),
+      RunPoint(
+        latitude: 37.001,
+        longitude: 127.001,
+        timestampRelMs: 60000,
+        elevationM: double.maxFinite,
+        source: RunPointSource.deviceGps,
       ),
     ],
   );

@@ -51,7 +51,8 @@ class HealthBackupService {
     final sessions = await _repository.listSessions();
     var syncedCount = 0;
     for (final session in sessions) {
-      if (session.syncStatus != RunSessionSyncStatus.syncFailed) {
+      if (session.recordSource != RunSessionRecordSource.appLocal ||
+          session.syncStatus != RunSessionSyncStatus.syncFailed) {
         continue;
       }
       final result = await backupSession(session);

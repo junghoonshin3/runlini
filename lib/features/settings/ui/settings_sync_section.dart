@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/core/health/health_route_client.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
@@ -39,7 +40,7 @@ class SettingsSyncSection extends ConsumerWidget {
         syncState.value?.kind == HealthSyncStatusKind.syncing;
     final isBackupBusy = backupState.isLoading;
     final healthConnected = _isHealthConnected(syncState, connectionState);
-    final healthLabel = _healthPlatformLabel(platform);
+    final healthLabel = healthDestinationLabel(platform);
 
     return SettingsSectionPanel(
       title: '연동',
@@ -70,9 +71,11 @@ class SettingsSyncSection extends ConsumerWidget {
                 if (failedCount > 0) ...[
                   const SizedBox(height: 10),
                   _FailedBackupRetry(
+                    destinationLabel: healthLabel,
                     failedCount: failedCount,
                     isBusy: isHealthBusy || isBackupBusy,
-                    onRetry: () => _retryFailedBackups(context, ref),
+                    onRetry: () =>
+                        _retryFailedBackups(context, ref, platform: platform),
                   ),
                 ],
               ],
@@ -111,16 +114,6 @@ class SettingsSyncSection extends ConsumerWidget {
     }
     return connectionState.value?.kind ==
         HealthRouteConnectionStatusKind.connected;
-  }
-
-  String _healthPlatformLabel(TargetPlatform platform) {
-    if (platform == TargetPlatform.iOS) {
-      return '건강 앱';
-    }
-    if (platform == TargetPlatform.android) {
-      return 'Health Connect';
-    }
-    return 'Health';
   }
 
   String _healthStatusText(
@@ -180,7 +173,7 @@ class SettingsSyncSection extends ConsumerWidget {
     required TargetPlatform platform,
     required bool connected,
   }) {
-    final label = _healthPlatformLabel(platform);
+    final label = healthDestinationLabel(platform);
     return switch (status.kind) {
       HealthSyncStatusKind.synced =>
         connected ? '최근 기록 가져오기를 마쳤어요.' : '$label 연결됨',
@@ -233,26 +226,39 @@ class SettingsSyncSection extends ConsumerWidget {
     return '가져올 워치 기록이 없어요.';
   }
 
-  Future<void> _retryFailedBackups(BuildContext context, WidgetRef ref) async {
+  Future<void> _retryFailedBackups(
+    BuildContext context,
+    WidgetRef ref, {
+    required TargetPlatform platform,
+  }) async {
     final count = await ref
         .read(healthBackupControllerProvider.notifier)
         .retryFailedSessions();
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$count개의 기록을 Health에 다시 백업했어요.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_retryBackupMessage(count, platform))),
+    );
+  }
+
+  String _retryBackupMessage(int syncedCount, TargetPlatform platform) {
+    if (syncedCount > 0) {
+      return '$syncedCount개의 기록을 ${healthDestinationSendTarget(platform)} 보냈어요.';
+    }
+    return '${healthDestinationSendTarget(platform)} 다시 보내지 못했어요.';
   }
 }
 
 class _FailedBackupRetry extends StatelessWidget {
   const _FailedBackupRetry({
+    required this.destinationLabel,
     required this.failedCount,
     required this.isBusy,
     required this.onRetry,
   });
 
+  final String destinationLabel;
   final int failedCount;
   final bool isBusy;
   final VoidCallback onRetry;
@@ -265,7 +271,7 @@ class _FailedBackupRetry extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          '백업 실패 $failedCount개',
+          '$destinationLabel 전송 실패 $failedCount개',
           style: const TextStyle(
             color: AppColors.muted,
             fontSize: 12,
@@ -274,7 +280,7 @@ class _FailedBackupRetry extends StatelessWidget {
         ),
         SettingsCompactButton(
           key: const Key('settings-health-retry-failed-button'),
-          label: '다시 시도',
+          label: '다시 보내기',
           danger: true,
           onPressed: isBusy ? null : onRetry,
         ),
