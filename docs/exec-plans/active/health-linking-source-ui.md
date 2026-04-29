@@ -2,9 +2,9 @@
 
 ## Summary
 
-Settings > 연동 is being split into platform-aware Health, Wear, and backup
-cards. Android uses Health Connect naming; iOS uses the user-facing 건강 앱
-label while the implementation remains HealthKit-backed.
+Settings > 연동 is being split into platform-aware Health and Wear entries.
+Android uses Health Connect naming; iOS uses the user-facing 건강 앱 label
+while the implementation remains HealthKit-backed.
 
 ## Decisions
 
@@ -15,13 +15,16 @@ label while the implementation remains HealthKit-backed.
 - History and detail badges use `recordSource` to distinguish backup status from
   import provenance. App-local synced records show `Health 백업됨`; imported
   records show their source app when available, otherwise the platform fallback.
+- Manual app-record backup is not a primary Settings action. Backup retry is
+  shown only when app-local records have failed Health backup.
 - Wear OS manual draft sync remains an Android-only Settings card.
 
 ## Status
 
 - [x] Add Health connection status checks to the Health route client.
-- [x] Rework Settings > 연동 into Health, Wear, and backup cards.
+- [x] Rework Settings > 연동 into Health and Wear entries.
 - [x] Show Health-imported record provenance in History and Detail.
+- [x] Hide the backup entry unless failed app-local backups need retry.
 - [x] Add focused widget/unit tests for platform labels and source badges.
 - [x] Run full validation after formatting.
 
