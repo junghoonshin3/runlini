@@ -24,6 +24,23 @@ void main() {
     expect(april29?.runCount, 1);
   });
 
+  test('groups UTC Wear sessions by local calendar day', () {
+    const calculator = RunHistoryCalendarSummaryCalculator();
+    final localStart = DateTime(2026, 4, 29, 0, 30);
+
+    final summaries = calculator.calculate(
+      sessions: [_session('wear-utc', localStart.toUtc(), 3200)],
+    );
+
+    final localDate = DateTime(
+      localStart.year,
+      localStart.month,
+      localStart.day,
+    );
+    expect(summaries[localDate]?.distanceM, 3200);
+    expect(summaries[localDate]?.runCount, 1);
+  });
+
   test('day progress is clamped to one', () {
     final summary = calculatorSummary(distanceM: 5000);
 

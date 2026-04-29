@@ -8,6 +8,18 @@ import org.junit.Test
 
 class WearRunUiModelsTest {
     @Test
+    fun layoutProfileUsesCompactBelowRegularBreakpoint() {
+        assertEquals(WearLayoutProfile.Compact, WearRunLayoutModel.profileFor(192, 192))
+        assertEquals(WearLayoutProfile.Compact, WearRunLayoutModel.profileFor(224, 300))
+    }
+
+    @Test
+    fun layoutProfileUsesRegularAtRegularBreakpoint() {
+        assertEquals(WearLayoutProfile.Regular, WearRunLayoutModel.profileFor(225, 225))
+        assertEquals(WearLayoutProfile.Regular, WearRunLayoutModel.profileFor(260, 260))
+    }
+
+    @Test
     fun pageModelUsesThreePagesForNormalRuns() {
         val pages = WearActiveRunPageModel.pagesFor(WearRunState())
 
@@ -48,7 +60,7 @@ class WearRunUiModelsTest {
             ),
         )
 
-        assertEquals("GHOST\nSTART", model.primaryLabel)
+        assertEquals("고스트\n시작", model.primaryLabel)
         assertTrue(model.usesGhostPrimary)
         assertEquals("일반 시작", model.secondaryLabel)
         assertEquals("전송 대기 2개", model.pendingLabel)
@@ -61,7 +73,7 @@ class WearRunUiModelsTest {
     fun readyModelUsesNormalStartWithoutGhost() {
         val model = WearReadyScreenModelBuilder.from(WearRunState())
 
-        assertEquals("START", model.primaryLabel)
+        assertEquals("시작", model.primaryLabel)
         assertFalse(model.usesGhostPrimary)
         assertNull(model.secondaryLabel)
         assertNull(model.pendingLabel)
@@ -75,6 +87,7 @@ class WearRunUiModelsTest {
                 elapsedMs = 600_000L,
                 distanceM = 2_000.0,
                 averagePaceSecPerKm = 300.0,
+                averageCadenceSpm = 171.8,
                 caloriesKcal = 123.0,
                 isGhostRun = true,
                 ghostConfig = ghostConfig(),
@@ -89,6 +102,7 @@ class WearRunUiModelsTest {
         assertEquals("10:00", model.elapsed)
         assertEquals("2.00 km", model.distance)
         assertEquals("5:00/km", model.averagePace)
+        assertEquals("172 spm", model.averageCadence)
         assertEquals("123 kcal", model.calories)
         assertEquals("뒤처지는 중 -0:08", model.ghostResult)
     }

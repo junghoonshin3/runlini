@@ -16,6 +16,7 @@ class WearRunDraftJsonMapperTest {
             distanceM = 1_000.5,
             sourceDeviceName = "Pixel Watch",
             caloriesKcal = 72.4,
+            averageCadenceSpm = 171.8,
             ghostSummary = WearRunGhostSummary(
                 result = "ahead",
                 timeGapMs = 12_000L,
@@ -50,6 +51,7 @@ class WearRunDraftJsonMapperTest {
         assertEquals("draft-1", json.getString("externalWorkoutId"))
         assertEquals("Pixel Watch", json.getString("sourceDeviceName"))
         assertEquals(72.4, json.getDouble("caloriesKcal"), 0.01)
+        assertEquals(171.8, json.getDouble("averageCadenceSpm"), 0.01)
         assertEquals("ahead", ghost.getString("result"))
         assertEquals(12_000L, ghost.getLong("timeGapMs"))
         assertEquals("ghost-1", ghost.getString("ghostSessionId"))

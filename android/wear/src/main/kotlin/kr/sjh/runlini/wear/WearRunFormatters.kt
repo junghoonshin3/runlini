@@ -41,6 +41,11 @@ internal object WearRunFormatters {
         return caloriesKcal?.roundToInt()?.let { "$it kcal" } ?: "--"
     }
 
+    fun cadence(cadenceSpm: Double?): String {
+        val cadence = cadenceSpm?.takeIf { it.isFinite() && it > 0 } ?: return "--"
+        return "${cadence.roundToInt()} spm"
+    }
+
     fun ghostStatusLabel(status: WearGhostStatus?): String {
         return when (status) {
             WearGhostStatus.Ahead -> "앞서는 중"

@@ -19,6 +19,9 @@ class WearRunStateReducer {
             averagePaceSecPerKm = null,
             currentPaceSecPerKm = null,
             speedMps = null,
+            cadenceSpm = null,
+            averageCadenceSpm = null,
+            cadenceSampleCount = 0,
             heartRateBpm = null,
             caloriesKcal = null,
             points = emptyList(),
@@ -103,6 +106,18 @@ class WearRunStateReducer {
         } else {
             state.averagePaceSecPerKm
         }
+        val cadence = sample.cadenceSpm?.takeIf { it.isFinite() && it > 0 }
+        val cadenceSampleCount = if (cadence == null) {
+            state.cadenceSampleCount
+        } else {
+            state.cadenceSampleCount + 1
+        }
+        val averageCadence = if (cadence == null) {
+            state.averageCadenceSpm
+        } else {
+            val previousTotal = (state.averageCadenceSpm ?: 0.0) * state.cadenceSampleCount
+            (previousTotal + cadence) / cadenceSampleCount
+        }
         val points = if (sample.points.isEmpty()) {
             state.points
         } else {
@@ -116,6 +131,9 @@ class WearRunStateReducer {
             averagePaceSecPerKm = averagePace,
             currentPaceSecPerKm = sample.paceSecPerKm ?: state.currentPaceSecPerKm,
             speedMps = sample.speedMps ?: state.speedMps,
+            cadenceSpm = cadence ?: state.cadenceSpm,
+            averageCadenceSpm = averageCadence,
+            cadenceSampleCount = cadenceSampleCount,
             heartRateBpm = sample.heartRateBpm ?: state.heartRateBpm,
             caloriesKcal = sample.caloriesKcal ?: state.caloriesKcal,
             points = points,

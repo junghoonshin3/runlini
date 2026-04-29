@@ -177,13 +177,12 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
 }
 
 bool _isSameDay(DateTime left, DateTime right) {
-  return left.year == right.year &&
-      left.month == right.month &&
-      left.day == right.day;
+  return _localDate(left) == _localDate(right);
 }
 
 DateTime _localDate(DateTime date) {
-  return DateTime(date.year, date.month, date.day);
+  final local = date.toLocal();
+  return DateTime(local.year, local.month, local.day);
 }
 
 String _selectedDateLabel(DateTime date) {

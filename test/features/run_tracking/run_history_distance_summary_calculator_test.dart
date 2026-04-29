@@ -54,6 +54,33 @@ void main() {
     expect(year.runCount, 3);
     expect(year.goalDistanceM, 12000);
   });
+
+  test('includes UTC Wear sessions in the matching local period', () {
+    final localStart = DateTime(2026, 4, 29, 0, 30);
+
+    final week = calculator.calculate(
+      sessions: [_session('wear-utc', localStart.toUtc(), 3200)],
+      period: RunHistoryPeriod.week,
+      now: localStart,
+      goalDistanceM: 6000,
+    );
+    final month = calculator.calculate(
+      sessions: [_session('wear-utc', localStart.toUtc(), 3200)],
+      period: RunHistoryPeriod.month,
+      now: localStart,
+      goalDistanceM: 10000,
+    );
+    final year = calculator.calculate(
+      sessions: [_session('wear-utc', localStart.toUtc(), 3200)],
+      period: RunHistoryPeriod.year,
+      now: localStart,
+      goalDistanceM: 12000,
+    );
+
+    expect(week.distanceM, 3200);
+    expect(month.distanceM, 3200);
+    expect(year.distanceM, 3200);
+  });
 }
 
 RunSession _session(String id, DateTime startedAt, double distanceM) {

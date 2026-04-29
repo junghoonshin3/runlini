@@ -33,7 +33,8 @@ class RunHistoryCalendarSummaryCalculator {
   }
 
   DateTime localDate(DateTime dateTime) {
-    return DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final local = dateTime.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 }
 

@@ -14,8 +14,9 @@ class RunHistoryDistanceSummaryCalculator {
     final range = _rangeFor(period, now);
     final periodSessions = sessions
         .where((RunSession session) {
-          return !session.startedAt.isBefore(range.start) &&
-              session.startedAt.isBefore(range.end);
+          final startedAt = session.startedAt.toLocal();
+          return !startedAt.isBefore(range.start) &&
+              startedAt.isBefore(range.end);
         })
         .toList(growable: false);
     final distanceM = periodSessions.fold<double>(

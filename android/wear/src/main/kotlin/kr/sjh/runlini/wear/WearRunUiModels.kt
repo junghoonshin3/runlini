@@ -35,7 +35,7 @@ internal object WearReadyScreenModelBuilder {
             null
         }
         return WearReadyScreenModel(
-            primaryLabel = if (hasGhost) "GHOST\nSTART" else "START",
+            primaryLabel = if (hasGhost) "고스트\n시작" else "시작",
             usesGhostPrimary = hasGhost,
             secondaryLabel = if (hasGhost) "일반 시작" else null,
             statusLabel = state.errorMessage ?: state.statusMessage ?: "준비 완료",
@@ -51,6 +51,7 @@ internal data class WearReviewSummaryModel(
     val elapsed: String,
     val distance: String,
     val averagePace: String,
+    val averageCadence: String,
     val calories: String,
     val ghostResult: String?,
     val pendingLabel: String?,
@@ -62,6 +63,7 @@ internal object WearReviewSummaryModelBuilder {
             elapsed = WearRunFormatters.elapsed(state.elapsedMs),
             distance = WearRunFormatters.distance(state.distanceM),
             averagePace = WearRunFormatters.pace(state.averagePaceSecPerKm),
+            averageCadence = WearRunFormatters.cadence(state.averageCadenceSpm),
             calories = WearRunFormatters.calories(state.caloriesKcal),
             ghostResult = if (state.isGhostRun) {
                 WearRunFormatters.ghostResult(state.ghostFrame)
