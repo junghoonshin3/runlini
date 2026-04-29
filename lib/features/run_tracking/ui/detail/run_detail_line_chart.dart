@@ -33,7 +33,7 @@ class RunDetailLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final validSamples = samples
-        .where((sample) => sample.value.isFinite)
+        .where((sample) => _isRenderableValue(sample.value))
         .toList(growable: false);
     if (validSamples.isEmpty) {
       return _EmptyChart(title: title, label: emptyLabel);
@@ -207,6 +207,10 @@ class RunDetailLineChart extends StatelessWidget {
   bool _isEdgeValue(double value, double min, double max) {
     final tolerance = math.max(0.01, (max - min).abs() * 0.02);
     return (value - min).abs() <= tolerance || (value - max).abs() <= tolerance;
+  }
+
+  bool _isRenderableValue(double value) {
+    return value.isFinite && value.abs() <= 1000000000000;
   }
 }
 
