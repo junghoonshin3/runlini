@@ -3,13 +3,20 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
 class RunSyncStatusBadge extends StatelessWidget {
-  const RunSyncStatusBadge({super.key, required this.status});
+  const RunSyncStatusBadge({
+    super.key,
+    required this.status,
+    this.recordSource = RunSessionRecordSource.appLocal,
+    this.sourceSummary = '',
+  });
 
   final RunSessionSyncStatus status;
+  final RunSessionRecordSource recordSource;
+  final String sourceSummary;
 
   @override
   Widget build(BuildContext context) {
-    final color = _color(status);
+    final color = _color(status, recordSource);
     return Container(
       key: const Key('run-sync-status-badge'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -19,7 +26,11 @@ class RunSyncStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        runSyncStatusLabel(status),
+        runSyncStatusLabel(
+          status,
+          recordSource: recordSource,
+          sourceSummary: sourceSummary,
+        ),
         style: TextStyle(
           color: color,
           fontSize: 12,
@@ -31,7 +42,23 @@ class RunSyncStatusBadge extends StatelessWidget {
   }
 }
 
-String runSyncStatusLabel(RunSessionSyncStatus status) {
+String runSyncStatusLabel(
+  RunSessionSyncStatus status, {
+  RunSessionRecordSource recordSource = RunSessionRecordSource.appLocal,
+  String sourceSummary = '',
+}) {
+  if (recordSource == RunSessionRecordSource.healthConnect) {
+    return _healthSourceLabel(
+      sourceSummary: sourceSummary,
+      fallback: 'Health Connect에서 가져옴',
+    );
+  }
+  if (recordSource == RunSessionRecordSource.healthKit) {
+    return _healthSourceLabel(
+      sourceSummary: sourceSummary,
+      fallback: '건강 앱에서 가져옴',
+    );
+  }
   return switch (status) {
     RunSessionSyncStatus.synced => 'Health 백업됨',
     RunSessionSyncStatus.syncFailed => '백업 실패',
@@ -40,7 +67,40 @@ String runSyncStatusLabel(RunSessionSyncStatus status) {
   };
 }
 
-Color _color(RunSessionSyncStatus status) {
+String _healthSourceLabel({
+  required String sourceSummary,
+  required String fallback,
+}) {
+  final source = _humanSourceName(sourceSummary);
+  if (source == null) {
+    return fallback;
+  }
+  return '$source에서 가져옴';
+}
+
+String? _humanSourceName(String sourceSummary) {
+  final summary = sourceSummary.trim();
+  if (summary.isEmpty ||
+      summary == 'Health Connect' ||
+      summary == 'Apple Health') {
+    return null;
+  }
+  final parts = summary.split('·');
+  final candidate = (parts.length > 1 ? parts.last : summary).trim();
+  if (candidate.isEmpty || _looksLikePackageName(candidate)) {
+    return null;
+  }
+  return candidate;
+}
+
+bool _looksLikePackageName(String value) {
+  return RegExp(r'^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$').hasMatch(value);
+}
+
+Color _color(RunSessionSyncStatus status, RunSessionRecordSource recordSource) {
+  if (recordSource != RunSessionRecordSource.appLocal) {
+    return AppColors.voltGreen;
+  }
   return switch (status) {
     RunSessionSyncStatus.synced => AppColors.voltGreen,
     RunSessionSyncStatus.syncFailed => AppColors.electricRed,

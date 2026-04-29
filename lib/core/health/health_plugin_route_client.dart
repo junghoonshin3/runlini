@@ -19,6 +19,16 @@ class HealthPluginRouteClient implements HealthRouteClient {
   final Duration lookback;
 
   @override
+  Future<HealthRouteConnectionStatus> checkConnection() {
+    return _connectionStatus(requestAuthorization: false);
+  }
+
+  @override
+  Future<HealthRouteConnectionStatus> requestConnection() {
+    return _connectionStatus(requestAuthorization: true);
+  }
+
+  @override
   Future<HealthRouteImportResult> importRecentSessions({
     required bool requestAuthorization,
   }) async {
@@ -93,6 +103,69 @@ class HealthPluginRouteClient implements HealthRouteClient {
     } catch (error) {
       debugPrint('Runlini health history import failed: $error');
       return HealthRouteImportResult.failed(error.toString());
+    }
+  }
+
+  Future<HealthRouteConnectionStatus> _connectionStatus({
+    required bool requestAuthorization,
+  }) async {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return const HealthRouteConnectionStatus.unavailable(
+        'Health connection is only available on Android and iOS.',
+      );
+    }
+
+    try {
+      await _health.configure();
+      if (Platform.isAndroid) {
+        final status = await _health.getHealthConnectSdkStatus();
+        if (status != HealthConnectSdkStatus.sdkAvailable) {
+          if (requestAuthorization &&
+              status ==
+                  HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired) {
+            await _health.installHealthConnect();
+          }
+          return const HealthRouteConnectionStatus.unavailable(
+            'Health Connect is not available.',
+          );
+        }
+      }
+
+      final permissionTypes =
+          HealthRunPermissionScope.permissionTypesForPlatform(
+            isAndroid: Platform.isAndroid,
+          );
+      final permissionAccesses =
+          HealthRunPermissionScope.permissionAccessesForPlatform(
+            isAndroid: Platform.isAndroid,
+          );
+      final hasPermissions = await _health.hasPermissions(
+        permissionTypes,
+        permissions: permissionAccesses,
+      );
+      if (hasPermissions == true) {
+        return const HealthRouteConnectionStatus.connected();
+      }
+
+      if (!requestAuthorization) {
+        return const HealthRouteConnectionStatus.connectionNeeded(
+          'Health permissions are required.',
+        );
+      }
+
+      final authorized = await _health.requestAuthorization(
+        permissionTypes,
+        permissions: permissionAccesses,
+      );
+      if (!authorized) {
+        return const HealthRouteConnectionStatus.connectionNeeded(
+          'Health permissions are required.',
+        );
+      }
+      return const HealthRouteConnectionStatus.connected();
+    } catch (error) {
+      debugPrint('Runlini health connection failed: $error');
+      return HealthRouteConnectionStatus.failed(error.toString());
     }
   }
 

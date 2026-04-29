@@ -186,6 +186,16 @@ class _HealthRoute implements HealthRouteClient {
   final List<RunSession> sessions;
 
   @override
+  Future<HealthRouteConnectionStatus> checkConnection() async {
+    return const HealthRouteConnectionStatus.connectionNeeded();
+  }
+
+  @override
+  Future<HealthRouteConnectionStatus> requestConnection() async {
+    return const HealthRouteConnectionStatus.connected();
+  }
+
+  @override
   Future<HealthRouteImportResult> importRecentSessions({
     required bool requestAuthorization,
   }) async {
@@ -198,6 +208,16 @@ class _HealthRoute implements HealthRouteClient {
 
 class _TrackingHealthRoute implements HealthRouteClient {
   final List<bool> requestAuthorizationValues = <bool>[];
+
+  @override
+  Future<HealthRouteConnectionStatus> checkConnection() async {
+    return const HealthRouteConnectionStatus.connectionNeeded();
+  }
+
+  @override
+  Future<HealthRouteConnectionStatus> requestConnection() async {
+    return const HealthRouteConnectionStatus.connectionNeeded();
+  }
 
   @override
   Future<HealthRouteImportResult> importRecentSessions({
