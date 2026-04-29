@@ -12,11 +12,12 @@ while the implementation remains HealthKit-backed.
   pull-to-refresh only sync when permission is already available.
 - Health-imported records keep `recordSource` as `healthConnect` or
   `healthKit`; app-created records keep `appLocal`.
-- History and detail badges use `recordSource` to distinguish backup status from
-  import provenance. App-local synced records show `Health 백업됨`; imported
-  records show their source app when available, otherwise the platform fallback.
+- History and detail badges use `recordSource` to distinguish app-created
+  Health send status from import provenance. App-local synced records show
+  `Health Connect에 저장됨` or `건강 앱에 저장됨`; imported records show their
+  source app when available, otherwise the platform fallback.
 - Manual app-record backup is not a primary Settings action. Backup retry is
-  shown only when app-local records have failed Health backup.
+  shown only when app-local records have failed Health send.
 - Wear OS manual draft sync remains an Android-only Settings card.
 
 ## Status
@@ -25,6 +26,10 @@ while the implementation remains HealthKit-backed.
 - [x] Rework Settings > 연동 into Health and Wear entries.
 - [x] Show Health-imported record provenance in History and Detail.
 - [x] Hide the backup entry unless failed app-local backups need retry.
+- [x] Keep failed-backup counting and retry scoped to app-local records.
+- [x] Replace user-facing backup copy with Health Connect / 건강 앱 send copy.
+- [x] Treat Health route export as best-effort so invalid route samples do not
+  leave locally saved workouts in 전송 실패.
 - [x] Add focused widget/unit tests for platform labels and source badges.
 - [x] Run full validation after formatting.
 

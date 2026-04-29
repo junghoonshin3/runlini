@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/core/health/health_workout_deleter.dart';
 import 'package:runlini/core/health/health_workout_export_result.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
@@ -239,10 +241,11 @@ class RunSessionDetailScreen extends ConsumerWidget {
   }
 
   String _backupMessage(HealthWorkoutExportResult result) {
+    final target = healthDestinationSendTarget(defaultTargetPlatform);
     return switch (result.kind) {
-      HealthWorkoutExportResultKind.synced => 'Health 백업 완료',
-      HealthWorkoutExportResultKind.skipped => 'Health 백업을 진행하지 못했어요',
-      HealthWorkoutExportResultKind.failed => 'Health 백업 실패',
+      HealthWorkoutExportResultKind.synced => '$target 보냈어요.',
+      HealthWorkoutExportResultKind.skipped => '$target 보내지 못했어요.',
+      HealthWorkoutExportResultKind.failed => '$target 보내지 못했어요.',
     };
   }
 }

@@ -94,12 +94,13 @@
 - If companion watch communication is unavailable, keep the phone-first run flow
   usable and queue or skip watch-only companion updates without implying Health
   permission failure.
-- Health backup status is stored on the local run record, so skipped or failed
-  export can be shown and retried without hiding the saved run.
+- Health backup status is stored on the local run record, but user-facing copy
+  should call it sending to Health Connect / 건강 앱. Skipped or failed export
+  can be shown and retried without hiding the saved run.
 - Settings should not show a standalone backup entry. Retry appears only when
-  a local run has failed Health backup.
+  a local run has failed Health send.
 - Health-imported records must show their import origin instead of the app-local
-  backup label: Health Connect records use the Health Connect/source app label,
-  and HealthKit records use 건강 앱/source app labeling.
+  send-status label: Health Connect records use the Health Connect/source app
+  label, and HealthKit records use 건강 앱/source app labeling.
 - Explain why each permission is needed in plain runner language.
 - Android uses Google Maps; iOS uses Apple Maps.

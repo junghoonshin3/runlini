@@ -1,11 +1,38 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_sync_status_badge.dart';
 
 void main() {
-  test('keeps app-local Health backup labels', () {
-    expect(runSyncStatusLabel(RunSessionSyncStatus.synced), 'Health 백업됨');
-    expect(runSyncStatusLabel(RunSessionSyncStatus.syncFailed), '백업 실패');
+  test('labels app-local Health send status by platform destination', () {
+    expect(
+      runSyncStatusLabel(
+        RunSessionSyncStatus.synced,
+        targetPlatform: TargetPlatform.android,
+      ),
+      'Health Connect에 저장됨',
+    );
+    expect(
+      runSyncStatusLabel(
+        RunSessionSyncStatus.syncFailed,
+        targetPlatform: TargetPlatform.android,
+      ),
+      'Health Connect 전송 실패',
+    );
+    expect(
+      runSyncStatusLabel(
+        RunSessionSyncStatus.synced,
+        targetPlatform: TargetPlatform.iOS,
+      ),
+      '건강 앱에 저장됨',
+    );
+    expect(
+      runSyncStatusLabel(
+        RunSessionSyncStatus.syncFailed,
+        targetPlatform: TargetPlatform.iOS,
+      ),
+      '건강 앱 전송 실패',
+    );
   });
 
   test('labels imported Health records by their source', () {

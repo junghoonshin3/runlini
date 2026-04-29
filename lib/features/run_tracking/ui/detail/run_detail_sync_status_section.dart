@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_compact_button.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_sync_status_badge.dart';
@@ -10,12 +12,14 @@ class RunDetailSyncStatusSection extends StatelessWidget {
     required this.status,
     this.recordSource = RunSessionRecordSource.appLocal,
     this.sourceSummary = '',
+    this.targetPlatform,
     this.onRetry,
   });
 
   final RunSessionSyncStatus status;
   final RunSessionRecordSource recordSource;
   final String sourceSummary;
+  final TargetPlatform? targetPlatform;
   final VoidCallback? onRetry;
 
   @override
@@ -38,12 +42,15 @@ class RunDetailSyncStatusSection extends StatelessWidget {
             status: status,
             recordSource: recordSource,
             sourceSummary: sourceSummary,
+            targetPlatform: targetPlatform,
           ),
           if (status == RunSessionSyncStatus.syncFailed &&
               recordSource == RunSessionRecordSource.appLocal)
             RunCompactButton(
               key: const Key('retry-health-backup-button'),
-              label: 'Health 백업 다시 시도',
+              label: healthDestinationRetryLabel(
+                targetPlatform ?? defaultTargetPlatform,
+              ),
               onPressed: onRetry,
               danger: true,
             ),

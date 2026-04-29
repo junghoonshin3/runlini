@@ -35,7 +35,7 @@ void main() {
     expect(find.text('Health Connect 연결됨'), findsOneWidget);
     expect(find.text('백업'), findsNothing);
     expect(find.textContaining('앱 기록 백업'), findsNothing);
-    expect(find.textContaining('백업 실패 재시도'), findsNothing);
+    expect(find.textContaining('백업 실패'), findsNothing);
   });
 
   testWidgets('iOS Health card uses the user-facing Health app name', (
@@ -60,10 +60,10 @@ void main() {
     );
 
     expect(find.text('백업'), findsNothing);
-    expect(find.text('백업 실패 1개'), findsOneWidget);
-    expect(find.text('다시 시도'), findsOneWidget);
+    expect(find.text('Health Connect 전송 실패 1개'), findsOneWidget);
+    expect(find.text('다시 보내기'), findsOneWidget);
     expect(find.textContaining('앱 기록 백업'), findsNothing);
-    expect(find.textContaining('백업 실패 재시도'), findsNothing);
+    expect(find.textContaining('백업 실패'), findsNothing);
 
     await tester.tap(
       find.byKey(const Key('settings-health-retry-failed-button')),
@@ -71,8 +71,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(recorder.finishCalls, 1);
-    expect(find.text('1개의 기록을 Health에 다시 백업했어요.'), findsOneWidget);
+    expect(find.text('1개의 기록을 Health Connect로 보냈어요.'), findsOneWidget);
   });
+
+  testWidgets('iOS failed backups use Health app send labels', (tester) async {
+    await _pumpSettings(
+      tester,
+      _HealthRoute(),
+      TargetPlatform.iOS,
+      repository: FakeRunSessionRepository([_failedRun()]),
+      recorder: FakeHealthWorkoutRecorder(),
+    );
+
+    expect(find.text('건강 앱 전송 실패 1개'), findsOneWidget);
+    expect(find.text('다시 보내기'), findsOneWidget);
+    expect(find.byKey(const Key('settings-wear-sync-button')), findsNothing);
+  });
+
+  testWidgets(
+    'failed backup retry does not report success when nothing syncs',
+    (tester) async {
+      final recorder = FakeHealthWorkoutRecorder(
+        finishResult: const HealthWorkoutExportResult.failed('write failed'),
+      );
+      await _pumpSettings(
+        tester,
+        _HealthRoute(),
+        TargetPlatform.android,
+        repository: FakeRunSessionRepository([_failedRun()]),
+        recorder: recorder,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('settings-health-retry-failed-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(recorder.finishCalls, 1);
+      expect(find.text('Health Connect로 다시 보내지 못했어요.'), findsOneWidget);
+      expect(find.textContaining('0개의 기록'), findsNothing);
+    },
+  );
 }
 
 Future<void> _pumpSettings(
