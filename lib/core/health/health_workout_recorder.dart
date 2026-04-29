@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:runlini/core/health/health_plugin_workout_platform.dart';
 import 'package:runlini/core/health/health_workout_export_result.dart';
 import 'package:runlini/core/health/health_workout_platform.dart';
+import 'package:runlini/core/health/health_workout_route_sanitizer.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 
 export 'package:runlini/core/health/health_workout_export_result.dart';
@@ -37,10 +37,12 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
   PlatformHealthWorkoutRecorder({required HealthWorkoutPlatform platform})
     : _platform = platform;
 
-  static const Distance _distance = Distance();
+  static const HealthWorkoutRouteSanitizer _routeSanitizer =
+      HealthWorkoutRouteSanitizer();
 
   final HealthWorkoutPlatform _platform;
   String? _activeRouteBuilderId;
+  bool _hasActiveHealthExport = false;
   bool _hasPreparedRunPermissions = false;
   HealthRunPreparationResult _preparedRunPermissionsResult =
       HealthRunPreparationResult.unavailable;
@@ -82,10 +84,17 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
         return;
       }
 
-      _activeRouteBuilderId = await _platform.startWorkoutRoute();
+      _hasActiveHealthExport = true;
+      try {
+        _activeRouteBuilderId = await _platform.startWorkoutRoute();
+      } catch (error) {
+        debugPrint('Runlini health route export start skipped: $error');
+        _activeRouteBuilderId = null;
+      }
     } catch (error) {
       debugPrint('Runlini health export start skipped: $error');
       _activeRouteBuilderId = null;
+      _hasActiveHealthExport = false;
     }
   }
 
@@ -112,58 +121,74 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
     required List<RunPoint> recordedPoints,
   }) async {
     final builderId = _activeRouteBuilderId;
+    final hasActiveHealthExport = _hasActiveHealthExport;
     _activeRouteBuilderId = null;
-    if (builderId == null) {
+    _hasActiveHealthExport = false;
+    if (!hasActiveHealthExport) {
+      await _discardRouteQuietly(builderId);
       return const HealthWorkoutExportResult.skipped(
         'Health export was not started.',
       );
     }
 
+    if (!endedAt.isAfter(startedAt)) {
+      await _discardRouteQuietly(builderId);
+      return const HealthWorkoutExportResult.skipped(
+        'Health workout time was invalid.',
+      );
+    }
+
+    final routePoints = _routeSanitizer.sanitize(
+      recordedPoints,
+      maxTimestampRelMs: endedAt.difference(startedAt).inMilliseconds,
+    );
+    final totalDistanceMeters = _routeSanitizer.calculateDistanceMeters(
+      routePoints,
+    );
+    final wroteWorkout = await _writeWorkout(
+      builderId: builderId,
+      startedAt: startedAt,
+      endedAt: endedAt,
+      totalDistanceMeters: totalDistanceMeters,
+    );
+    if (wroteWorkout.kind != HealthWorkoutExportResultKind.synced) {
+      return wroteWorkout;
+    }
+
+    final workoutUuid = await _findWorkoutUuid(startedAt, endedAt);
+    if (workoutUuid == null) {
+      await _discardRouteQuietly(builderId);
+      return const HealthWorkoutExportResult.synced(
+        message: 'Health workout was written, but record id was unavailable.',
+      );
+    }
+
+    if (builderId == null) {
+      return HealthWorkoutExportResult.synced(
+        externalId: workoutUuid,
+        message: 'Health workout was sent without route data.',
+      );
+    }
+
+    final routeLocations = _toWorkoutRouteLocations(
+      startedAt: startedAt,
+      recordedPoints: routePoints,
+    );
+    if (routeLocations.isEmpty) {
+      await _discardRouteQuietly(builderId);
+      return HealthWorkoutExportResult.synced(externalId: workoutUuid);
+    }
+
     try {
-      final totalDistanceMeters = _calculateDistanceMeters(recordedPoints);
-      final wroteWorkout = await _platform.writeRunningWorkout(
-        startedAt: startedAt,
-        endedAt: endedAt,
-        totalDistanceMeters: totalDistanceMeters == 0
-            ? null
-            : totalDistanceMeters,
-      );
-      if (!wroteWorkout) {
-        await _platform.discardWorkoutRoute(builderId);
-        return const HealthWorkoutExportResult.failed(
-          'Health workout write failed.',
-        );
-      }
-
-      final workoutUuid = await _platform.findWorkoutUuid(
-        startedAt: startedAt,
-        endedAt: endedAt,
-      );
-      if (workoutUuid == null) {
-        await _platform.discardWorkoutRoute(builderId);
-        return const HealthWorkoutExportResult.synced(
-          message: 'Health workout was written, but record id was unavailable.',
-        );
-      }
-
-      final routeLocations = _toWorkoutRouteLocations(
-        startedAt: startedAt,
-        recordedPoints: recordedPoints,
-      );
-      if (routeLocations.isEmpty) {
-        await _platform.discardWorkoutRoute(builderId);
-        return HealthWorkoutExportResult.synced(externalId: workoutUuid);
-      }
-
       final inserted = await _platform.insertWorkoutRouteData(
         builderId: builderId,
         locations: routeLocations,
       );
       if (!inserted) {
-        await _platform.discardWorkoutRoute(builderId);
+        await _discardRouteQuietly(builderId);
         return HealthWorkoutExportResult.synced(
           externalId: workoutUuid,
-          message: 'Health workout was backed up without route data.',
+          message: 'Health workout was sent without route data.',
         );
       }
 
@@ -173,9 +198,47 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
       );
       return HealthWorkoutExportResult.synced(externalId: workoutUuid);
     } catch (error) {
+      debugPrint('Runlini health route export skipped: $error');
+      await _discardRouteQuietly(builderId);
+      return HealthWorkoutExportResult.synced(
+        externalId: workoutUuid,
+        message: 'Health workout was sent without route data.',
+      );
+    }
+  }
+
+  Future<HealthWorkoutExportResult> _writeWorkout({
+    required String? builderId,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required int? totalDistanceMeters,
+  }) async {
+    try {
+      final wroteWorkout = await _platform.writeRunningWorkout(
+        startedAt: startedAt,
+        endedAt: endedAt,
+        totalDistanceMeters: totalDistanceMeters,
+      );
+      if (!wroteWorkout) {
+        await _discardRouteQuietly(builderId);
+        return const HealthWorkoutExportResult.failed(
+          'Health workout write failed.',
+        );
+      }
+      return const HealthWorkoutExportResult.synced();
+    } catch (error) {
       debugPrint('Runlini health export finish skipped: $error');
-      await _platform.discardWorkoutRoute(builderId);
+      await _discardRouteQuietly(builderId);
       return HealthWorkoutExportResult.failed(error.toString());
+    }
+  }
+
+  Future<String?> _findWorkoutUuid(DateTime startedAt, DateTime endedAt) async {
+    try {
+      return _platform.findWorkoutUuid(startedAt: startedAt, endedAt: endedAt);
+    } catch (error) {
+      debugPrint('Runlini health workout lookup skipped: $error');
+      return null;
     }
   }
 
@@ -183,6 +246,11 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
   Future<void> cancelRunCapture() async {
     final builderId = _activeRouteBuilderId;
     _activeRouteBuilderId = null;
+    _hasActiveHealthExport = false;
+    await _discardRouteQuietly(builderId);
+  }
+
+  Future<void> _discardRouteQuietly(String? builderId) async {
     if (builderId == null) {
       return;
     }
@@ -194,39 +262,15 @@ class PlatformHealthWorkoutRecorder implements HealthWorkoutRecorder {
     }
   }
 
-  int _calculateDistanceMeters(List<RunPoint> recordedPoints) {
-    if (recordedPoints.length < 2) {
-      return 0;
-    }
-
-    var totalMeters = 0.0;
-    for (var index = 1; index < recordedPoints.length; index += 1) {
-      final previous = recordedPoints[index - 1];
-      final current = recordedPoints[index];
-      totalMeters += _distance.as(
-        LengthUnit.Meter,
-        LatLng(previous.latitude, previous.longitude),
-        LatLng(current.latitude, current.longitude),
-      );
-    }
-
-    return totalMeters.round();
-  }
-
   List<WorkoutRouteLocation> _toWorkoutRouteLocations({
     required DateTime startedAt,
     required List<RunPoint> recordedPoints,
   }) {
-    if (recordedPoints.isEmpty) {
+    if (recordedPoints.length < 2) {
       return const <WorkoutRouteLocation>[];
     }
 
-    final sortedPoints = List<RunPoint>.from(recordedPoints)
-      ..sort(
-        (RunPoint left, RunPoint right) =>
-            left.timestampRelMs.compareTo(right.timestampRelMs),
-      );
-    return sortedPoints
+    return recordedPoints
         .map(
           (RunPoint point) => WorkoutRouteLocation(
             latitude: point.latitude,
