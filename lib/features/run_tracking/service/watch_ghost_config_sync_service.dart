@@ -23,7 +23,51 @@ class WatchGhostConfigSyncService {
     await _client.sendGhostConfig(config);
   }
 
+  Future<void> syncRecentSessions(
+    List<RunSession> sessions, {
+    String? selectedSessionId,
+  }) async {
+    final runnableConfigs =
+        sessions
+            .map(WatchGhostConfig.fromSession)
+            .where((WatchGhostConfig config) => config.canRunOnWatch)
+            .toList(growable: false)
+          ..sort((WatchGhostConfig left, WatchGhostConfig right) {
+            return right.startedAt.compareTo(left.startedAt);
+          });
+    final selectedConfig = selectedSessionId == null
+        ? null
+        : _firstWhereOrNull(
+            runnableConfigs,
+            (WatchGhostConfig config) => config.id == selectedSessionId,
+          );
+    final configs = <WatchGhostConfig>[
+      ...(selectedConfig == null
+          ? const <WatchGhostConfig>[]
+          : <WatchGhostConfig>[selectedConfig]),
+      ...runnableConfigs.where(
+        (WatchGhostConfig config) => config.id != selectedConfig?.id,
+      ),
+    ].take(3).toList(growable: false);
+    final activeId =
+        selectedConfig?.id ?? (configs.isEmpty ? null : configs.first.id);
+
+    await _client.sendGhostConfigs(activeId: activeId, configs: configs);
+  }
+
   Future<void> clear() {
     return _client.clearGhostConfig();
   }
+}
+
+WatchGhostConfig? _firstWhereOrNull(
+  List<WatchGhostConfig> configs,
+  bool Function(WatchGhostConfig config) test,
+) {
+  for (final config in configs) {
+    if (test(config)) {
+      return config;
+    }
+  }
+  return null;
 }

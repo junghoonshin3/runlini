@@ -18,7 +18,50 @@ class WatchGhostConfig {
   final String sourceSummary;
   final List<RunPoint> points;
 
-  bool get canRunOnWatch => points.length >= 2;
+  bool get canRunOnWatch {
+    if (durationMs <= 0 || !distanceM.isFinite || distanceM <= 0) {
+      return false;
+    }
+    if (points.length < 2) {
+      return false;
+    }
+
+    var minLat = double.infinity;
+    var maxLat = double.negativeInfinity;
+    var minLng = double.infinity;
+    var maxLng = double.negativeInfinity;
+    int? previousTimestampRelMs;
+
+    for (final point in points) {
+      if (!_isValidLatitude(point.latitude) ||
+          !_isValidLongitude(point.longitude) ||
+          point.timestampRelMs < 0 ||
+          !_isValidPace(point.paceSecPerKm) ||
+          !_isValidSpeed(point.speedMps) ||
+          !_isValidPositiveValue(point.horizontalAccuracyM) ||
+          !_isValidPositiveValue(point.speedAccuracyMps) ||
+          !_isValidElevation(point.elevationM)) {
+        return false;
+      }
+
+      final previous = previousTimestampRelMs;
+      if (previous != null && point.timestampRelMs <= previous) {
+        return false;
+      }
+      previousTimestampRelMs = point.timestampRelMs;
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    if (points.last.timestampRelMs <= 0) {
+      return false;
+    }
+
+    return maxLat - minLat <= _maxRouteSpanDegrees &&
+        maxLng - minLng <= _maxRouteSpanDegrees;
+  }
 
   factory WatchGhostConfig.fromSession(RunSession session) {
     return WatchGhostConfig(
@@ -56,4 +99,30 @@ class WatchGhostConfig {
       'points': points.map((RunPoint point) => point.toJson()).toList(),
     };
   }
+}
+
+const double _maxRouteSpanDegrees = 2;
+
+bool _isValidLatitude(double value) {
+  return value.isFinite && value >= -90 && value <= 90;
+}
+
+bool _isValidLongitude(double value) {
+  return value.isFinite && value >= -180 && value <= 180;
+}
+
+bool _isValidPace(double? value) {
+  return value == null || (value.isFinite && value > 0);
+}
+
+bool _isValidSpeed(double? value) {
+  return value == null || (value.isFinite && value >= 0);
+}
+
+bool _isValidPositiveValue(double? value) {
+  return value == null || (value.isFinite && value > 0);
+}
+
+bool _isValidElevation(double? value) {
+  return value == null || (value.isFinite && value.abs() <= 12000);
 }

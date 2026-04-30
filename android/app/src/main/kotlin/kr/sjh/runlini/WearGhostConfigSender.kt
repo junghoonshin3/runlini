@@ -34,8 +34,19 @@ class WearGhostConfigSender internal constructor(
         )
     }
 
+    fun sendConfigs(activeId: String?, json: String) {
+        transport.putConfigs(
+            path = ConfigsPath,
+            enabled = true,
+            activeId = activeId,
+            json = json,
+            updatedAtEpochMs = System.currentTimeMillis(),
+        )
+    }
+
     companion object {
         const val ConfigPath = "/runlini/phone/ghost_config"
+        const val ConfigsPath = "/runlini/phone/ghost_configs"
     }
 }
 
@@ -45,6 +56,14 @@ internal interface WearGhostConfigTransport {
         enabled: Boolean,
         ghostSessionId: String?,
         json: String?,
+        updatedAtEpochMs: Long,
+    )
+
+    fun putConfigs(
+        path: String,
+        enabled: Boolean,
+        activeId: String?,
+        json: String,
         updatedAtEpochMs: Long,
     )
 }
@@ -69,6 +88,26 @@ private class DataLayerWearGhostConfigTransport(
                     Asset.createFromBytes(it.toByteArray(Charsets.UTF_8)),
                 )
             }
+            asPutDataRequest().setUrgent()
+        }
+        dataClient.putDataItem(request)
+    }
+
+    override fun putConfigs(
+        path: String,
+        enabled: Boolean,
+        activeId: String?,
+        json: String,
+        updatedAtEpochMs: Long,
+    ) {
+        val request = PutDataMapRequest.create(path).run {
+            dataMap.putBoolean("enabled", enabled)
+            dataMap.putLong("updatedAtEpochMs", updatedAtEpochMs)
+            activeId?.let { dataMap.putString("activeId", it) }
+            dataMap.putAsset(
+                "ghostConfigsJson",
+                Asset.createFromBytes(json.toByteArray(Charsets.UTF_8)),
+            )
             asPutDataRequest().setUrgent()
         }
         dataClient.putDataItem(request)

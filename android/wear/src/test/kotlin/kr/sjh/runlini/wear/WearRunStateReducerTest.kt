@@ -5,6 +5,41 @@ import org.junit.Test
 
 class WearRunStateReducerTest {
     @Test
+    fun countdownStateIsNotActiveOrSaveable() {
+        val state = WearRunStateReducer().countdown(
+            WearRunState(),
+            remainingSeconds = 3,
+        )
+
+        assertEquals(WearRunPhase.CountingDown, state.phase)
+        assertEquals(3, state.countdownRemainingSeconds)
+        assertEquals(false, state.isActive)
+        assertEquals(false, state.canSave)
+    }
+
+    @Test
+    fun startClearsCountdownFields() {
+        val reducer = WearRunStateReducer()
+        val countdown = reducer.countdown(
+            WearRunState(),
+            remainingSeconds = 2,
+            ghostConfig = ghostConfig(),
+        )
+
+        val state = reducer.start(
+            countdown,
+            epochMs = 1_000L,
+            realtimeMs = 10L,
+            ghostConfig = countdown.countdownStartGhostConfig,
+        )
+
+        assertEquals(WearRunPhase.Running, state.phase)
+        assertEquals(null, state.countdownRemainingSeconds)
+        assertEquals(null, state.countdownStartGhostConfig)
+        assertEquals(true, state.isGhostRun)
+    }
+
+    @Test
     fun applyMetricsMapsSensorUpdatesIntoUiState() {
         val reducer = WearRunStateReducer()
         val started = reducer.start(WearRunState(), epochMs = 1_000L, realtimeMs = 10L)
@@ -76,27 +111,43 @@ class WearRunStateReducerTest {
     @Test
     fun readyStateExposesPendingDraftCount() {
         val state = WearRunStateReducer().ready(
-            message = "다시 전송함 · 폰 확인 대기",
             pendingDraftCount = 2,
         )
 
         assertEquals(WearRunPhase.Ready, state.phase)
         assertEquals(2, state.pendingDraftCount)
-        assertEquals("다시 전송함 · 폰 확인 대기", state.statusMessage)
+        assertEquals(null, state.statusMessage)
+    }
+
+    @Test
+    fun savedFeedbackStateIsNotActiveOrSaveable() {
+        val state = WearRunStateReducer().feedback(
+            type = WearRunFeedbackType.Saved,
+            pendingDraftCount = 2,
+        )
+
+        assertEquals(WearRunPhase.Feedback, state.phase)
+        assertEquals(WearRunFeedbackType.Saved, state.feedbackType)
+        assertEquals(2, state.pendingDraftCount)
+        assertEquals(false, state.isActive)
+        assertEquals(false, state.canSave)
+    }
+
+    @Test
+    fun discardedFeedbackStateIsNotActiveOrSaveable() {
+        val state = WearRunStateReducer().feedback(
+            type = WearRunFeedbackType.Discarded,
+        )
+
+        assertEquals(WearRunPhase.Feedback, state.phase)
+        assertEquals(WearRunFeedbackType.Discarded, state.feedbackType)
+        assertEquals(false, state.isActive)
+        assertEquals(false, state.canSave)
     }
 
     @Test
     fun startCanAttachGhostConfigForGhostRun() {
-        val ghostConfig = WearGhostConfig(
-            id = "ghost-1",
-            durationMs = 600_000L,
-            distanceM = 1_000.0,
-            sourceSummary = "한강 1K",
-            points = listOf(
-                WearRunPoint(37.0, 127.0, 0L),
-                WearRunPoint(37.0, 127.01, 600_000L),
-            ),
-        )
+        val ghostConfig = ghostConfig()
 
         val state = WearRunStateReducer().start(
             WearRunState(),
@@ -107,6 +158,19 @@ class WearRunStateReducerTest {
 
         assertEquals(true, state.isGhostRun)
         assertEquals("ghost-1", state.ghostConfig?.id)
+    }
+
+    private fun ghostConfig(): WearGhostConfig {
+        return WearGhostConfig(
+            id = "ghost-1",
+            durationMs = 600_000L,
+            distanceM = 1_000.0,
+            sourceSummary = "한강 1K",
+            points = listOf(
+                WearRunPoint(37.0, 127.0, 0L),
+                WearRunPoint(37.0, 127.01, 600_000L),
+            ),
+        )
     }
 
     @Test

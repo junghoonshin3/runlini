@@ -31,9 +31,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+
+private const val CountdownSeconds = 3
+private const val CompletionFeedbackMs = 1_000L
 
 class HealthServicesRunController(
     context: Context,
@@ -46,39 +50,64 @@ class HealthServicesRunController(
     private val draftSender: WearDraftSender = WearDraftSender(context),
     private val ghostStore: WearGhostConfigStore = WearGhostConfigStore(context),
     private val activeRunStore: WearActiveRunStore = WearActiveRunStore(context),
+    private val settingsStore: WearRunSettingsStore = WearRunSettingsStore(context),
+    private val alertController: WearRunAlertController =
+        WearRunAlertController(
+            haptics = AndroidWearRunHaptics(context),
+            speech = AndroidWearRunSpeech(context),
+        ),
     private val ghostGapCalculator: WearGhostGapCalculator = WearGhostGapCalculator(),
+    private val debugGpsInjectionMerger: WearDebugGpsInjectionMerger =
+        WearDebugGpsInjectionMerger(),
     private val deviceName: String =
         "${Build.MANUFACTURER.trim()} ${Build.MODEL.trim()}".trim(),
 ) {
     private val _state = MutableStateFlow(
         WearRunState(
+            settings = settingsStore.current(),
             pendingDraftCount = pendingQueue.pendingCount(),
             ghostConfig = ghostStore.current(),
+            ghostConfigs = ghostStore.cached(),
         ),
     )
     val state: StateFlow<WearRunState> = _state.asStateFlow()
 
     private var tickerJob: Job? = null
+    private var countdownJob: Job? = null
+    private var feedbackJob: Job? = null
     private var lastCheckpointRealtimeMs: Long = 0L
+
+    init {
+        if (BuildConfig.DEBUG) {
+            observeDebugGpsInjection()
+        }
+        observeGhostConfigChanges()
+    }
 
     private val callback = object : ExerciseUpdateCallback {
         override fun onExerciseUpdateReceived(update: androidx.health.services.client.data.ExerciseUpdate) {
+            val now = nowRealtimeMs()
             val phase = when {
                 update.exerciseStateInfo.state.isPaused -> WearRunPhase.Paused
                 update.exerciseStateInfo.state.isEnded -> WearRunPhase.Reviewing
                 else -> WearRunPhase.Running
             }
-            val sample = update.latestMetrics.toMetricSample(
-                activeDurationMs = update.activeDurationCheckpoint
-                    ?.activeDuration
-                    ?.toMillis(),
+            val sample = debugGpsInjectionMerger.filterHealthServicesSample(
+                update.latestMetrics.toMetricSample(
+                    activeDurationMs = update.activeDurationCheckpoint
+                        ?.activeDuration
+                        ?.toMillis(),
+                ),
+                now,
             )
             val next = reducer.applyMetrics(
                 _state.value.copy(phase = phase),
                 sample,
-                nowRealtimeMs(),
+                now,
             )
-            setState(applyGhostFrame(next))
+            val framed = applyGhostFrame(next)
+            emitRunAlerts(framed)
+            setState(framed)
         }
 
         override fun onAvailabilityChanged(
@@ -100,12 +129,14 @@ class HealthServicesRunController(
     fun recoverActiveRun() {
         scope.launch {
             val pendingCount = pendingQueue.pendingCount()
+            val ghostConfigs = ghostStore.cached()
             val ghostConfig = ghostStore.current()
+            val settings = settingsStore.current()
             val recovered = activeRunStore.restore(
                 nowRealtimeMs = nowRealtimeMs(),
                 pendingDraftCount = pendingCount,
                 fallbackGhostConfig = ghostConfig,
-            )
+            )?.copy(settings = settings, ghostConfigs = ghostConfigs)
 
             val exerciseInfo = runCatching {
                 exerciseClient.getCurrentExerciseInfo()
@@ -117,6 +148,8 @@ class HealthServicesRunController(
                         reducer.ready(
                             pendingDraftCount = pendingCount,
                             ghostConfig = ghostConfig,
+                            ghostConfigs = ghostConfigs,
+                            settings = settings,
                         ),
                         "다른 운동이 진행 중이에요",
                     )
@@ -144,6 +177,8 @@ class HealthServicesRunController(
                             reducer.ready(
                                 pendingDraftCount = pendingCount,
                                 ghostConfig = ghostConfig,
+                                ghostConfigs = ghostConfigs,
+                                settings = settings,
                             ),
                             "진행 중 기록 복구 정보가 없어요",
                         )
@@ -163,24 +198,49 @@ class HealthServicesRunController(
     }
 
     fun startRun() {
-        startRunInternal(ghostConfig = null)
+        startCountdown(ghostConfig = null)
     }
 
     fun startGhostRun() {
-        val config = ghostStore.current() ?: _state.value.ghostConfig
+        val config = _state.value.ghostConfig ?: ghostStore.current()
         if (config == null) {
             startRun()
             return
         }
-        startRunInternal(ghostConfig = config)
+        startCountdown(ghostConfig = config)
+    }
+
+    private fun startCountdown(ghostConfig: WearGhostConfig?) {
+        if (_state.value.phase != WearRunPhase.Ready || countdownJob?.isActive == true) {
+            return
+        }
+        feedbackJob?.cancel()
+        val settings = settingsStore.current()
+        if (!WearRunStartPolicy.shouldUseCountdown(settings)) {
+            startRunInternal(ghostConfig)
+            return
+        }
+        countdownJob = scope.launch {
+            for (remaining in CountdownSeconds downTo 1) {
+                _state.value = reducer.countdown(
+                    _state.value.copy(settings = settings),
+                    remainingSeconds = remaining,
+                    ghostConfig = ghostConfig,
+                )
+                delay(1_000L)
+            }
+            countdownJob = null
+            startRunInternal(ghostConfig)
+        }
     }
 
     private fun startRunInternal(ghostConfig: WearGhostConfig?) {
         scope.launch {
+            alertController.reset()
             val startedAt = System.currentTimeMillis()
             setState(
                 reducer.start(
-                    _state.value,
+                    _state.value.copy(settings = settingsStore.current()),
                     startedAt,
                     nowRealtimeMs(),
                     ghostConfig,
@@ -197,8 +257,10 @@ class HealthServicesRunController(
                 activeRunStore.clear()
                 _state.value = reducer.fail(
                     WearRunState(
+                        settings = settingsStore.current(),
                         pendingDraftCount = pendingQueue.pendingCount(),
                         ghostConfig = ghostStore.current(),
+                        ghostConfigs = ghostStore.cached(),
                     ),
                     error.shortMessage("러닝 시작 실패"),
                 )
@@ -208,6 +270,7 @@ class HealthServicesRunController(
 
     fun pauseRun() {
         scope.launch {
+            countdownJob?.cancel()
             runCatching { exerciseClient.pauseExercise() }
             setState(reducer.pause(_state.value, nowRealtimeMs()), forceCheckpoint = true)
         }
@@ -223,6 +286,7 @@ class HealthServicesRunController(
 
     fun stopRun() {
         scope.launch {
+            countdownJob?.cancel()
             runCatching { exerciseClient.endExercise() }
             setState(
                 applyGhostFrame(
@@ -240,60 +304,76 @@ class HealthServicesRunController(
 
     fun saveDraft() {
         scope.launch {
+            countdownJob?.cancel()
+            feedbackJob?.cancel()
             val draft = WearRunDraftPayload.fromState(_state.value, deviceName)
             pendingQueue.enqueue(draft)
-            val message = runCatching {
-                val count = withContext(Dispatchers.IO) {
+            runCatching {
+                withContext(Dispatchers.IO) {
                     draftSender.sendPending(pendingQueue)
                 }
-                if (count > 0) "저장됨 · 폰 확인 대기" else "저장됨"
-            }.getOrElse {
-                "저장됨 · 폰 연결 시 전송"
             }
             clearCallback()
             activeRunStore.clear()
-            _state.value = reducer.ready(
-                message,
-                pendingQueue.pendingCount(),
-                ghostStore.current(),
-            )
+            showCompletionFeedback(WearRunFeedbackType.Saved)
         }
     }
 
     fun discardDraft() {
         scope.launch {
+            countdownJob?.cancel()
+            feedbackJob?.cancel()
             clearCallback()
             activeRunStore.clear()
-            _state.value = reducer.ready(
-                "삭제됨",
-                pendingQueue.pendingCount(),
-                ghostStore.current(),
-            )
+            showCompletionFeedback(WearRunFeedbackType.Discarded)
         }
     }
 
     fun flushPendingDrafts() {
-        flushPendingDrafts(showStatus = false)
+        flushPendingDraftsInternal()
     }
 
     fun retryPendingDrafts() {
-        flushPendingDrafts(showStatus = true)
+        flushPendingDraftsInternal()
     }
 
     fun refreshPendingDraftCount() {
+        val cachedGhosts = ghostStore.cached()
         _state.value = _state.value.copy(
+            settings = if (_state.value.isActive) {
+                _state.value.settings
+            } else {
+                settingsStore.current()
+            },
             pendingDraftCount = pendingQueue.pendingCount(),
             ghostConfig = if (_state.value.isActive) {
                 _state.value.ghostConfig
             } else {
                 ghostStore.current()
             },
+            ghostConfigs = if (_state.value.isActive) {
+                _state.value.ghostConfigs
+            } else {
+                cachedGhosts
+            },
         )
     }
 
-    private fun flushPendingDrafts(showStatus: Boolean) {
+    fun refreshGhostConfigCache() {
+        if (_state.value.phase != WearRunPhase.Ready) {
+            return
+        }
+        val cached = ghostStore.cached()
+        _state.value = _state.value.copy(
+            ghostConfig = ghostStore.current(),
+            ghostConfigs = cached,
+            errorMessage = null,
+        )
+    }
+
+    private fun flushPendingDraftsInternal() {
         scope.launch {
-            val result = runCatching {
+            runCatching {
                 withContext(Dispatchers.IO) { draftSender.sendPending(pendingQueue) }
             }
             val pendingCount = pendingQueue.pendingCount()
@@ -302,36 +382,76 @@ class HealthServicesRunController(
                 setState(current.copy(pendingDraftCount = pendingCount))
                 return@launch
             }
-            val message = if (showStatus) {
-                result.fold(
-                    onSuccess = { sent ->
-                        if (pendingCount == 0) {
-                            "전송 대기 없음"
-                        } else if (sent > 0) {
-                            "다시 전송함 · 폰 확인 대기"
-                        } else {
-                            "전송 대기 없음"
-                        }
-                    },
-                    onFailure = { "폰 연결 시 전송" },
-                )
-            } else {
-                current.statusMessage
-            }
             _state.value = current.copy(
+                settings = settingsStore.current(),
                 pendingDraftCount = pendingCount,
                 ghostConfig = ghostStore.current(),
-                statusMessage = message,
+                ghostConfigs = ghostStore.cached(),
+                statusMessage = current.statusMessage,
                 errorMessage = null,
             )
         }
     }
 
+    private fun showCompletionFeedback(type: WearRunFeedbackType) {
+        _state.value = reducer.feedback(
+            type = type,
+            pendingDraftCount = pendingQueue.pendingCount(),
+            ghostConfig = ghostStore.current(),
+            ghostConfigs = ghostStore.cached(),
+            settings = settingsStore.current(),
+        )
+        feedbackJob = scope.launch {
+            delay(CompletionFeedbackMs)
+            val current = _state.value
+            if (current.phase == WearRunPhase.Feedback && current.feedbackType == type) {
+                _state.value = reducer.ready(
+                    pendingDraftCount = pendingQueue.pendingCount(),
+                    ghostConfig = ghostStore.current(),
+                    ghostConfigs = ghostStore.cached(),
+                    settings = settingsStore.current(),
+                )
+            }
+        }
+    }
+
+    fun selectGhostConfig(id: String) {
+        if (_state.value.phase != WearRunPhase.Ready) {
+            return
+        }
+        val selected = ghostStore.select(id) ?: return
+        val cached = ghostStore.cached()
+        _state.value = _state.value.copy(
+            ghostConfig = selected,
+            ghostConfigs = cached,
+            statusMessage = null,
+            errorMessage = null,
+        )
+    }
+
+    fun updateSettings(settings: WearRunSettings) {
+        settingsStore.save(settings)
+        _state.value = _state.value.copy(settings = settings)
+    }
+
+    private fun observeGhostConfigChanges() {
+        scope.launch {
+            WearGhostConfigChangeBus.changes.collect {
+                refreshGhostConfigCache()
+            }
+        }
+    }
+
     fun dispose(clearExerciseCallback: Boolean = true) {
+        countdownJob?.cancel()
+        countdownJob = null
+        feedbackJob?.cancel()
+        feedbackJob = null
         stopTicker()
         if (clearExerciseCallback) {
             scope.launch { clearCallback() }
         }
+        alertController.shutdown()
     }
 
     private suspend fun clearCallback() {
@@ -368,13 +488,42 @@ class HealthServicesRunController(
         if (tickerJob?.isActive == true) return
         tickerJob = scope.launch {
             while (_state.value.phase == WearRunPhase.Running) {
-                _state.value = applyGhostFrame(
+                val next = applyGhostFrame(
                     reducer.tick(_state.value, nowRealtimeMs()),
                 )
-                persistActiveState(_state.value)
+                emitRunAlerts(next)
+                _state.value = next
+                persistActiveState(next)
                 delay(1000)
             }
         }
+    }
+
+    private fun observeDebugGpsInjection() {
+        scope.launch {
+            WearDebugGpsInjectionBus.samples.collect { sample ->
+                if (_state.value.phase != WearRunPhase.Running) return@collect
+                val now = nowRealtimeMs()
+                val metricSample = debugGpsInjectionMerger.recordInjectedSample(sample, now)
+                val next = reducer.applyMetrics(_state.value, metricSample, now)
+                val framed = applyGhostFrame(next)
+                emitRunAlerts(framed)
+                setState(framed)
+            }
+        }
+    }
+
+    private fun emitRunAlerts(state: WearRunState) {
+        alertController.onDistanceChanged(
+            distanceM = state.distanceM,
+            averagePaceSecPerKm = state.averagePaceSecPerKm,
+            settings = state.settings,
+        )
+        alertController.onGhostFrame(
+            frame = state.ghostFrame,
+            settings = state.settings,
+            isGhostRun = state.isGhostRun,
+        )
     }
 
     private fun applyGhostFrame(state: WearRunState): WearRunState {
@@ -403,7 +552,13 @@ class HealthServicesRunController(
     }
 
     private fun persistActiveState(state: WearRunState, force: Boolean = false) {
-        if (state.phase == WearRunPhase.Ready) return
+        if (
+            state.phase == WearRunPhase.Ready ||
+            state.phase == WearRunPhase.CountingDown ||
+            state.phase == WearRunPhase.Feedback
+        ) {
+            return
+        }
         val now = nowRealtimeMs()
         if (!force && state.phase == WearRunPhase.Running && now - lastCheckpointRealtimeMs < 5_000L) {
             return
@@ -420,10 +575,14 @@ class HealthServicesRunController(
             _state.value = reducer.ready(
                 pendingDraftCount = pendingQueue.pendingCount(),
                 ghostConfig = ghostStore.current(),
+                ghostConfigs = ghostStore.cached(),
+                settings = settingsStore.current(),
             )
             return
         }
         val reviewState = recovered.copy(
+            settings = settingsStore.current(),
+            ghostConfigs = ghostStore.cached(),
             phase = WearRunPhase.Reviewing,
             endedAtEpochMs = recovered.endedAtEpochMs ?: System.currentTimeMillis(),
             elapsedBeforeActiveSegmentMs = recovered.elapsedMs,

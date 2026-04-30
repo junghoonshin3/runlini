@@ -131,12 +131,27 @@ private fun WearRunRecordingService.actions(): WearRunActions {
     return WearRunActions(
         onStart = ::startRun,
         onGhostStart = ::startGhostRun,
-        onRetryPending = ::retryPendingDrafts,
         onPause = ::pauseRun,
         onStop = ::stopRun,
         onResume = ::resumeRun,
         onSave = ::saveDraft,
         onDiscard = ::discardDraft,
+        onCountdownEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(countdownEnabled = enabled))
+        },
+        onVibrationEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(vibrationEnabled = enabled))
+        },
+        onKmAlertEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(kmAlertEnabled = enabled))
+        },
+        onVoiceCueEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(voiceCueEnabled = enabled))
+        },
+        onGhostVoiceCueEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(ghostVoiceCueEnabled = enabled))
+        },
+        onGhostSelect = ::selectGhostConfig,
     )
 }
 

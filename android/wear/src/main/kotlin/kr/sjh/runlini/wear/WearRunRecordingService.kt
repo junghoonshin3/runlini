@@ -49,12 +49,10 @@ class WearRunRecordingService : Service() {
     }
 
     fun startRun() {
-        ensureForeground(controller.state.value)
         controller.startRun()
     }
 
     fun startGhostRun() {
-        ensureForeground(controller.state.value)
         controller.startGhostRun()
     }
 
@@ -91,6 +89,14 @@ class WearRunRecordingService : Service() {
         controller.refreshPendingDraftCount()
     }
 
+    fun updateSettings(settings: WearRunSettings) {
+        controller.updateSettings(settings)
+    }
+
+    fun selectGhostConfig(id: String) {
+        controller.selectGhostConfig(id)
+    }
+
     inner class LocalBinder : Binder() {
         fun service(): WearRunRecordingService = this@WearRunRecordingService
     }
@@ -110,7 +116,10 @@ class WearRunRecordingService : Service() {
                     } else {
                         ensureForeground(state)
                     }
-                    WearRunPhase.Ready -> if (foregroundActive) {
+                    WearRunPhase.Ready,
+                    WearRunPhase.CountingDown,
+                    WearRunPhase.Feedback,
+                    -> if (foregroundActive) {
                         foregroundActive = false
                         ServiceCompat.stopForeground(
                             this@WearRunRecordingService,

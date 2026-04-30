@@ -72,6 +72,15 @@ object WearGhostConfigJsonMapper {
         )
     }
 
+    fun toJsonObject(config: WearGhostConfig): JSONObject {
+        return JSONObject()
+            .put("id", config.id)
+            .put("durationMs", config.durationMs)
+            .put("distanceM", config.distanceM)
+            .put("sourceSummary", config.sourceSummary)
+            .put("points", JSONArray(config.points.map(::pointToJson)))
+    }
+
     private fun pointsFromJson(pointsJson: JSONArray): List<WearRunPoint> {
         return buildList {
             for (index in 0 until pointsJson.length()) {
@@ -90,6 +99,18 @@ object WearGhostConfigJsonMapper {
                 )
             }
         }
+    }
+
+    private fun pointToJson(point: WearRunPoint): JSONObject {
+        return JSONObject()
+            .put("lat", point.latitude)
+            .put("lng", point.longitude)
+            .put("timestampRelMs", point.timestampRelMs)
+            .put("paceSecPerKm", point.paceSecPerKm)
+            .put("speedMps", point.speedMps)
+            .put("horizontalAccuracyM", point.horizontalAccuracyM)
+            .put("elevationM", point.elevationM)
+            .put("heartRateBpm", point.heartRateBpm)
     }
 
     private fun JSONObject.optionalDouble(name: String): Double? {

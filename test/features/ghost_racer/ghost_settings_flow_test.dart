@@ -34,6 +34,18 @@ void main() {
     expect(find.byKey(const Key('settings-button')), findsOneWidget);
     await tester.tap(find.byKey(const Key('ghost-control-chip')));
     await pumpUntilFound(tester, find.byKey(const Key('ghost-session-sheet')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('ghost-session-draggable-sheet')),
+      findsOneWidget,
+    );
+    final handleFinder = find.byKey(const Key('ghost-session-drag-handle'));
+    final initialHandleTop = tester.getTopLeft(handleFinder).dy;
+    await tester.drag(handleFinder, const Offset(0, -360));
+    await tester.pumpAndSettle();
+    final expandedHandleTop = tester.getTopLeft(handleFinder).dy;
+    expect(expandedHandleTop, lessThan(initialHandleTop));
 
     tester
         .widget<RunSessionSummaryTile>(

@@ -3,6 +3,21 @@ package kr.sjh.runlini.wear
 import java.util.UUID
 
 class WearRunStateReducer {
+    fun countdown(
+        state: WearRunState,
+        remainingSeconds: Int,
+        ghostConfig: WearGhostConfig? = null,
+    ): WearRunState {
+        return state.copy(
+            phase = WearRunPhase.CountingDown,
+            countdownRemainingSeconds = remainingSeconds.coerceAtLeast(1),
+            countdownStartGhostConfig = ghostConfig,
+            statusMessage = null,
+            errorMessage = null,
+            feedbackType = null,
+        )
+    }
+
     fun start(
         state: WearRunState,
         epochMs: Long,
@@ -11,6 +26,8 @@ class WearRunStateReducer {
     ): WearRunState {
         return state.copy(
             phase = WearRunPhase.Running,
+            countdownRemainingSeconds = null,
+            countdownStartGhostConfig = null,
             sessionId = UUID.randomUUID().toString(),
             startedAtEpochMs = epochMs,
             endedAtEpochMs = null,
@@ -33,6 +50,7 @@ class WearRunStateReducer {
             ghostFrame = null,
             statusMessage = null,
             errorMessage = null,
+            feedbackType = null,
         )
     }
 
@@ -76,16 +94,41 @@ class WearRunStateReducer {
         message: String? = null,
         pendingDraftCount: Int = 0,
         ghostConfig: WearGhostConfig? = null,
+        ghostConfigs: List<WearGhostConfig> = emptyList(),
+        settings: WearRunSettings = WearRunSettings(),
     ): WearRunState {
         return WearRunState(
+            settings = settings,
             pendingDraftCount = pendingDraftCount,
             ghostConfig = ghostConfig,
+            ghostConfigs = ghostConfigs,
             statusMessage = message,
         )
     }
 
+    fun feedback(
+        type: WearRunFeedbackType,
+        pendingDraftCount: Int = 0,
+        ghostConfig: WearGhostConfig? = null,
+        ghostConfigs: List<WearGhostConfig> = emptyList(),
+        settings: WearRunSettings = WearRunSettings(),
+    ): WearRunState {
+        return WearRunState(
+            phase = WearRunPhase.Feedback,
+            settings = settings,
+            pendingDraftCount = pendingDraftCount,
+            ghostConfig = ghostConfig,
+            ghostConfigs = ghostConfigs,
+            feedbackType = type,
+        )
+    }
+
     fun fail(state: WearRunState, message: String): WearRunState {
-        return state.copy(errorMessage = message, statusMessage = null)
+        return state.copy(
+            errorMessage = message,
+            statusMessage = null,
+            feedbackType = null,
+        )
     }
 
     fun applyMetrics(

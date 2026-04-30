@@ -67,6 +67,20 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(null)
                     }
                 }
+                "sendGhostConfigs" -> {
+                    val activeId = call.argument<String>("activeId")
+                    val json = call.argument<String>("json")
+                    if (json == null) {
+                        result.error(
+                            "missing_configs",
+                            "sendGhostConfigs requires a json argument.",
+                            null,
+                        )
+                    } else {
+                        sender.sendConfigs(activeId, json)
+                        result.success(null)
+                    }
+                }
                 "clearGhostConfig" -> {
                     sender.clearConfig()
                     result.success(null)

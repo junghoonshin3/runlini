@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission
         android:name="android.permission.BODY_SENSORS"
         android:maxSdkVersion="35" />
@@ -57,6 +58,10 @@
                     android:scheme="wear"
                     android:host="*"
                     android:pathPrefix="/runlini/phone/ghost_config" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/runlini/phone/ghost_configs" />
             </intent-filter>
         </service>
     </application>

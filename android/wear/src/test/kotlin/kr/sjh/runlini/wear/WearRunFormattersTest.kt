@@ -9,6 +9,10 @@ class WearRunFormattersTest {
         assertEquals("01:05", WearRunFormatters.elapsed(65_000L))
         assertEquals("1:01:05", WearRunFormatters.elapsed(3_665_000L))
         assertEquals("1.23 km", WearRunFormatters.distance(1_234.0))
+        assertEquals(
+            WearDistanceHeroText("1.23", "km"),
+            WearRunFormatters.distanceHero(1_234.0),
+        )
         assertEquals("5:07/km", WearRunFormatters.pace(307.0))
         assertEquals("12.0 km/h", WearRunFormatters.speed(3.333))
         assertEquals("172 spm", WearRunFormatters.cadence(171.6))
@@ -24,6 +28,34 @@ class WearRunFormattersTest {
         assertEquals("--", WearRunFormatters.heartRate(null))
         assertEquals("--", WearRunFormatters.calories(null))
         assertEquals("--", WearRunFormatters.ghostGap(null))
+    }
+
+    @Test
+    fun distanceHeroTypographyShrinksForLongValues() {
+        assertEquals(
+            38,
+            WearDistanceHeroTypography.valueSizeSp("0.01", WearLayoutProfile.Compact),
+        )
+        assertEquals(
+            34,
+            WearDistanceHeroTypography.valueSizeSp("12.10", WearLayoutProfile.Compact),
+        )
+        assertEquals(
+            30,
+            WearDistanceHeroTypography.valueSizeSp("100.00", WearLayoutProfile.Compact),
+        )
+        assertEquals(
+            44,
+            WearDistanceHeroTypography.valueSizeSp("0.01", WearLayoutProfile.Regular),
+        )
+        assertEquals(
+            39,
+            WearDistanceHeroTypography.valueSizeSp("42.20", WearLayoutProfile.Regular),
+        )
+        assertEquals(
+            34,
+            WearDistanceHeroTypography.valueSizeSp("100.00", WearLayoutProfile.Regular),
+        )
     }
 
     private fun ghostFrame(gapMs: Long): WearGhostFrame {

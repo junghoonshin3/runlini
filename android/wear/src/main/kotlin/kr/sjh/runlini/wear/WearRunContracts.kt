@@ -5,7 +5,9 @@ import org.json.JSONObject
 import java.time.Instant
 import java.util.UUID
 
-enum class WearRunPhase { Ready, Running, Paused, Reviewing }
+enum class WearRunPhase { Ready, CountingDown, Running, Paused, Reviewing, Feedback }
+
+enum class WearRunFeedbackType { Saved, Discarded }
 
 data class WearRunPoint(
     val latitude: Double,
@@ -31,6 +33,9 @@ data class WearMetricSample(
 
 data class WearRunState(
     val phase: WearRunPhase = WearRunPhase.Ready,
+    val settings: WearRunSettings = WearRunSettings(),
+    val countdownRemainingSeconds: Int? = null,
+    val countdownStartGhostConfig: WearGhostConfig? = null,
     val sessionId: String = "",
     val startedAtEpochMs: Long = 0,
     val endedAtEpochMs: Long? = null,
@@ -49,10 +54,12 @@ data class WearRunState(
     val activeSegmentStartedRealtimeMs: Long? = null,
     val pendingDraftCount: Int = 0,
     val ghostConfig: WearGhostConfig? = null,
+    val ghostConfigs: List<WearGhostConfig> = emptyList(),
     val isGhostRun: Boolean = false,
     val ghostFrame: WearGhostFrame? = null,
     val statusMessage: String? = null,
     val errorMessage: String? = null,
+    val feedbackType: WearRunFeedbackType? = null,
 ) {
     val isActive: Boolean
         get() = phase == WearRunPhase.Running || phase == WearRunPhase.Paused

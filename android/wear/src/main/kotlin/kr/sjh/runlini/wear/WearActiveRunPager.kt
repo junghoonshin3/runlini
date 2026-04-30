@@ -28,10 +28,15 @@ import androidx.wear.compose.material3.Text
 internal fun WearActiveRunPager(
     state: WearRunState,
     onPause: () -> Unit,
+    onResume: () -> Unit,
     onStop: () -> Unit,
 ) {
     val pages = WearActiveRunPageModel.pagesFor(state)
-    val pagerState = rememberPagerState(pageCount = { pages.size })
+    val initialPage = WearActiveRunPageModel.initialPageFor(pages)
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { pages.size },
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         HorizontalPager(
             state = pagerState,
@@ -42,7 +47,9 @@ internal fun WearActiveRunPager(
                 WearActiveRunPage.Ghost -> WearGhostPage(state)
                 WearActiveRunPage.Details -> WearDetailsPage(state)
                 WearActiveRunPage.Controls -> WearRunControlsPage(
+                    state = state,
                     onPause = onPause,
+                    onResume = onResume,
                     onStop = onStop,
                 )
             }
@@ -68,9 +75,11 @@ private fun WearCorePage(state: WearRunState) {
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        WearPrimaryMetric(
+        val distanceHero = WearRunFormatters.distanceHero(state.distanceM)
+        WearDistanceHeroMetric(
             label = "거리",
-            value = WearRunFormatters.distance(state.distanceM),
+            value = distanceHero.value,
+            unit = distanceHero.unit,
             valueColor = RunliniWearColors.VoltGreen,
             profile = spec.profile,
         )
@@ -174,32 +183,59 @@ private fun WearDetailsPage(state: WearRunState) {
 
 @Composable
 private fun WearRunControlsPage(
+    state: WearRunState,
     onPause: () -> Unit,
+    onResume: () -> Unit,
     onStop: () -> Unit,
 ) {
-    WearRunPageFrame(reservePageIndicator = true) { spec ->
-        val buttonHeight = if (spec.profile == WearLayoutProfile.Regular) {
-            52.dp
-        } else {
-            48.dp
-        }
-        WearActionButton(
-            label = "일시정지",
+    val model = WearRunControlModelBuilder.from(state)
+    WearRunPageFrame(
+        verticalArrangement = Arrangement.SpaceBetween,
+        reservePageIndicator = true,
+    ) { spec ->
+        val compact = spec.profile == WearLayoutProfile.Compact
+        val controlSize = if (compact) 62.dp else 72.dp
+        val bottomBalance = if (compact) 18.dp else 22.dp
+
+        Text(
+            text = "RUNLINI",
             color = RunliniWearColors.Chalk,
-            textColor = RunliniWearColors.Black,
-            modifier = Modifier.fillMaxWidth(),
-            height = buttonHeight,
-            onClick = onPause,
+            fontSize = if (compact) 19.sp else 23.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(10.dp))
-        WearActionButton(
-            label = "종료",
-            color = RunliniWearColors.ElectricRed,
-            textColor = RunliniWearColors.Chalk,
+
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            height = buttonHeight,
-            onClick = onStop,
-        )
+            horizontalArrangement = Arrangement.spacedBy(
+                space = if (compact) 12.dp else 16.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            WearCircleButton(
+                label = model.primaryLabel,
+                color = if (model.primaryIsResume) {
+                    RunliniWearColors.VoltGreen
+                } else {
+                    RunliniWearColors.Chalk
+                },
+                textColor = RunliniWearColors.Black,
+                size = controlSize,
+                icon = model.primaryIcon,
+                onClick = if (model.primaryIsResume) onResume else onPause,
+            )
+            WearCircleButton(
+                label = model.secondaryLabel,
+                color = RunliniWearColors.ElectricRed,
+                textColor = RunliniWearColors.Chalk,
+                size = controlSize,
+                icon = model.secondaryIcon,
+                onClick = onStop,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(bottomBalance))
     }
 }
 
