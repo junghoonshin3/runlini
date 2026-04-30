@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/core/health/health_route_client.dart';
+import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
 import 'package:runlini/features/health_sync/types/health_sync_status.dart';
@@ -11,6 +11,7 @@ import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.da
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/settings/ui/settings_failed_backup_retry.dart';
 import 'package:runlini/features/settings/ui/settings_section_panel.dart';
 import 'package:runlini/features/settings/ui/settings_sync_card.dart';
 
@@ -70,7 +71,7 @@ class SettingsSyncSection extends ConsumerWidget {
                 ),
                 if (failedCount > 0) ...[
                   const SizedBox(height: 10),
-                  _FailedBackupRetry(
+                  SettingsFailedBackupRetry(
                     destinationLabel: healthLabel,
                     failedCount: failedCount,
                     isBusy: isHealthBusy || isBackupBusy,
@@ -90,7 +91,7 @@ class SettingsSyncSection extends ConsumerWidget {
                 wearSyncState.isLoading,
               ),
               actionKey: const Key('settings-wear-sync-button'),
-              actionLabel: wearSyncState.isLoading ? '처리 중...' : '워치 기록 동기화',
+              actionLabel: wearSyncState.isLoading ? '처리 중...' : '워치 동기화',
               onPressed: wearSyncState.isLoading
                   ? null
                   : () => _syncWearRecords(context, ref),
@@ -192,12 +193,27 @@ class SettingsSyncSection extends ConsumerWidget {
     final result = await ref
         .read(wearDraftSyncControllerProvider.notifier)
         .syncPendingDrafts();
+    await _syncRecentGhostConfigs(ref);
     if (!context.mounted) {
       return;
     }
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(_wearSyncMessage(result))));
+  }
+
+  Future<void> _syncRecentGhostConfigs(WidgetRef ref) async {
+    try {
+      final sessions = await ref.read(runSessionListProvider.future);
+      final selectedSessionId = ref
+          .read(ghostSettingsProvider)
+          .selectedSessionId;
+      await ref
+          .read(watchGhostConfigSyncServiceProvider)
+          .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
+    } catch (_) {
+      // Wear ghost route cache sync is best-effort.
+    }
   }
 
   String _wearStatusText(WearDraftSyncResult? result, bool isLoading) {
@@ -223,7 +239,7 @@ class SettingsSyncSection extends ConsumerWidget {
     if (result.importedCount > 0) {
       return '${result.importedCount}개의 워치 기록을 가져왔어요.';
     }
-    return '가져올 워치 기록이 없어요.';
+    return '워치 동기화를 마쳤어요.';
   }
 
   Future<void> _retryFailedBackups(
@@ -247,44 +263,5 @@ class SettingsSyncSection extends ConsumerWidget {
       return '$syncedCount개의 기록을 ${healthDestinationSendTarget(platform)} 보냈어요.';
     }
     return '${healthDestinationSendTarget(platform)} 다시 보내지 못했어요.';
-  }
-}
-
-class _FailedBackupRetry extends StatelessWidget {
-  const _FailedBackupRetry({
-    required this.destinationLabel,
-    required this.failedCount,
-    required this.isBusy,
-    required this.onRetry,
-  });
-
-  final String destinationLabel;
-  final int failedCount;
-  final bool isBusy;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Text(
-          '$destinationLabel 전송 실패 $failedCount개',
-          style: const TextStyle(
-            color: AppColors.muted,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        SettingsCompactButton(
-          key: const Key('settings-health-retry-failed-button'),
-          label: '다시 보내기',
-          danger: true,
-          onPressed: isBusy ? null : onRetry,
-        ),
-      ],
-    );
   }
 }

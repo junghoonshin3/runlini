@@ -18,37 +18,22 @@ class GhostSettingsNotifier extends Notifier<GhostSettingsState> {
       selectedSessionId: summary.id,
       selectedSessionSummary: summary,
     );
-    unawaited(_syncSelectedSession(summary.id));
+    unawaited(_syncRecentGhostConfigs(selectedSessionId: summary.id));
   }
 
   void disable() {
     state = const GhostSettingsState.disabled();
-    unawaited(_clearWatchGhostConfig());
+    unawaited(_syncRecentGhostConfigs());
   }
 
-  Future<void> _syncSelectedSession(String id) async {
+  Future<void> _syncRecentGhostConfigs({String? selectedSessionId}) async {
     try {
       final sessions = await ref.read(runSessionListProvider.future);
-      RunSession? selectedSession;
-      for (final session in sessions) {
-        if (session.id == id) {
-          selectedSession = session;
-          break;
-        }
-      }
       await ref
           .read(watchGhostConfigSyncServiceProvider)
-          .syncSession(selectedSession);
+          .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
     } catch (_) {
       // Ghost selection should not block the phone run UI.
-    }
-  }
-
-  Future<void> _clearWatchGhostConfig() async {
-    try {
-      await ref.read(watchGhostConfigSyncServiceProvider).clear();
-    } catch (_) {
-      // Wear sync is opportunistic and will be retried on app foreground.
     }
   }
 }

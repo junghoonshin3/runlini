@@ -6,6 +6,7 @@ import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
@@ -43,7 +44,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _syncWearDrafts();
-      _syncWearGhostConfig();
+      _syncRecentWatchGhostConfigs();
     }
   }
 
@@ -64,6 +65,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
       return const StartupWeightScreen();
     }
 
+    _listenForRunSessionChanges();
     _scheduleHealthSync();
     _scheduleWearDraftSync();
     _scheduleWearGhostConfigSync();
@@ -159,7 +161,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
       if (!mounted) {
         return;
       }
-      _syncWearGhostConfig();
+      _syncRecentWatchGhostConfigs();
     });
   }
 
@@ -170,16 +172,29 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
     ref.read(wearDraftSyncControllerProvider.notifier).syncPendingDrafts();
   }
 
-  Future<void> _syncWearGhostConfig() async {
+  void _listenForRunSessionChanges() {
+    ref.listen(runSessionListProvider, (previous, next) {
+      if (previous?.hasValue == true && next.hasValue) {
+        _syncRecentWatchGhostConfigs();
+      }
+    });
+  }
+
+  Future<void> _syncRecentWatchGhostConfigs() async {
     if (!mounted) {
       return;
     }
     try {
-      final session = await ref.read(selectedGhostSessionProvider.future);
+      final sessions = await ref.read(runSessionListProvider.future);
       if (!mounted) {
         return;
       }
-      await ref.read(watchGhostConfigSyncServiceProvider).syncSession(session);
+      final selectedSessionId = ref
+          .read(ghostSettingsProvider)
+          .selectedSessionId;
+      await ref
+          .read(watchGhostConfigSyncServiceProvider)
+          .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
     } catch (_) {
       // Wear config sync is best-effort and retried on foreground.
     }
