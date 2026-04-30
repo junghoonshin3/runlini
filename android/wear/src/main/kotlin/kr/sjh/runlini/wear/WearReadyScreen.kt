@@ -1,15 +1,9 @@
 package kr.sjh.runlini.wear
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,115 +15,96 @@ internal fun WearReadyScreen(
     state: WearRunState,
     onStart: () -> Unit,
     onGhostStart: () -> Unit,
-    onRetryPending: () -> Unit,
+    reservePageIndicator: Boolean = false,
 ) {
     val model = WearReadyScreenModelBuilder.from(state)
+    if (model.usesGhostPrimary) {
+        WearGhostReadyScreen(
+            model = model,
+            onStart = onStart,
+            onGhostStart = onGhostStart,
+            reservePageIndicator = reservePageIndicator,
+        )
+        return
+    }
+
+    WearRunHubScaffold(
+        primaryLabel = model.primaryLabel.replace('\n', ' '),
+        primaryColor = RunliniWearColors.VoltGreen,
+        primaryTextColor = RunliniWearColors.Black,
+        onPrimary = if (model.usesGhostPrimary) onGhostStart else onStart,
+        secondaryLabel = model.secondaryLabel,
+        secondaryColor = RunliniWearColors.Chalk,
+        secondaryTextColor = RunliniWearColors.Black,
+        onSecondary = model.secondaryLabel?.let { onStart },
+        statusLabel = readyStatusLabel(model),
+        isErrorStatus = model.isError,
+        reservePageIndicator = reservePageIndicator,
+    )
+}
+
+@Composable
+private fun WearGhostReadyScreen(
+    model: WearReadyScreenModel,
+    onStart: () -> Unit,
+    onGhostStart: () -> Unit,
+    reservePageIndicator: Boolean,
+) {
+    val actions = WearGhostReadyModelBuilder.actionsFrom(model)
     WearRunPageFrame(
         verticalArrangement = Arrangement.SpaceBetween,
+        reservePageIndicator = reservePageIndicator,
     ) { spec ->
-        val compact = spec.profile == WearLayoutProfile.Compact
-        val primarySize = if (compact) 76.dp else 94.dp
-        val actionHeight = if (compact) 30.dp else 34.dp
-        val pendingLabel = readyPendingLabel(state)
-        val hasSecondaryAction = model.secondaryLabel != null
-        val hasRetryAction = model.retryLabel != null
+        val layout = WearGhostReadyModelBuilder.layoutFor(spec.profile)
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Text(
+            text = "RUNLINI",
+            color = RunliniWearColors.Chalk,
+            fontSize = layout.titleSizeSp.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(
+                space = layout.gapDp.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "RUNLINI",
+            WearCircleButton(
+                label = actions.ghostStartLabel,
+                color = RunliniWearColors.VoltGreen,
+                textColor = RunliniWearColors.Black,
+                size = layout.circleSizeDp.dp,
+                labelFontSize = layout.labelSizeSp.sp,
+                onClick = onGhostStart,
+            )
+            WearCircleButton(
+                label = actions.normalStartLabel,
                 color = RunliniWearColors.Chalk,
-                fontSize = if (compact) 19.sp else 23.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
+                textColor = RunliniWearColors.Black,
+                size = layout.circleSizeDp.dp,
+                labelFontSize = layout.labelSizeSp.sp,
+                onClick = onStart,
             )
         }
 
-        WearCircleButton(
-            label = model.primaryLabel.replace('\n', ' '),
-            color = RunliniWearColors.VoltGreen,
-            textColor = RunliniWearColors.Black,
-            size = primarySize,
-            onClick = if (model.usesGhostPrimary) onGhostStart else onStart,
+        WearStatusPill(
+            label = actions.statusLabel,
+            color = if (actions.isError) {
+                RunliniWearColors.ElectricRed
+            } else {
+                RunliniWearColors.Muted
+            },
         )
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                WearStatusPill(
-                    label = readyStatusLabel(model),
-                    color = if (model.isError) {
-                        RunliniWearColors.ElectricRed
-                    } else {
-                        RunliniWearColors.Muted
-                    },
-                    modifier = if (pendingLabel != null) Modifier.weight(1f) else Modifier,
-                )
-                pendingLabel?.let {
-                    Spacer(modifier = Modifier.width(5.dp))
-                    WearStatusPill(
-                        label = it,
-                        color = RunliniWearColors.VoltGreen,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-
-            if (hasSecondaryAction || hasRetryAction) {
-                Spacer(modifier = Modifier.height(if (compact) 5.dp else 7.dp))
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                model.secondaryLabel?.let { secondaryLabel ->
-                    WearActionButton(
-                        label = secondaryLabel,
-                        color = RunliniWearColors.Chalk,
-                        textColor = RunliniWearColors.Black,
-                        modifier = if (hasRetryAction) Modifier.weight(1f) else Modifier.fillMaxWidth(),
-                        height = actionHeight,
-                        onClick = onStart,
-                    )
-                }
-                if (hasSecondaryAction && hasRetryAction) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                }
-                model.retryLabel?.let {
-                    WearActionButton(
-                        label = "재전송",
-                        color = RunliniWearColors.Chalk,
-                        textColor = RunliniWearColors.Black,
-                        modifier = if (hasSecondaryAction) Modifier.weight(1f) else Modifier.fillMaxWidth(),
-                        height = actionHeight,
-                        onClick = onRetryPending,
-                    )
-                }
-            }
-        }
     }
 }
 
-private fun readyStatusLabel(model: WearReadyScreenModel): String {
+private fun readyStatusLabel(model: WearReadyScreenModel): String? {
     return when {
         model.isError -> "오류"
-        model.usesGhostPrimary -> model.ghostLabel ?: "고스트"
-        model.statusLabel == "준비 완료" -> "준비"
+        model.statusLabel == "준비 완료" -> null
         else -> model.statusLabel
-    }
-}
-
-private fun readyPendingLabel(state: WearRunState): String? {
-    return if (state.pendingDraftCount > 0) {
-        "대기 ${state.pendingDraftCount}"
-    } else {
-        null
     }
 }

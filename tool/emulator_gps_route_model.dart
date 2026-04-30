@@ -18,6 +18,7 @@ class SimulatorOptions {
     required this.interval,
     required this.maxUpdates,
     required this.dryRun,
+    required this.wearDebugInjection,
     required this.showHelp,
   });
 
@@ -29,6 +30,7 @@ class SimulatorOptions {
   final Duration interval;
   final int? maxUpdates;
   final bool dryRun;
+  final bool wearDebugInjection;
   final bool showHelp;
 
   factory SimulatorOptions.parse(List<String> args) {
@@ -40,6 +42,7 @@ class SimulatorOptions {
     var interval = defaultInterval;
     int? maxUpdates;
     var dryRun = false;
+    var wearDebugInjection = false;
     var showHelp = false;
 
     for (var index = 0; index < args.length; index += 1) {
@@ -66,6 +69,8 @@ class SimulatorOptions {
           maxUpdates = int.parse(readValue(args, ++index, arg));
         case '--dry-run':
           dryRun = true;
+        case '--wear-debug-injection':
+          wearDebugInjection = true;
         default:
           throw FormatException('Unknown option: $arg');
       }
@@ -93,6 +98,7 @@ class SimulatorOptions {
       interval: interval,
       maxUpdates: maxUpdates,
       dryRun: dryRun,
+      wearDebugInjection: wearDebugInjection,
       showHelp: showHelp,
     );
   }
@@ -157,6 +163,17 @@ class TimedRoute {
 
     return points.last;
   }
+
+  double distanceAt(Duration elapsed) {
+    if (elapsed <= Duration.zero) {
+      return 0;
+    }
+    if (elapsed >= duration) {
+      return cumulativeMeters.last;
+    }
+    return (elapsed.inMilliseconds / duration.inMilliseconds) *
+        cumulativeMeters.last;
+  }
 }
 
 class Coordinate {
@@ -211,6 +228,55 @@ String get defaultAdbPath {
   return '$home/Library/Android/sdk/platform-tools/adb';
 }
 
+const String wearDebugGpsAction = 'kr.sjh.runlini.wear.debug.GPS_SAMPLE';
+
+List<String> buildWearDebugInjectionArgs({
+  required String deviceId,
+  required Coordinate coordinate,
+  required Duration elapsed,
+  required double distanceM,
+  required double paceSecPerKm,
+  double accuracyM = 5,
+  double elevationM = 0,
+}) {
+  final speedMps = 1000 / paceSecPerKm;
+  return <String>[
+    '-s',
+    deviceId,
+    'shell',
+    'am',
+    'broadcast',
+    '-p',
+    'kr.sjh.runlini',
+    '-a',
+    wearDebugGpsAction,
+    '--ef',
+    'lat',
+    coordinate.latitude.toStringAsFixed(7),
+    '--ef',
+    'lng',
+    coordinate.longitude.toStringAsFixed(7),
+    '--el',
+    'elapsedMs',
+    elapsed.inMilliseconds.toString(),
+    '--ef',
+    'distanceM',
+    distanceM.toStringAsFixed(3),
+    '--ef',
+    'speedMps',
+    speedMps.toStringAsFixed(6),
+    '--ef',
+    'paceSecPerKm',
+    paceSecPerKm.toStringAsFixed(3),
+    '--ef',
+    'accuracyM',
+    accuracyM.toStringAsFixed(3),
+    '--ef',
+    'elevationM',
+    elevationM.toStringAsFixed(3),
+  ];
+}
+
 const String simulatorUsage = '''
 Runlini emulator GPS route simulator.
 
@@ -226,10 +292,8 @@ Options:
   --interval-ms <ms>        GPS update interval. Default: 1000
   --max-updates <count>     Stop after this many emitted GPS updates.
   --dry-run                 Print coordinates without calling adb.
+  --wear-debug-injection    Send debug-only Wear GPS samples by ADB broadcast.
   -h, --help                Show this help.
-
-Examples:
   dart run tool/emulator_gps_route_simulator.dart
-  dart run tool/emulator_gps_route_simulator.dart --time-scale 1
-  dart run tool/emulator_gps_route_simulator.dart --pace-sec-per-km 330 --time-scale 8
+  dart run tool/emulator_gps_route_simulator.dart --wear-debug-injection --time-scale 6
 ''';

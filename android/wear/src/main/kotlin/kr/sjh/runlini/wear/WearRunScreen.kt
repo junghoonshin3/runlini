@@ -8,19 +8,16 @@ internal fun WearRunScreen(
     actions: WearRunActions,
 ) {
     when (state.phase) {
-        WearRunPhase.Ready -> WearReadyScreen(
+        WearRunPhase.Ready -> WearReadyPager(
             state = state,
-            onStart = actions.onStart,
-            onGhostStart = actions.onGhostStart,
-            onRetryPending = actions.onRetryPending,
+            actions = actions,
         )
-        WearRunPhase.Running -> WearActiveRunPager(
+        WearRunPhase.CountingDown -> WearCountdownScreen(state = state)
+        WearRunPhase.Running,
+        WearRunPhase.Paused,
+        -> WearActiveRunPager(
             state = state,
             onPause = actions.onPause,
-            onStop = actions.onStop,
-        )
-        WearRunPhase.Paused -> WearPausedScreen(
-            state = state,
             onResume = actions.onResume,
             onStop = actions.onStop,
         )
@@ -29,29 +26,40 @@ internal fun WearRunScreen(
             onSave = actions.onSave,
             onDiscard = actions.onDiscard,
         )
+        WearRunPhase.Feedback -> WearCompletionFeedbackScreen(state = state)
     }
 }
 
 internal data class WearRunActions(
     val onStart: () -> Unit,
     val onGhostStart: () -> Unit,
-    val onRetryPending: () -> Unit,
     val onPause: () -> Unit,
     val onStop: () -> Unit,
     val onResume: () -> Unit,
     val onSave: () -> Unit,
     val onDiscard: () -> Unit,
+    val onCountdownEnabledChange: (Boolean) -> Unit,
+    val onVibrationEnabledChange: (Boolean) -> Unit,
+    val onKmAlertEnabledChange: (Boolean) -> Unit,
+    val onVoiceCueEnabledChange: (Boolean) -> Unit,
+    val onGhostVoiceCueEnabledChange: (Boolean) -> Unit,
+    val onGhostSelect: (String) -> Unit,
 ) {
     companion object {
         val NoOp = WearRunActions(
             onStart = {},
             onGhostStart = {},
-            onRetryPending = {},
             onPause = {},
             onStop = {},
             onResume = {},
             onSave = {},
             onDiscard = {},
+            onCountdownEnabledChange = {},
+            onVibrationEnabledChange = {},
+            onKmAlertEnabledChange = {},
+            onVoiceCueEnabledChange = {},
+            onGhostVoiceCueEnabledChange = {},
+            onGhostSelect = {},
         )
     }
 }

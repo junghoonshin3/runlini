@@ -30,7 +30,8 @@ Future<void> main(List<String> args) async {
     'Runlini emulator GPS simulator\n'
     'device=${options.deviceId}, points=${coordinates.length}, '
     'pace=${options.paceSecPerKm.toStringAsFixed(0)} sec/km, '
-    'timeScale=${options.timeScale.toStringAsFixed(1)}x\n'
+    'timeScale=${options.timeScale.toStringAsFixed(1)}x, '
+    'mode=${options.wearDebugInjection ? 'wear-debug-injection' : 'geo-fix'}\n'
     'simulated route time=${formatDuration(route.duration)}, '
     'wall time=${formatDuration(simulatedDuration)}, '
     'interval=${options.interval.inMilliseconds}ms',
@@ -43,14 +44,26 @@ Future<void> main(List<String> args) async {
       milliseconds: (stopwatch.elapsedMilliseconds * options.timeScale).round(),
     );
     final coordinate = route.positionAt(elapsed);
+    final distanceM = route.distanceAt(elapsed);
     if (options.dryRun) {
-      stdout.writeln(
-        'dry-run ${formatDuration(elapsed)} '
-        '${coordinate.longitude.toStringAsFixed(7)} '
-        '${coordinate.latitude.toStringAsFixed(7)}',
-      );
+      if (options.wearDebugInjection) {
+        stdout.writeln(
+          'dry-run ${buildWearDebugInjectionArgs(deviceId: options.deviceId, coordinate: coordinate, elapsed: elapsed, distanceM: distanceM, paceSecPerKm: options.paceSecPerKm).join(' ')}',
+        );
+      } else {
+        stdout.writeln(
+          'dry-run ${formatDuration(elapsed)} '
+          '${coordinate.longitude.toStringAsFixed(7)} '
+          '${coordinate.latitude.toStringAsFixed(7)}',
+        );
+      }
     } else {
-      await _sendLocation(options: options, coordinate: coordinate);
+      await _sendLocation(
+        options: options,
+        coordinate: coordinate,
+        elapsed: elapsed,
+        distanceM: distanceM,
+      );
       stdout.writeln(
         '${tick.toString().padLeft(3, '0')} '
         '${formatDuration(elapsed)} '
@@ -93,7 +106,19 @@ Future<List<Coordinate>> _loadRouteCoordinates(String routePath) async {
 Future<void> _sendLocation({
   required SimulatorOptions options,
   required Coordinate coordinate,
+  required Duration elapsed,
+  required double distanceM,
 }) async {
+  if (options.wearDebugInjection) {
+    await _sendWearDebugInjection(
+      options: options,
+      coordinate: coordinate,
+      elapsed: elapsed,
+      distanceM: distanceM,
+    );
+    return;
+  }
+
   final result = await Process.run(options.adbPath, <String>[
     '-s',
     options.deviceId,
@@ -111,4 +136,32 @@ Future<void> _sendLocation({
   stderr.writeln(result.stderr);
   stderr.writeln(result.stdout);
   throw StateError('adb geo fix failed with exit code ${result.exitCode}');
+}
+
+Future<void> _sendWearDebugInjection({
+  required SimulatorOptions options,
+  required Coordinate coordinate,
+  required Duration elapsed,
+  required double distanceM,
+}) async {
+  final result = await Process.run(
+    options.adbPath,
+    buildWearDebugInjectionArgs(
+      deviceId: options.deviceId,
+      coordinate: coordinate,
+      elapsed: elapsed,
+      distanceM: distanceM,
+      paceSecPerKm: options.paceSecPerKm,
+    ),
+  );
+
+  if (result.exitCode == 0) {
+    return;
+  }
+
+  stderr.writeln(result.stderr);
+  stderr.writeln(result.stdout);
+  throw StateError(
+    'Wear debug GPS injection failed with exit code ${result.exitCode}',
+  );
 }

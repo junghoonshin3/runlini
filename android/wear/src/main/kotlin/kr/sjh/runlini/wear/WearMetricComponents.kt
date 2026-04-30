@@ -19,9 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +57,8 @@ internal fun WearCircleButton(
     textColor: Color,
     modifier: Modifier = Modifier,
     size: Dp = 104.dp,
+    icon: WearRunButtonIcon? = null,
+    labelFontSize: TextUnit = 18.sp,
     onClick: () -> Unit,
 ) {
     Box(
@@ -62,17 +67,27 @@ internal fun WearCircleButton(
             .clip(CircleShape)
             .background(color)
             .border(3.dp, RunliniWearColors.Black, CircleShape)
+            .semantics { contentDescription = label }
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-        )
+        if (icon != null) {
+            WearRunIconGlyph(
+                icon = icon,
+                color = textColor,
+                modifier = Modifier.size(if (size < 90.dp) 30.dp else 36.dp),
+            )
+        } else {
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = labelFontSize,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -83,6 +98,7 @@ internal fun WearActionButton(
     textColor: Color,
     modifier: Modifier = Modifier,
     height: Dp = 44.dp,
+    icon: WearRunButtonIcon? = null,
     onClick: () -> Unit,
 ) {
     Box(
@@ -90,19 +106,28 @@ internal fun WearActionButton(
             .height(height)
             .clip(RoundedCornerShape(2.dp))
             .background(color)
+            .semantics { contentDescription = label }
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        if (icon != null) {
+            WearRunIconGlyph(
+                icon = icon,
+                color = textColor,
+                modifier = Modifier.size(if (height < 34.dp) 16.dp else 18.dp),
+            )
+        } else {
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -175,6 +200,81 @@ internal fun WearPrimaryMetric(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+internal object WearDistanceHeroTypography {
+    fun valueSizeSp(value: String, profile: WearLayoutProfile): Int {
+        return when (profile) {
+            WearLayoutProfile.Compact -> when {
+                value.length <= 4 -> 38
+                value.length <= 5 -> 34
+                else -> 30
+            }
+            WearLayoutProfile.Regular -> when {
+                value.length <= 4 -> 44
+                value.length <= 5 -> 39
+                else -> 34
+            }
+        }
+    }
+
+    fun unitSizeSp(profile: WearLayoutProfile): Int {
+        return if (profile == WearLayoutProfile.Compact) 16 else 18
+    }
+}
+
+@Composable
+internal fun WearDistanceHeroMetric(
+    label: String,
+    value: String,
+    unit: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier,
+    profile: WearLayoutProfile = WearLayoutProfile.Compact,
+) {
+    val valueSize = WearDistanceHeroTypography.valueSizeSp(value, profile)
+    val unitSize = WearDistanceHeroTypography.unitSizeSp(profile)
+    val labelSize = if (profile == WearLayoutProfile.Compact) 10.sp else 11.sp
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = label,
+            color = RunliniWearColors.Muted,
+            fontSize = labelSize,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Text(
+                text = value,
+                color = valueColor,
+                fontSize = valueSize.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+            )
+            Text(
+                text = unit,
+                color = valueColor,
+                fontSize = unitSize.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.padding(
+                    bottom = if (profile == WearLayoutProfile.Compact) 5.dp else 7.dp,
+                ),
+            )
+        }
     }
 }
 

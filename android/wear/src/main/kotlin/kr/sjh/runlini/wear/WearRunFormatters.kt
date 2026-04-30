@@ -21,6 +21,13 @@ internal object WearRunFormatters {
         return "%.2f km".format(distanceM.coerceAtLeast(0.0) / 1000.0)
     }
 
+    fun distanceHero(distanceM: Double): WearDistanceHeroText {
+        return WearDistanceHeroText(
+            value = "%.2f".format(distanceM.coerceAtLeast(0.0) / 1000.0),
+            unit = "km",
+        )
+    }
+
     fun pace(paceSecPerKm: Double?): String {
         val pace = paceSecPerKm?.takeIf { it.isFinite() && it > 0 } ?: return "--"
         val minutes = floor(pace / 60.0).toInt()
@@ -69,3 +76,8 @@ internal object WearRunFormatters {
         return "${ghostStatusLabel(frame?.status)} ${ghostGap(frame)}"
     }
 }
+
+internal data class WearDistanceHeroText(
+    val value: String,
+    val unit: String,
+)

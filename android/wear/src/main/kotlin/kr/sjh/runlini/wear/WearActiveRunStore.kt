@@ -15,7 +15,11 @@ class WearActiveRunStore(private val persistence: ActiveRunPersistence) {
     constructor(context: Context) : this(FileActiveRunPersistence(context))
 
     fun save(state: WearRunState, checkpointRealtimeMs: Long) {
-        if (state.phase == WearRunPhase.Ready) {
+        if (
+            state.phase == WearRunPhase.Ready ||
+            state.phase == WearRunPhase.CountingDown ||
+            state.phase == WearRunPhase.Feedback
+        ) {
             clear()
             return
         }
@@ -91,7 +95,13 @@ object WearActiveRunJsonMapper {
         val phase = runCatching {
             WearRunPhase.valueOf(objectJson.getString("phase"))
         }.getOrDefault(WearRunPhase.Ready)
-        if (phase == WearRunPhase.Ready) return null
+        if (
+            phase == WearRunPhase.Ready ||
+            phase == WearRunPhase.CountingDown ||
+            phase == WearRunPhase.Feedback
+        ) {
+            return null
+        }
 
         val checkpointRealtimeMs = objectJson.optLong("checkpointRealtimeMs", nowRealtimeMs)
         val savedElapsedMs = objectJson.optLong("elapsedMs", 0L)
