@@ -72,24 +72,29 @@ void main() {
         .selectSession(RunSessionSummary.fromSession(session));
     await pumpEventQueue();
 
-    expect(client.sentConfig?.id, 'ghost-selected');
+    expect(client.activeId, 'ghost-selected');
+    expect(client.sentConfigs.single.id, 'ghost-selected');
   });
 
-  test('clears watch ghost config when ghost mode is disabled', () async {
-    final client = _FakeWatchGhostConfigClient();
-    final container = ProviderContainer(
-      overrides: [
-        runSessionListProvider.overrideWith((Ref ref) async => [_session()]),
-        watchGhostConfigClientProvider.overrideWithValue(client),
-      ],
-    );
-    addTearDown(container.dispose);
+  test(
+    'refreshes recent watch ghost configs when ghost mode is disabled',
+    () async {
+      final client = _FakeWatchGhostConfigClient();
+      final container = ProviderContainer(
+        overrides: [
+          runSessionListProvider.overrideWith((Ref ref) async => [_session()]),
+          watchGhostConfigClientProvider.overrideWithValue(client),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    container.read(ghostSettingsProvider.notifier).disable();
-    await pumpEventQueue();
+      container.read(ghostSettingsProvider.notifier).disable();
+      await pumpEventQueue();
 
-    expect(client.clearCount, 1);
-  });
+      expect(client.clearCount, 0);
+      expect(client.sentConfigs.single.id, 'ghost-selected');
+    },
+  );
 }
 
 RunSession _session() {
@@ -121,11 +126,22 @@ RunSession _session() {
 
 class _FakeWatchGhostConfigClient implements WatchGhostConfigClient {
   WatchGhostConfig? sentConfig;
+  String? activeId;
+  List<WatchGhostConfig> sentConfigs = const [];
   int clearCount = 0;
 
   @override
   Future<void> sendGhostConfig(WatchGhostConfig config) async {
     sentConfig = config;
+  }
+
+  @override
+  Future<void> sendGhostConfigs({
+    required String? activeId,
+    required List<WatchGhostConfig> configs,
+  }) async {
+    this.activeId = activeId;
+    sentConfigs = configs;
   }
 
   @override

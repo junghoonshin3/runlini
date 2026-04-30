@@ -18,6 +18,118 @@ class WearGhostConfigStoreTest {
     }
 
     @Test
+    fun storeKeepsThreeMostRecentGhostConfigs() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+
+        store.save(ghostConfigJson(id = "ghost-1", sourceSummary = "첫 번째"))
+        store.save(ghostConfigJson(id = "ghost-2", sourceSummary = "두 번째"))
+        store.save(ghostConfigJson(id = "ghost-3", sourceSummary = "세 번째"))
+        store.save(ghostConfigJson(id = "ghost-4", sourceSummary = "네 번째"))
+
+        assertEquals(listOf("ghost-4", "ghost-3", "ghost-2"), store.cached().map { it.id })
+        assertEquals("ghost-4", store.current()?.id)
+    }
+
+    @Test
+    fun storeUpdatesDuplicateConfigWithoutCreatingAnotherEntry() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+
+        store.save(ghostConfigJson(id = "ghost-1", sourceSummary = "이전"))
+        store.save(ghostConfigJson(id = "ghost-2", sourceSummary = "둘"))
+        store.save(ghostConfigJson(id = "ghost-1", sourceSummary = "갱신"))
+
+        assertEquals(listOf("ghost-1", "ghost-2"), store.cached().map { it.id })
+        assertEquals("갱신", store.current()?.sourceSummary)
+    }
+
+    @Test
+    fun storeSelectsGhostAndMovesItToFront() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+        store.save(ghostConfigJson(id = "ghost-1"))
+        store.save(ghostConfigJson(id = "ghost-2"))
+
+        val selected = store.select("ghost-1")
+
+        assertEquals("ghost-1", selected?.id)
+        assertEquals(listOf("ghost-1", "ghost-2"), store.cached().map { it.id })
+        assertEquals("ghost-1", store.current()?.id)
+    }
+
+    @Test
+    fun storeMigratesLegacySingleConfigIntoCache() {
+        val persistence = FakeGhostConfigPersistence()
+        persistence.write(ghostConfigJson(id = "legacy"))
+        val store = WearGhostConfigStore(persistence)
+
+        assertEquals("legacy", store.current()?.id)
+        assertEquals(listOf("legacy"), store.cached().map { it.id })
+    }
+
+    @Test
+    fun storePreservesPointTimestamps() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+
+        store.save(ghostConfigJson())
+
+        assertEquals(listOf(0L, 600_000L), store.current()?.points?.map { it.timestampRelMs })
+    }
+
+    @Test
+    fun storeReplacesCacheFromBatchAndKeepsActiveId() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+        store.save(ghostConfigJson(id = "old"))
+        val configs = listOf(
+            WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-1")),
+            WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-2")),
+            WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-3")),
+            WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-4")),
+        )
+
+        val active = store.replace(configs, activeId = "ghost-2")
+
+        assertEquals("ghost-2", active?.id)
+        assertEquals(listOf("ghost-1", "ghost-2", "ghost-3"), store.cached().map { it.id })
+        assertEquals("ghost-2", store.current()?.id)
+    }
+
+    @Test
+    fun storeReplaceClearsCacheWhenBatchIsEmpty() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+        store.save(ghostConfigJson())
+
+        val active = store.replace(emptyList(), activeId = null)
+
+        assertNull(active)
+        assertNull(store.current())
+        assertEquals(emptyList<String>(), store.cached().map { it.id })
+    }
+
+    @Test
+    fun batchHandlerReplacesCacheAndPreservesTimestamps() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+        val batchJson = WearGhostConfigCacheJsonMapper.toJson(
+            WearGhostConfigCache(
+                activeId = "ghost-2",
+                configs = listOf(
+                    WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-1")),
+                    WearGhostConfigJsonMapper.fromJson(ghostConfigJson(id = "ghost-2")),
+                ),
+            ),
+        )
+
+        PhoneGhostConfigHandler.handle(
+            path = PhoneGhostConfigHandler.ConfigsPath,
+            enabled = true,
+            json = batchJson,
+            store = store,
+        )
+
+        assertEquals(listOf("ghost-1", "ghost-2"), store.cached().map { it.id })
+        assertEquals("ghost-2", store.current()?.id)
+        assertEquals(listOf(0L, 600_000L), store.current()?.points?.map { it.timestampRelMs })
+    }
+
+    @Test
     fun storeClearsConfigWithInsufficientRoute() {
         val persistence = FakeGhostConfigPersistence()
         val store = WearGhostConfigStore(persistence)
@@ -25,6 +137,35 @@ class WearGhostConfigStoreTest {
         val config = store.save(ghostConfigJson(points = onePointJson()))
 
         assertNull(config)
+        assertNull(store.current())
+    }
+
+    @Test
+    fun batchHandlerKeepsLegacySingleConfigPathWorking() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+
+        PhoneGhostConfigHandler.handle(
+            path = PhoneGhostConfigHandler.ConfigPath,
+            enabled = true,
+            json = ghostConfigJson(id = "single"),
+            store = store,
+        )
+
+        assertEquals("single", store.current()?.id)
+    }
+
+    @Test
+    fun batchHandlerClearsCacheWhenDisabled() {
+        val store = WearGhostConfigStore(FakeGhostConfigPersistence())
+        store.save(ghostConfigJson())
+
+        PhoneGhostConfigHandler.handle(
+            path = PhoneGhostConfigHandler.ConfigsPath,
+            enabled = false,
+            json = null,
+            store = store,
+        )
+
         assertNull(store.current())
     }
 
@@ -44,14 +185,18 @@ class WearGhostConfigStoreTest {
         assertNull(store.current())
     }
 
-    private fun ghostConfigJson(points: String = twoPointsJson()): String {
+    private fun ghostConfigJson(
+        id: String = "ghost-1",
+        sourceSummary: String = "한강 5K",
+        points: String = twoPointsJson(),
+    ): String {
         return """
             {
-              "id": "ghost-1",
+              "id": "$id",
               "startedAt": "2026-04-28T00:00:00.000Z",
               "durationMs": 600000,
               "distanceM": 2000.0,
-              "sourceSummary": "한강 5K",
+              "sourceSummary": "$sourceSummary",
               "points": $points
             }
         """.trimIndent()
@@ -77,6 +222,7 @@ class WearGhostConfigStoreTest {
 
 private class FakeGhostConfigPersistence : GhostConfigPersistence {
     private var json: String? = null
+    private var cacheJson: String? = null
 
     override fun read(): String? = json
 
@@ -86,5 +232,15 @@ private class FakeGhostConfigPersistence : GhostConfigPersistence {
 
     override fun clear() {
         json = null
+    }
+
+    override fun readCache(): String? = cacheJson
+
+    override fun writeCache(json: String) {
+        cacheJson = json
+    }
+
+    override fun clearCache() {
+        cacheJson = null
     }
 }

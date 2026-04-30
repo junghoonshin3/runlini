@@ -108,6 +108,40 @@ class WearActiveRunStoreTest {
     }
 
     @Test
+    fun storeDoesNotPersistCountdownState() {
+        val persistence = FakeActiveRunPersistence()
+        val store = WearActiveRunStore(persistence)
+        store.save(runningState(), checkpointRealtimeMs = 1_000L)
+
+        store.save(
+            WearRunState(
+                phase = WearRunPhase.CountingDown,
+                countdownRemainingSeconds = 3,
+            ),
+            checkpointRealtimeMs = 2_000L,
+        )
+
+        assertNull(persistence.read())
+    }
+
+    @Test
+    fun storeDoesNotPersistFeedbackState() {
+        val persistence = FakeActiveRunPersistence()
+        val store = WearActiveRunStore(persistence)
+        store.save(runningState(), checkpointRealtimeMs = 1_000L)
+
+        store.save(
+            WearRunState(
+                phase = WearRunPhase.Feedback,
+                feedbackType = WearRunFeedbackType.Saved,
+            ),
+            checkpointRealtimeMs = 2_000L,
+        )
+
+        assertNull(persistence.read())
+    }
+
+    @Test
     fun restoreKeepsGhostRunState() {
         val persistence = FakeActiveRunPersistence()
         val store = WearActiveRunStore(persistence)

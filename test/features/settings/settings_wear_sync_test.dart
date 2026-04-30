@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/theme/app_theme.dart';
+import 'package:runlini/core/wear/watch_ghost_config_client.dart';
 import 'package:runlini/core/wear/wear_draft_inbox_client.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
@@ -10,9 +11,11 @@ import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.da
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
+import 'package:runlini/features/run_tracking/types/watch_ghost_config.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
@@ -28,12 +31,14 @@ void main() {
         failedCount: 0,
       ),
     );
+    final ghostClient = _FakeWatchGhostConfigClient();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
-          runSessionListProvider.overrideWith((ref) async => const []),
+          runSessionListProvider.overrideWith((ref) async => [_session()]),
           wearDraftSyncServiceProvider.overrideWithValue(wearSyncService),
+          watchGhostConfigClientProvider.overrideWithValue(ghostClient),
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
@@ -54,8 +59,33 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(wearSyncService.calls, 1);
+    expect(ghostClient.sentConfigs.single.id, 'ghost-ready');
     expect(find.text('1개의 워치 기록을 가져왔어요.'), findsOneWidget);
   });
+}
+
+RunSession _session() {
+  return RunSession(
+    id: 'ghost-ready',
+    startedAt: DateTime.utc(2026, 4, 30, 7),
+    durationMs: 600000,
+    distanceM: 2000,
+    sourceSummary: 'test',
+    points: const [
+      RunPoint(
+        latitude: 37,
+        longitude: 127,
+        timestampRelMs: 0,
+        source: RunPointSource.deviceGps,
+      ),
+      RunPoint(
+        latitude: 37.001,
+        longitude: 127.001,
+        timestampRelMs: 600000,
+        source: RunPointSource.deviceGps,
+      ),
+    ],
+  );
 }
 
 class _FakeWearDraftSyncService extends WearDraftSyncService {
@@ -122,4 +152,22 @@ class _FakeRunSettingsRepository implements RunSettingsRepository {
 
   @override
   Future<void> saveShoe(RunShoe shoe) async {}
+}
+
+class _FakeWatchGhostConfigClient implements WatchGhostConfigClient {
+  List<WatchGhostConfig> sentConfigs = const [];
+
+  @override
+  Future<void> clearGhostConfig() async {}
+
+  @override
+  Future<void> sendGhostConfig(WatchGhostConfig config) async {}
+
+  @override
+  Future<void> sendGhostConfigs({
+    required String? activeId,
+    required List<WatchGhostConfig> configs,
+  }) async {
+    sentConfigs = configs;
+  }
 }

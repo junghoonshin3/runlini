@@ -44,6 +44,46 @@ void main() {
     expect(calls.single.method, 'clearGhostConfig');
   });
 
+  test('sends recent ghost configs over the Android method channel', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+          calls.add(call);
+          return null;
+        });
+    const client = MethodChannelWatchGhostConfigClient(isAndroidOverride: true);
+
+    await client.sendGhostConfigs(
+      activeId: 'ghost-1',
+      configs: [
+        _config(),
+        _config(id: 'ghost-2'),
+        _config(id: 'ghost-3'),
+      ],
+    );
+
+    expect(calls.single.method, 'sendGhostConfigs');
+    expect(calls.single.arguments, containsPair('activeId', 'ghost-1'));
+    expect(calls.single.arguments.toString(), contains('"configs"'));
+    expect(calls.single.arguments.toString(), contains('"timestampRelMs"'));
+  });
+
+  test('sends an empty recent ghost batch as a clear intent', () async {
+    final calls = <MethodCall>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
+          calls.add(call);
+          return null;
+        });
+    const client = MethodChannelWatchGhostConfigClient(isAndroidOverride: true);
+
+    await client.sendGhostConfigs(activeId: null, configs: const []);
+
+    expect(calls.single.method, 'sendGhostConfigs');
+    expect(calls.single.arguments, containsPair('activeId', null));
+    expect(calls.single.arguments.toString(), contains('"configs":[]'));
+  });
+
   test('does nothing on non-Android platforms', () async {
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -56,15 +96,16 @@ void main() {
     );
 
     await client.sendGhostConfig(_config());
+    await client.sendGhostConfigs(activeId: 'ghost-1', configs: [_config()]);
     await client.clearGhostConfig();
 
     expect(calls, isEmpty);
   });
 }
 
-WatchGhostConfig _config() {
+WatchGhostConfig _config({String id = 'ghost-1'}) {
   return WatchGhostConfig(
-    id: 'ghost-1',
+    id: id,
     startedAt: DateTime.utc(2026, 4, 28, 7),
     durationMs: 600000,
     distanceM: 2000,
