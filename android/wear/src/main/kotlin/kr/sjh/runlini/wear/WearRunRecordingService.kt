@@ -93,6 +93,10 @@ class WearRunRecordingService : Service() {
         controller.updateSettings(settings)
     }
 
+    fun playVoiceTestCue(volume: Float) {
+        controller.playVoiceTestCue(volume)
+    }
+
     fun selectGhostConfig(id: String) {
         controller.selectGhostConfig(id)
     }

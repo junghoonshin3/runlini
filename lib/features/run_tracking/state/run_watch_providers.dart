@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/core/wear/watch_connection_client.dart';
 import 'package:runlini/core/wear/watch_ghost_config_client.dart';
+import 'package:runlini/core/wear/watch_interval_config_client.dart';
+import 'package:runlini/core/wear/watch_voice_settings_client.dart';
 import 'package:runlini/core/wear/wear_draft_inbox_client.dart';
 import 'package:runlini/features/run_tracking/service/watch_ghost_config_sync_service.dart';
 import 'package:runlini/features/run_tracking/service/watch_run_session_import_service.dart';
@@ -23,6 +26,24 @@ final watchGhostConfigClientProvider = Provider<WatchGhostConfigClient>((
   Ref ref,
 ) {
   return const MethodChannelWatchGhostConfigClient();
+});
+
+final watchIntervalConfigClientProvider = Provider<WatchIntervalConfigClient>((
+  Ref ref,
+) {
+  return const MethodChannelWatchIntervalConfigClient();
+});
+
+final watchVoiceSettingsClientProvider = Provider<WatchVoiceSettingsClient>((
+  Ref ref,
+) {
+  return const MethodChannelWatchVoiceSettingsClient();
+});
+
+final watchConnectionClientProvider = Provider<WatchConnectionClient>((
+  Ref ref,
+) {
+  return const MethodChannelWatchConnectionClient();
 });
 
 final watchGhostConfigSyncServiceProvider =
@@ -70,3 +91,33 @@ final wearDraftSyncControllerProvider =
     AsyncNotifierProvider<WearDraftSyncController, WearDraftSyncResult?>(
       WearDraftSyncController.new,
     );
+
+class WatchConnectionStatusController
+    extends AsyncNotifier<WatchConnectionStatus?> {
+  @override
+  FutureOr<WatchConnectionStatus?> build() {
+    return null;
+  }
+
+  Future<WatchConnectionStatus> check() async {
+    state = const AsyncValue<WatchConnectionStatus?>.loading();
+    final result = await AsyncValue.guard(
+      () => ref.read(watchConnectionClientProvider).connectionStatus(),
+    );
+    if (result.hasValue) {
+      final status = result.requireValue;
+      state = AsyncValue<WatchConnectionStatus?>.data(status);
+      return status;
+    }
+
+    const fallback = WatchConnectionStatus.disconnected;
+    state = const AsyncValue<WatchConnectionStatus?>.data(fallback);
+    return fallback;
+  }
+}
+
+final watchConnectionStatusProvider =
+    AsyncNotifierProvider<
+      WatchConnectionStatusController,
+      WatchConnectionStatus?
+    >(WatchConnectionStatusController.new);

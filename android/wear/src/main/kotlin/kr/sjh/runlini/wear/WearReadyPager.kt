@@ -44,7 +44,9 @@ internal fun WearReadyPager(
                     onVibrationEnabledChange = actions.onVibrationEnabledChange,
                     onKmAlertEnabledChange = actions.onKmAlertEnabledChange,
                     onVoiceCueEnabledChange = actions.onVoiceCueEnabledChange,
+                    onVoiceCueVolumeChange = actions.onVoiceCueVolumeChange,
                     onGhostVoiceCueEnabledChange = actions.onGhostVoiceCueEnabledChange,
+                    onIntervalWorkoutChange = actions.onIntervalWorkoutChange,
                 )
             }
         }

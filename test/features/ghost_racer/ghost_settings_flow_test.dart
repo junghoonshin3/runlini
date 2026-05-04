@@ -31,7 +31,8 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const Key('ghost-control-chip')));
     await pumpUntilFound(tester, find.text('Ghost Run Off'));
 
-    expect(find.byKey(const Key('settings-button')), findsOneWidget);
+    expect(find.byKey(const Key('settings-button')), findsNothing);
+    expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
     await tester.tap(find.byKey(const Key('ghost-control-chip')));
     await pumpUntilFound(tester, find.byKey(const Key('ghost-session-sheet')));
     await tester.pumpAndSettle();
@@ -41,11 +42,7 @@ void main() {
       findsOneWidget,
     );
     final handleFinder = find.byKey(const Key('ghost-session-drag-handle'));
-    final initialHandleTop = tester.getTopLeft(handleFinder).dy;
-    await tester.drag(handleFinder, const Offset(0, -360));
-    await tester.pumpAndSettle();
-    final expandedHandleTop = tester.getTopLeft(handleFinder).dy;
-    expect(expandedHandleTop, lessThan(initialHandleTop));
+    expect(tester.getTopLeft(handleFinder).dy, lessThan(40));
 
     tester
         .widget<RunSessionSummaryTile>(
@@ -63,6 +60,85 @@ void main() {
 
     expect(find.byKey(const Key('ghost-polyline-layer')), findsNothing);
     expect(find.text('Ghost Run Off'), findsOneWidget);
+  });
+
+  testWidgets('ghost session picker opens full and closes when pulled down', (
+    WidgetTester tester,
+  ) async {
+    tester.view.padding = const FakeViewPadding(top: 84);
+    tester.view.viewPadding = const FakeViewPadding(top: 84);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          runSessionListProvider.overrideWith(
+            (Ref ref) async => sampleRunSessions(),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await pumpUntilFound(tester, find.byKey(const Key('ghost-control-chip')));
+
+    await tester.tap(find.byKey(const Key('ghost-control-chip')));
+    await pumpUntilFound(tester, find.byKey(const Key('ghost-session-sheet')));
+    await tester.pumpAndSettle();
+
+    final handleFinder = find.byKey(const Key('ghost-session-drag-handle'));
+    expect(tester.getTopLeft(handleFinder).dy, greaterThanOrEqualTo(28));
+
+    await tester.drag(handleFinder, const Offset(0, 720));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('ghost-session-sheet')), findsNothing);
+  });
+
+  testWidgets('short pull down snaps ghost picker back to full height', (
+    WidgetTester tester,
+  ) async {
+    tester.view.padding = const FakeViewPadding(top: 84);
+    tester.view.viewPadding = const FakeViewPadding(top: 84);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          runSessionListProvider.overrideWith(
+            (Ref ref) async => sampleRunSessions(),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await pumpUntilFound(tester, find.byKey(const Key('ghost-control-chip')));
+
+    await tester.tap(find.byKey(const Key('ghost-control-chip')));
+    await pumpUntilFound(tester, find.byKey(const Key('ghost-session-sheet')));
+    await tester.pumpAndSettle();
+
+    final handleFinder = find.byKey(const Key('ghost-session-drag-handle'));
+    final initialTop = tester.getTopLeft(handleFinder).dy;
+
+    await tester.drag(handleFinder, const Offset(0, 80));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('ghost-session-sheet')), findsOneWidget);
+    expect(tester.getTopLeft(handleFinder).dy, initialTop);
   });
 
   testWidgets('shows a disabled chip when there are no records', (
@@ -85,7 +161,8 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const Key('ghost-control-chip')));
     await pumpUntilFound(tester, find.text('Ghost Run Off'));
 
-    expect(find.byKey(const Key('settings-button')), findsOneWidget);
+    expect(find.byKey(const Key('settings-button')), findsNothing);
+    expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
     expect(find.text('Ghost Run Off'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('ghost-control-chip')));
@@ -94,7 +171,7 @@ void main() {
     expect(find.byKey(const Key('ghost-session-sheet')), findsNothing);
   });
 
-  testWidgets('settings button switches to the app settings tab', (
+  testWidgets('running tab uses the left action for interval settings', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -113,14 +190,17 @@ void main() {
     );
     await tester.pump();
     await openRunningTab(tester);
-    await pumpUntilFound(tester, find.byKey(const Key('settings-button')));
+    await pumpUntilFound(tester, find.byKey(const Key('run-interval-button')));
 
-    await tester.tap(find.byKey(const Key('settings-button')));
-    await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
+    expect(find.byKey(const Key('settings-button')), findsNothing);
 
-    expect(find.byKey(const Key('settings-tab-screen')), findsOneWidget);
-    expect(find.text('설정'), findsWidgets);
+    await tester.tap(find.byKey(const Key('run-interval-button')));
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('run-interval-sheet-scroll')),
+    );
+
+    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsOneWidget);
     expect(find.byKey(const Key('ghost-toggle')), findsNothing);
-    expect(find.byKey(const Key('selected-ghost-summary')), findsNothing);
   });
 }

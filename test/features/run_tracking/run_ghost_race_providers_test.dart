@@ -204,8 +204,7 @@ void main() {
       expect(frame.ghostMarkerPoint, isNotNull);
 
       final mapViewState = container.read(ghostAwareRunMapViewStateProvider);
-      expect(mapViewState, isNotNull);
-      expect(mapViewState!.ghostMarkerPoint, isNull);
+      expect(mapViewState.ghostMarkerPoint, isNull);
 
       await container.read(runSettingsControllerProvider.future);
       await container
@@ -216,7 +215,7 @@ void main() {
       final visibleMapViewState = container.read(
         ghostAwareRunMapViewStateProvider,
       );
-      expect(visibleMapViewState!.ghostMarkerPoint, frame.ghostMarkerPoint);
+      expect(visibleMapViewState.ghostMarkerPoint, frame.ghostMarkerPoint);
     },
   );
 

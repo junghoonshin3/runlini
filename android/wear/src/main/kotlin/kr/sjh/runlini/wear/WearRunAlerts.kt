@@ -49,17 +49,20 @@ class WearRunAlertController(
     private var lastAlertedKm: Int = 0
     private var lastSpokenGhostStatus: WearGhostStatus? = null
     private var lastGhostSpokenAtMs: Long? = null
+    private var lastIntervalStepLabel: String? = null
 
     fun reset() {
         lastAlertedKm = 0
         lastSpokenGhostStatus = null
         lastGhostSpokenAtMs = null
+        lastIntervalStepLabel = null
     }
 
     fun onDistanceChanged(
         distanceM: Double,
         averagePaceSecPerKm: Double?,
         settings: WearRunSettings,
+        elapsedMs: Long? = null,
     ) {
         val currentKm = floor(distanceM / 1000.0).toInt()
         if (currentKm <= 0 || currentKm <= lastAlertedKm) return
@@ -67,12 +70,14 @@ class WearRunAlertController(
         if (settings.vibrationEnabled && settings.kmAlertEnabled) {
             haptics.tick()
         }
-        if (settings.voiceCueEnabled) {
+        if (settings.voiceCueEnabled && settings.kmAlertEnabled) {
             speech.speak(
                 WearRunVoiceCueFormatter.kilometerSummary(
                     kilometer = currentKm,
                     averagePaceSecPerKm = averagePaceSecPerKm,
+                    elapsedMs = elapsedMs,
                 ),
+                settings.voiceCueVolume,
             )
         }
     }
@@ -89,9 +94,28 @@ class WearRunAlertController(
         val lastSpokenAt = lastGhostSpokenAtMs
         if (lastSpokenAt != null && now - lastSpokenAt < GhostVoiceCueDebounceMs) return
         val cue = WearRunVoiceCueFormatter.ghostStatus(frame) ?: return
-        speech.speak(cue)
+        speech.speak(cue, settings.voiceCueVolume)
         lastSpokenGhostStatus = status
         lastGhostSpokenAtMs = now
+    }
+
+    fun onIntervalFrame(frame: WearIntervalFrame?, settings: WearRunSettings) {
+        val label = WearIntervalFormatters.stepLabel(frame?.step)
+        if (frame == null || label == lastIntervalStepLabel) return
+        lastIntervalStepLabel = label
+        if (settings.vibrationEnabled) {
+            haptics.tick()
+        }
+        if (settings.voiceCueEnabled) {
+            speech.speak(label, settings.voiceCueVolume)
+        }
+    }
+
+    fun playVoiceTestCue(volume: Float) {
+        speech.speak(
+            WearVoiceTestCue.Text,
+            WearRunSettingsDefaults.clampVoiceVolume(volume),
+        )
     }
 
     fun shutdown() {
@@ -103,13 +127,16 @@ internal object WearRunVoiceCueFormatter {
     fun kilometerSummary(
         kilometer: Int,
         averagePaceSecPerKm: Double?,
+        elapsedMs: Long? = null,
     ): String {
-        val pace = paceSpeech(averagePaceSecPerKm)
-        return if (pace == null) {
-            "${kilometer}킬로미터"
-        } else {
-            "${kilometer}킬로미터, 평균 페이스 $pace"
+        val parts = mutableListOf("${kilometer}킬로미터")
+        paceSpeech(averagePaceSecPerKm)?.let {
+            parts += "평균 페이스 $it"
         }
+        elapsedSpeech(elapsedMs)?.let {
+            parts += "시간 $it"
+        }
+        return parts.joinToString(", ")
     }
 
     fun ghostStatus(frame: WearGhostFrame): String? {
@@ -132,6 +159,21 @@ internal object WearRunVoiceCueFormatter {
         } else {
             "${minutes}분 ${seconds}초"
         }
+    }
+
+    private fun elapsedSpeech(elapsedMs: Long?): String? {
+        val totalSeconds = elapsedMs
+            ?.takeIf { it > 0L }
+            ?.let { (it / 1000L).coerceAtLeast(1L) }
+            ?: return null
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        val parts = mutableListOf<String>()
+        if (hours > 0) parts += "${hours}시간"
+        if (minutes > 0) parts += "${minutes}분"
+        if (seconds > 0 || parts.isEmpty()) parts += "${seconds}초"
+        return parts.joinToString(" ")
     }
 
     private fun gapSpeech(gapMs: Long): String {

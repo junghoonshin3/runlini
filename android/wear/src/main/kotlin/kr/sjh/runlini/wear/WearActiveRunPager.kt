@@ -44,6 +44,7 @@ internal fun WearActiveRunPager(
         ) { pageIndex ->
             when (pages[pageIndex]) {
                 WearActiveRunPage.Core -> WearCorePage(state)
+                WearActiveRunPage.Interval -> WearIntervalPage(state)
                 WearActiveRunPage.Ghost -> WearGhostPage(state)
                 WearActiveRunPage.Details -> WearDetailsPage(state)
                 WearActiveRunPage.Controls -> WearRunControlsPage(
@@ -67,7 +68,13 @@ internal fun WearActiveRunPager(
 @Composable
 private fun WearCorePage(state: WearRunState) {
     WearRunPageFrame(reservePageIndicator = true) { spec ->
-        state.ghostFrame?.let { frame ->
+        state.intervalFrame?.let { frame ->
+            WearStatusPill(
+                label = WearIntervalFormatters.stepLabel(frame.step),
+                color = RunliniWearColors.VoltGreen,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        } ?: state.ghostFrame?.let { frame ->
             WearStatusPill(
                 label = WearRunFormatters.ghostResult(frame),
                 color = ghostColor(frame.status),
@@ -99,6 +106,35 @@ private fun WearCorePage(state: WearRunState) {
                 modifier = Modifier.weight(1f),
             )
         }
+    }
+}
+
+@Composable
+private fun WearIntervalPage(state: WearRunState) {
+    val frame = state.intervalFrame
+    val hero = WearIntervalFormatters.heroRemaining(frame)
+    WearRunPageFrame(reservePageIndicator = true) { spec ->
+        WearStatusPill(
+            label = WearIntervalFormatters.stepLabel(frame?.step),
+            color = RunliniWearColors.VoltGreen,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        WearIntervalHeroMetric(
+            label = hero.label,
+            value = hero.value,
+            valueColor = RunliniWearColors.VoltGreen,
+            profile = spec.profile,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "다음 ${WearIntervalFormatters.stepLabel(frame?.nextStep)}",
+            color = RunliniWearColors.Muted,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

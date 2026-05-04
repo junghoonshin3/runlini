@@ -64,5 +64,29 @@
                     android:pathPrefix="/runlini/phone/ghost_configs" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".PhoneIntervalConfigListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/runlini/phone/interval_config" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".PhoneVoiceSettingsListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/runlini/phone/voice_settings" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

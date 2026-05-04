@@ -57,7 +57,7 @@ Runlini should feel like a running app that answers one question instantly:
     sections in Runlini's compact data-lab style
   - saved-run deletion with a confirmation step
   - Settings tab controls for display units, distance goals, local privacy
-    display, running shoes, countdown length, and location tracking quality
+    display, running shoes, voice cues, and location tracking quality
   - no bundled local fixture records in the user-visible list
 - HealthKit and Health Connect workout export
   - export begins on `START`

@@ -9,8 +9,19 @@ data class WearRunSettings(
     val vibrationEnabled: Boolean = true,
     val kmAlertEnabled: Boolean = false,
     val voiceCueEnabled: Boolean = true,
+    val voiceCueVolume: Float = WearRunSettingsDefaults.DefaultVoiceCueVolume,
     val ghostVoiceCueEnabled: Boolean = false,
+    val intervalWorkout: WearIntervalWorkout = WearIntervalWorkout(),
 )
+
+object WearRunSettingsDefaults {
+    const val DefaultVoiceCueVolume = 1.0f
+    const val VoiceCueVolumeStep = 0.1f
+
+    fun clampVoiceVolume(volume: Float): Float {
+        return volume.coerceIn(0.0f, 1.0f)
+    }
+}
 
 interface WearRunSettingsPersistence {
     fun read(): String?
@@ -41,7 +52,12 @@ object WearRunSettingsJsonMapper {
             .put("vibrationEnabled", settings.vibrationEnabled)
             .put("kmAlertEnabled", settings.kmAlertEnabled)
             .put("voiceCueEnabled", settings.voiceCueEnabled)
+            .put("voiceCueVolume", WearRunSettingsDefaults.clampVoiceVolume(settings.voiceCueVolume))
             .put("ghostVoiceCueEnabled", settings.ghostVoiceCueEnabled)
+            .put(
+                "intervalWorkout",
+                JSONObject(WearIntervalWorkoutJsonMapper.toJson(settings.intervalWorkout)),
+            )
             .toString()
     }
 
@@ -52,7 +68,16 @@ object WearRunSettingsJsonMapper {
             vibrationEnabled = objectJson.optBoolean("vibrationEnabled", true),
             kmAlertEnabled = objectJson.optBoolean("kmAlertEnabled", false),
             voiceCueEnabled = objectJson.optBoolean("voiceCueEnabled", true),
+            voiceCueVolume = WearRunSettingsDefaults.clampVoiceVolume(
+                objectJson.optDouble(
+                    "voiceCueVolume",
+                    WearRunSettingsDefaults.DefaultVoiceCueVolume.toDouble(),
+                ).toFloat(),
+            ),
             ghostVoiceCueEnabled = objectJson.optBoolean("ghostVoiceCueEnabled", false),
+            intervalWorkout = objectJson.optJSONObject("intervalWorkout")?.let {
+                WearIntervalWorkoutJsonMapper.fromJson(it.toString())
+            } ?: WearIntervalWorkout(),
         )
     }
 }
