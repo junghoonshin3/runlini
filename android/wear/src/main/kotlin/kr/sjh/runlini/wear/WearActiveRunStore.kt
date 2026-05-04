@@ -76,6 +76,7 @@ object WearActiveRunJsonMapper {
             .put("caloriesKcal", finiteDoubleOrNull(state.caloriesKcal))
             .put("elapsedBeforeActiveSegmentMs", state.elapsedBeforeActiveSegmentMs)
             .put("activeSegmentStartedRealtimeMs", state.activeSegmentStartedRealtimeMs)
+            .put("pauseReason", state.pauseReason?.name)
             .put("isGhostRun", state.isGhostRun)
             .put("ghostConfig", state.ghostConfig?.let(::ghostConfigToJson))
             .put("ghostFrame", state.ghostFrame?.let(::ghostFrameToJson))
@@ -137,6 +138,9 @@ object WearActiveRunJsonMapper {
                 nowRealtimeMs
             } else {
                 null
+            },
+            pauseReason = objectJson.optionalString("pauseReason")?.let { value ->
+                runCatching { WearPauseReason.valueOf(value) }.getOrNull()
             },
             pendingDraftCount = pendingDraftCount,
             ghostConfig = ghostConfig,

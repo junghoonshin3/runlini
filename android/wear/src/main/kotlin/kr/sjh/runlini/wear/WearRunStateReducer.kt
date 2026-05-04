@@ -49,6 +49,7 @@ class WearRunStateReducer {
             isGhostRun = ghostConfig != null,
             ghostFrame = null,
             intervalFrame = null,
+            pauseReason = null,
             statusMessage = null,
             errorMessage = null,
             feedbackType = null,
@@ -64,7 +65,11 @@ class WearRunStateReducer {
         )
     }
 
-    fun pause(state: WearRunState, realtimeMs: Long): WearRunState {
+    fun pause(
+        state: WearRunState,
+        realtimeMs: Long,
+        reason: WearPauseReason = WearPauseReason.Manual,
+    ): WearRunState {
         if (state.phase != WearRunPhase.Running) return state
         val elapsed = elapsedAt(state, realtimeMs)
         return state.copy(
@@ -72,6 +77,7 @@ class WearRunStateReducer {
             elapsedMs = elapsed,
             elapsedBeforeActiveSegmentMs = elapsed,
             activeSegmentStartedRealtimeMs = null,
+            pauseReason = reason,
         )
     }
 
@@ -80,6 +86,7 @@ class WearRunStateReducer {
         return state.copy(
             phase = WearRunPhase.Running,
             activeSegmentStartedRealtimeMs = realtimeMs,
+            pauseReason = null,
         )
     }
 
@@ -92,6 +99,7 @@ class WearRunStateReducer {
             elapsedMs = elapsed,
             elapsedBeforeActiveSegmentMs = elapsed,
             activeSegmentStartedRealtimeMs = null,
+            pauseReason = null,
         )
     }
 

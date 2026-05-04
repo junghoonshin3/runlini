@@ -139,6 +139,9 @@ private fun WearRunRecordingService.actions(): WearRunActions {
         onCountdownEnabledChange = { enabled ->
             updateSettings(state.value.settings.copy(countdownEnabled = enabled))
         },
+        onAutoPauseEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(autoPauseEnabled = enabled))
+        },
         onVibrationEnabledChange = { enabled ->
             updateSettings(state.value.settings.copy(vibrationEnabled = enabled))
         },
