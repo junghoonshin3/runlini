@@ -62,6 +62,11 @@ class RunGhostControlChip extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
+      sheetAnimationStyle: const AnimationStyle(
+        duration: Duration(milliseconds: 140),
+        reverseDuration: Duration(milliseconds: 80),
+      ),
       builder: (BuildContext context) {
         return GhostSessionPickerSheet(summaries: summaries);
       },

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
-import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_start_countdown_state.dart';
 
@@ -11,8 +10,7 @@ final runStartCountdownStepDurationProvider = Provider<Duration>(
 );
 
 final runStartCountdownSecondsProvider = Provider<int>((Ref ref) {
-  return ref.watch(runSettingsControllerProvider).value?.countdownSeconds ??
-      defaultRunCountdownSeconds;
+  return defaultRunCountdownSeconds;
 });
 
 class RunStartCountdownController extends Notifier<RunStartCountdownState> {

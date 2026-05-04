@@ -18,26 +18,6 @@ class SettingsRunningSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('시작 카운트다운', style: _labelStyle),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (
-                var seconds = runCountdownMinSeconds;
-                seconds <= runCountdownMaxSeconds;
-                seconds += 1
-              )
-                SettingsCompactButton(
-                  key: Key('countdown-seconds-$seconds-button'),
-                  label: '$seconds초',
-                  selected: settings.countdownSeconds == seconds,
-                  onPressed: () => controller.setCountdownSeconds(seconds),
-                ),
-            ],
-          ),
-          const SizedBox(height: 18),
           const Text('위치 업데이트', style: _labelStyle),
           const SizedBox(height: 10),
           Wrap(
@@ -73,6 +53,35 @@ class SettingsRunningSection extends ConsumerWidget {
           _GhostMarkerSwitch(
             value: settings.showGhostMarker,
             onChanged: controller.setShowGhostMarker,
+          ),
+          const SizedBox(height: 18),
+          _VoiceCueSwitch(
+            switchKey: const Key('voice-cue-enabled-switch'),
+            label: '음성 안내',
+            hint: '폰 러닝과 워치 러닝의 안내 음성을 켜요.',
+            value: settings.voiceCueEnabled,
+            onChanged: controller.setVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _VoiceCueSwitch(
+            switchKey: const Key('km-voice-cue-enabled-switch'),
+            label: '1km 안내',
+            hint: '1km마다 평균 페이스와 시간을 알려줘요.',
+            value: settings.kmVoiceCueEnabled,
+            onChanged: controller.setKmVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _VoiceCueSwitch(
+            switchKey: const Key('ghost-voice-cue-enabled-switch'),
+            label: '고스트 음성',
+            hint: '고스트 상태가 바뀔 때만 짧게 알려줘요.',
+            value: settings.ghostVoiceCueEnabled,
+            onChanged: controller.setGhostVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _VoiceVolumeSlider(
+            value: settings.voiceCueVolume,
+            onChanged: controller.setVoiceCueVolume,
           ),
         ],
       ),
@@ -140,6 +149,83 @@ class _GhostMarkerSwitch extends StatelessWidget {
           key: const Key('show-ghost-marker-switch'),
           value: value,
           activeThumbColor: AppColors.voltGreen,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _VoiceCueSwitch extends StatelessWidget {
+  const _VoiceCueSwitch({
+    required this.switchKey,
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final Key switchKey;
+  final String label;
+  final String hint;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: _labelStyle),
+              const SizedBox(height: 4),
+              Text(hint, style: _hintStyle),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Switch(
+          key: switchKey,
+          value: value,
+          activeThumbColor: AppColors.voltGreen,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _VoiceVolumeSlider extends StatelessWidget {
+  const _VoiceVolumeSlider({required this.value, required this.onChanged});
+
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (value * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: Text('음성 안내 음량', style: _labelStyle)),
+            Text('$percent%', style: _labelStyle),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text('폰과 워치에서 나오는 안내 음량이에요.', style: _hintStyle),
+        Slider(
+          key: const Key('voice-cue-volume-slider'),
+          value: value.clamp(runVoiceCueVolumeMin, runVoiceCueVolumeMax),
+          min: runVoiceCueVolumeMin,
+          max: runVoiceCueVolumeMax,
+          divisions: 10,
+          activeColor: AppColors.voltGreen,
+          inactiveColor: AppColors.chalk.withValues(alpha: 0.2),
           onChanged: onChanged,
         ),
       ],

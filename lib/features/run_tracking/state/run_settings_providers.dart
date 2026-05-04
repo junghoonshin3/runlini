@@ -5,6 +5,7 @@ import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart'
 import 'package:runlini/features/run_tracking/repo/sqflite_run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 
@@ -79,6 +80,32 @@ class RunSettingsController extends AsyncNotifier<RunSettingsState> {
   Future<void> setShowGhostMarker(bool visible) async {
     final current = state.value ?? const RunSettingsState();
     await _save(current.copyWith(showGhostMarker: visible));
+  }
+
+  Future<void> setIntervalWorkout(RunIntervalWorkout workout) async {
+    final current = state.value ?? const RunSettingsState();
+    await _save(current.copyWith(intervalWorkout: workout));
+  }
+
+  Future<void> setVoiceCueVolume(double volume) async {
+    final current = state.value ?? const RunSettingsState();
+    final clamped = volume.clamp(runVoiceCueVolumeMin, runVoiceCueVolumeMax);
+    await _save(current.copyWith(voiceCueVolume: clamped.toDouble()));
+  }
+
+  Future<void> setVoiceCueEnabled(bool enabled) async {
+    final current = state.value ?? const RunSettingsState();
+    await _save(current.copyWith(voiceCueEnabled: enabled));
+  }
+
+  Future<void> setKmVoiceCueEnabled(bool enabled) async {
+    final current = state.value ?? const RunSettingsState();
+    await _save(current.copyWith(kmVoiceCueEnabled: enabled));
+  }
+
+  Future<void> setGhostVoiceCueEnabled(bool enabled) async {
+    final current = state.value ?? const RunSettingsState();
+    await _save(current.copyWith(ghostVoiceCueEnabled: enabled));
   }
 
   Future<void> setBodyWeightKg(double? weightKg) async {

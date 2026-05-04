@@ -42,6 +42,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
       startedAt: startedAt,
       resumedAt: startedAt,
       activeSessionId: 'live_${startedAt.millisecondsSinceEpoch}',
+      intervalManualAdvanceCount: 0,
     );
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(true);
     return RunTrackingToggleResult.started;
@@ -190,6 +191,15 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     }
 
     return start();
+  }
+
+  void advanceInterval() {
+    if (!state.hasActiveSession) {
+      return;
+    }
+    state = state.copyWith(
+      intervalManualAdvanceCount: state.intervalManualAdvanceCount + 1,
+    );
   }
 
   void ingestLiveSample(LiveLocationSample sample) {

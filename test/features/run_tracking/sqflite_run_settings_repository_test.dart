@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:runlini/core/persistence/runlini_database.dart';
 import 'package:runlini/features/run_tracking/repo/sqflite_run_settings_repository.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -36,6 +37,15 @@ void main() {
         countdownSeconds: 7,
         locationTrackingPreset: RunLocationTrackingPreset.highAccuracy,
         showGhostMarker: true,
+        voiceCueEnabled: false,
+        kmVoiceCueEnabled: false,
+        ghostVoiceCueEnabled: true,
+        voiceCueVolume: 0.7,
+        intervalWorkout: RunIntervalWorkout(
+          enabled: true,
+          work: RunIntervalTarget.distance(400),
+          repeatCount: 6,
+        ),
         bodyWeightKg: 70.5,
         defaultShoeId: 'shoe-a',
       ),
@@ -65,6 +75,13 @@ void main() {
       RunLocationTrackingPreset.highAccuracy,
     );
     expect(settings.showGhostMarker, isTrue);
+    expect(settings.voiceCueEnabled, isFalse);
+    expect(settings.kmVoiceCueEnabled, isFalse);
+    expect(settings.ghostVoiceCueEnabled, isTrue);
+    expect(settings.voiceCueVolume, 0.7);
+    expect(settings.intervalWorkout.enabled, isTrue);
+    expect(settings.intervalWorkout.work.distanceM, 400);
+    expect(settings.intervalWorkout.repeatCount, 6);
     expect(settings.bodyWeightKg, 70.5);
     expect(settings.defaultShoeId, 'shoe-a');
   });
@@ -102,6 +119,10 @@ void main() {
       'key': 'yearly_distance_goal_m',
       'value': 'wild',
     });
+    await db.insert('app_settings', const <String, Object?>{
+      'key': 'voice_cue_volume',
+      'value': '2',
+    });
 
     final settings = await SqfliteRunSettingsRepository(
       database: database,
@@ -113,6 +134,10 @@ void main() {
     expect(settings.distanceGoals.weeklyGoalM, defaultWeeklyDistanceGoalM);
     expect(settings.distanceGoals.monthlyGoalM, defaultMonthlyDistanceGoalM);
     expect(settings.distanceGoals.yearlyGoalM, defaultYearlyDistanceGoalM);
+    expect(settings.voiceCueEnabled, isTrue);
+    expect(settings.kmVoiceCueEnabled, isTrue);
+    expect(settings.ghostVoiceCueEnabled, isFalse);
+    expect(settings.voiceCueVolume, defaultRunVoiceCueVolume);
   });
 
   test('adds, retires, and soft-deletes running shoes', () async {
