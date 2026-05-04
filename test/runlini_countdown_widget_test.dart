@@ -178,9 +178,8 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tapAt(
-        tester.getCenter(find.byKey(const Key('settings-button'))),
-      );
+      expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsNothing);
       await tester.pump();
       expect(find.byKey(const Key('settings-tab-screen')), findsNothing);
       expect(

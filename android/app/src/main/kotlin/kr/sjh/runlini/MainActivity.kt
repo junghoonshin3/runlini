@@ -1,5 +1,6 @@
 package kr.sjh.runlini
 
+import com.google.android.gms.wearable.Wearable
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -49,6 +50,25 @@ class MainActivity : FlutterFragmentActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
+            WATCH_CONNECTION_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "connectionStatus" -> {
+                    Wearable.getNodeClient(applicationContext)
+                        .connectedNodes
+                        .addOnSuccessListener { nodes ->
+                            result.success(if (nodes.isNotEmpty()) "connected" else "disconnected")
+                        }
+                        .addOnFailureListener {
+                            result.success("disconnected")
+                        }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
             WEAR_GHOST_CONFIG_CHANNEL,
         ).setMethodCallHandler { call, result ->
             val sender = WearGhostConfigSender(applicationContext)
@@ -88,11 +108,71 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            WEAR_INTERVAL_CONFIG_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            val sender = WearIntervalConfigSender(applicationContext)
+            when (call.method) {
+                "sendIntervalConfig" -> {
+                    val enabled = call.argument<Boolean>("enabled") ?: false
+                    val json = call.argument<String>("json")
+                    if (json == null) {
+                        result.error(
+                            "missing_interval_config",
+                            "sendIntervalConfig requires a json argument.",
+                            null,
+                        )
+                    } else {
+                        sender.sendConfig(enabled, json)
+                        result.success(null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            WEAR_VOICE_SETTINGS_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            val sender = WearVoiceSettingsSender(applicationContext)
+            when (call.method) {
+                "sendVoiceSettings" -> {
+                    val voiceCueEnabled = call.argument<Boolean>("voiceCueEnabled") ?: true
+                    val kmVoiceCueEnabled = call.argument<Boolean>("kmVoiceCueEnabled") ?: true
+                    val ghostVoiceCueEnabled = call.argument<Boolean>("ghostVoiceCueEnabled") ?: false
+                    val volume = call.argument<Double>("volume")
+                    val playTestCue = call.argument<Boolean>("playTestCue") ?: false
+                    if (volume == null) {
+                        result.error(
+                            "missing_voice_settings",
+                            "sendVoiceSettings requires a volume argument.",
+                            null,
+                        )
+                    } else {
+                        sender.send(
+                            voiceCueEnabled = voiceCueEnabled,
+                            kmVoiceCueEnabled = kmVoiceCueEnabled,
+                            ghostVoiceCueEnabled = ghostVoiceCueEnabled,
+                            volume = volume,
+                            playTestCue = playTestCue,
+                        )
+                        result.success(null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     companion object {
         private const val MAP_CONFIG_CHANNEL = "runlini/map_config"
         private const val WEAR_DRAFTS_CHANNEL = "runlini/wear_drafts"
+        private const val WATCH_CONNECTION_CHANNEL = "runlini/watch_connection"
         private const val WEAR_GHOST_CONFIG_CHANNEL = "runlini/wear_ghost_config"
+        private const val WEAR_INTERVAL_CONFIG_CHANNEL = "runlini/wear_interval_config"
+        private const val WEAR_VOICE_SETTINGS_CHANNEL = "runlini/wear_voice_settings"
     }
 }

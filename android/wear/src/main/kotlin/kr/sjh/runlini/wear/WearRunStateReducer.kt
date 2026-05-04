@@ -48,6 +48,7 @@ class WearRunStateReducer {
             ghostConfig = ghostConfig,
             isGhostRun = ghostConfig != null,
             ghostFrame = null,
+            intervalFrame = null,
             statusMessage = null,
             errorMessage = null,
             feedbackType = null,
@@ -56,7 +57,11 @@ class WearRunStateReducer {
 
     fun tick(state: WearRunState, realtimeMs: Long): WearRunState {
         if (state.phase != WearRunPhase.Running) return state
-        return state.copy(elapsedMs = elapsedAt(state, realtimeMs))
+        val elapsed = elapsedAt(state, realtimeMs)
+        return state.copy(
+            elapsedMs = elapsed,
+            intervalFrame = intervalFrame(state, elapsed, state.distanceM),
+        )
     }
 
     fun pause(state: WearRunState, realtimeMs: Long): WearRunState {
@@ -180,6 +185,7 @@ class WearRunStateReducer {
             heartRateBpm = sample.heartRateBpm ?: state.heartRateBpm,
             caloriesKcal = sample.caloriesKcal ?: state.caloriesKcal,
             points = points,
+            intervalFrame = intervalFrame(state, elapsed, distance),
             elapsedBeforeActiveSegmentMs = if (state.phase == WearRunPhase.Running) {
                 elapsed
             } else {
@@ -201,5 +207,17 @@ class WearRunStateReducer {
     private fun elapsedAt(state: WearRunState, realtimeMs: Long): Long {
         val started = state.activeSegmentStartedRealtimeMs ?: return state.elapsedMs
         return state.elapsedBeforeActiveSegmentMs + (realtimeMs - started).coerceAtLeast(0)
+    }
+
+    private fun intervalFrame(
+        state: WearRunState,
+        elapsedMs: Long,
+        distanceM: Double,
+    ): WearIntervalFrame? {
+        return WearIntervalWorkoutCalculator().calculate(
+            workout = state.settings.intervalWorkout,
+            elapsedMs = elapsedMs,
+            distanceM = distanceM,
+        )
     }
 }

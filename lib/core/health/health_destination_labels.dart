@@ -24,6 +24,10 @@ String healthDestinationFailedLabel(TargetPlatform platform) {
   return '${healthDestinationLabel(platform)} 전송 실패';
 }
 
+String healthDestinationSendLabel(TargetPlatform platform) {
+  return '${healthDestinationSendTarget(platform)} 보내기';
+}
+
 String healthDestinationRetryLabel(TargetPlatform platform) {
   return '${healthDestinationSendTarget(platform)} 다시 보내기';
 }

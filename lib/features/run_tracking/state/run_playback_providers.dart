@@ -1,4 +1,5 @@
 export 'live_location_providers.dart';
+export 'run_interval_providers.dart';
 export 'run_location_tracking_settings.dart';
 export 'run_map_state_providers.dart';
 export 'run_playback_controller_providers.dart';

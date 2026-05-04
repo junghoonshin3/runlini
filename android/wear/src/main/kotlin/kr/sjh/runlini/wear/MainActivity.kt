@@ -148,8 +148,24 @@ private fun WearRunRecordingService.actions(): WearRunActions {
         onVoiceCueEnabledChange = { enabled ->
             updateSettings(state.value.settings.copy(voiceCueEnabled = enabled))
         },
+        onVoiceCueVolumeChange = { volume ->
+            val safeVolume = WearRunSettingsDefaults.clampVoiceVolume(volume)
+            updateSettings(
+                state.value.settings.copy(
+                    voiceCueVolume = safeVolume,
+                ),
+            )
+            playVoiceTestCue(safeVolume)
+        },
         onGhostVoiceCueEnabledChange = { enabled ->
             updateSettings(state.value.settings.copy(ghostVoiceCueEnabled = enabled))
+        },
+        onIntervalWorkoutChange = { workout ->
+            updateSettings(
+                state.value.settings.copy(
+                    intervalWorkout = WearIntervalQuickSettings.normalize(workout),
+                ),
+            )
         },
         onGhostSelect = ::selectGhostConfig,
     )

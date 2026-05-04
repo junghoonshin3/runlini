@@ -89,6 +89,9 @@
   flows.
 - App startup may check/sync Health data only when permission is already
   granted, and must skip quietly otherwise.
+- History refresh may also silently import Health Connect / HealthKit records
+  when access is already granted. The history list stays unified instead of
+  splitting app-local and Health-origin records.
 - If HealthKit or Health Connect is unavailable or denied, keep local run
   recording active and skip the export gracefully.
 - If companion watch communication is unavailable, keep the phone-first run flow
@@ -101,6 +104,7 @@
   a local run has failed Health send.
 - Health-imported records must show their import origin instead of the app-local
   send-status label: Health Connect records use the Health Connect/source app
-  label, and HealthKit records use 건강 앱/source app labeling.
+  label, and HealthKit records use 건강 앱/source app labeling. Show this origin
+  in run detail, not as a separate category in the history list.
 - Explain why each permission is needed in plain runner language.
 - Android uses Google Maps; iOS uses Apple Maps.

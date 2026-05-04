@@ -1,32 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 
-class RunSettingsButton extends StatelessWidget {
-  const RunSettingsButton({super.key, required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 68,
-      child: IconButton(
-        key: const Key('settings-button'),
-        style: IconButton.styleFrom(
-          backgroundColor: AppColors.black.withValues(alpha: 0.9),
-          foregroundColor: AppColors.chalk,
-          shape: const CircleBorder(
-            side: BorderSide(color: AppColors.chalk, width: 3),
-          ),
-        ),
-        onPressed: onPressed,
-        icon: const Icon(Icons.tune_rounded, size: 28),
-        tooltip: 'Settings',
-      ),
-    );
-  }
-}
-
 class RunPauseResumeButton extends StatelessWidget {
   const RunPauseResumeButton({
     super.key,

@@ -28,9 +28,8 @@ void main() {
     );
     await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
 
-    await tester.tap(find.byKey(const Key('countdown-seconds-5-button')));
-    await tester.pumpAndSettle();
-    expect(repository.settings.countdownSeconds, 5);
+    expect(find.text('시작 카운트다운'), findsNothing);
+    expect(find.byKey(const Key('countdown-seconds-5-button')), findsNothing);
 
     await tester.tap(
       find.byKey(const Key('location-preset-highAccuracy-button')),
@@ -44,6 +43,26 @@ void main() {
     await tester.tap(find.byKey(const Key('show-ghost-marker-switch')));
     await tester.pumpAndSettle();
     expect(repository.settings.showGhostMarker, isTrue);
+
+    await tester.tap(find.byKey(const Key('voice-cue-enabled-switch')));
+    await tester.pumpAndSettle();
+    expect(repository.settings.voiceCueEnabled, isFalse);
+
+    await tester.tap(find.byKey(const Key('km-voice-cue-enabled-switch')));
+    await tester.pumpAndSettle();
+    expect(repository.settings.kmVoiceCueEnabled, isFalse);
+
+    await tester.tap(find.byKey(const Key('ghost-voice-cue-enabled-switch')));
+    await tester.pumpAndSettle();
+    expect(repository.settings.ghostVoiceCueEnabled, isTrue);
+
+    final volumeSliderFinder = find.byKey(const Key('voice-cue-volume-slider'));
+    await tester.ensureVisible(volumeSliderFinder);
+    await tester.pumpAndSettle();
+    final volumeSlider = tester.widget<Slider>(volumeSliderFinder);
+    volumeSlider.onChanged!(0.6);
+    await tester.pumpAndSettle();
+    expect(repository.settings.voiceCueVolume, 0.6);
 
     final saveWeightButton = find.byKey(const Key('save-runner-weight-button'));
     await tester.ensureVisible(saveWeightButton);
@@ -92,6 +111,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.settings.privacy.hideRouteMap, isTrue);
 
+    final manageShoesButtonFinder = find.byKey(
+      const Key('manage-shoes-button'),
+    );
+    await tester.scrollUntilVisible(
+      manageShoesButtonFinder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('기본 러닝화가 없어요.'), findsOneWidget);
+    expect(find.byKey(const Key('add-shoe-button')), findsNothing);
+    await tester.tap(manageShoesButtonFinder);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shoe-management-screen')), findsOneWidget);
+
     final addShoeButtonFinder = find.byKey(const Key('add-shoe-button')).first;
     await tester.ensureVisible(addShoeButtonFinder);
     await tester.pumpAndSettle();
@@ -132,6 +166,20 @@ void main() {
     expect(repository.shoes.single.name, 'Pegasus 41');
     expect(repository.shoes.single.distanceLimitKm, 750);
     expect(find.text('Nike Pegasus 41'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('settings-tab-screen')), findsOneWidget);
+    expect(
+      find.byKey(Key('default-shoe-summary-${firstShoe.id}')),
+      findsOneWidget,
+    );
+    expect(find.text('Nike Pegasus 41'), findsOneWidget);
+    expect(find.byKey(Key('edit-shoe-${firstShoe.id}')), findsNothing);
+
+    await tester.tap(manageShoesButtonFinder);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shoe-management-screen')), findsOneWidget);
 
     await tester.scrollUntilVisible(
       addShoeButtonFinder,
@@ -179,7 +227,7 @@ void main() {
     await tester.tap(coursesSecondShoeFinder);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('shoe-courses-screen')), findsOneWidget);
-    expect(find.textContaining('0개 코스'), findsOneWidget);
+    expect(find.textContaining('0개 기록'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 

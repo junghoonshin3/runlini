@@ -57,6 +57,7 @@ data class WearRunState(
     val ghostConfigs: List<WearGhostConfig> = emptyList(),
     val isGhostRun: Boolean = false,
     val ghostFrame: WearGhostFrame? = null,
+    val intervalFrame: WearIntervalFrame? = null,
     val statusMessage: String? = null,
     val errorMessage: String? = null,
     val feedbackType: WearRunFeedbackType? = null,

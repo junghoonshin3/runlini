@@ -61,16 +61,76 @@ class WearRunAlertControllerTest {
             speech = speech,
         )
 
-        controller.onDistanceChanged(1_000.0, 320.0, WearRunSettings())
-        controller.onDistanceChanged(1_500.0, 320.0, WearRunSettings())
-        controller.onDistanceChanged(2_000.0, null, WearRunSettings())
+        val settings = WearRunSettings(kmAlertEnabled = true)
+
+        controller.onDistanceChanged(1_000.0, 320.0, settings, elapsedMs = 320_000L)
+        controller.onDistanceChanged(1_500.0, 320.0, settings)
+        controller.onDistanceChanged(2_000.0, null, settings, elapsedMs = 640_000L)
 
         assertEquals(
             listOf(
-                "1킬로미터, 평균 페이스 5분 20초",
-                "2킬로미터",
+                "1킬로미터, 평균 페이스 5분 20초, 시간 5분 20초",
+                "2킬로미터, 시간 10분 40초",
             ),
             speech.spoken,
+        )
+        assertEquals(listOf(1.0f, 1.0f), speech.volumes)
+    }
+
+    @Test
+    fun voiceCueUsesConfiguredVolume() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+
+        controller.onDistanceChanged(
+            1_000.0,
+            300.0,
+            WearRunSettings(kmAlertEnabled = true, voiceCueVolume = 0.4f),
+            elapsedMs = 300_000L,
+        )
+
+        assertEquals(listOf(0.4f), speech.volumes)
+    }
+
+    @Test
+    fun voiceTestCueUsesConfiguredVolume() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+
+        controller.playVoiceTestCue(0.35f)
+
+        assertEquals(listOf("음량 테스트"), speech.spoken)
+        assertEquals(listOf(0.35f), speech.volumes)
+    }
+
+    @Test
+    fun voiceTestCueClampsVolume() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+
+        controller.playVoiceTestCue(3.0f)
+
+        assertEquals(listOf(1.0f), speech.volumes)
+    }
+
+    @Test
+    fun voiceCueFormatsLongElapsedTime() {
+        assertEquals(
+            "12킬로미터, 평균 페이스 5분, 시간 1시간 2분 3초",
+            WearRunVoiceCueFormatter.kilometerSummary(
+                kilometer = 12,
+                averagePaceSecPerKm = 300.0,
+                elapsedMs = 3_723_000L,
+            ),
         )
     }
 
@@ -85,7 +145,24 @@ class WearRunAlertControllerTest {
         controller.onDistanceChanged(
             1_000.0,
             320.0,
-            WearRunSettings(voiceCueEnabled = false),
+            WearRunSettings(voiceCueEnabled = false, kmAlertEnabled = true),
+        )
+
+        assertEquals(emptyList<String>(), speech.spoken)
+    }
+
+    @Test
+    fun voiceCueDoesNothingWhenKmAlertIsOff() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+
+        controller.onDistanceChanged(
+            1_000.0,
+            320.0,
+            WearRunSettings(voiceCueEnabled = true, kmAlertEnabled = false),
         )
 
         assertEquals(emptyList<String>(), speech.spoken)
@@ -178,10 +255,12 @@ private class FakeWearRunHaptics : WearRunHaptics {
 
 private class FakeWearRunSpeech : WearRunSpeech {
     val spoken = mutableListOf<String>()
+    val volumes = mutableListOf<Float>()
     var shutdowns = 0
 
-    override fun speak(text: String) {
+    override fun speak(text: String, volume: Float) {
         spoken.add(text)
+        volumes.add(volume)
     }
 
     override fun shutdown() {

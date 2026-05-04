@@ -77,11 +77,15 @@ Current Android native V1 implementation:
 - After save or discard, the watch shows a 1-second completion feedback screen,
   then returns to a clean Ready launch hub without leaving `저장됨` / `삭제됨`
   status text behind.
-- Settings > 연동 exposes a manual `워치 동기화` action that drains the phone
+- Settings > 연동 exposes a manual `워치 기록 가져오기` action that drains the phone
   pending inbox and refreshes the watch's recent ghost route cache. The watch
   keeps pending drafts internally, but the Ready screen does not show sync counts
   or retry controls; the watch is the recording surface and the phone is the sync
   management surface.
+- The manual phone action checks whether a Wear node is connected for clearer
+  status text, but connection is not a hard prerequisite: drafts that have
+  already reached the phone inbox can be imported even while the watch is
+  disconnected.
 - The default Ready screen leaves the area below the start button empty. When a
   ghost route is cached, Ready hides source labels such as `device:gps`, shows a
   small `고스트 모드 ON` pill, and places circular `고스트런 시작` / `일반 시작`
@@ -107,6 +111,16 @@ Current Android native V1 implementation:
 - Recent ghost cache refresh happens on phone app launch, foreground resume, run
   list changes, and Settings manual sync. Charging-only background refresh is a
   later WorkManager-style enhancement.
+- Phone interval settings are sent to the watch on
+  `/runlini/phone/interval_config` as an `intervalJson` asset. V1 supports
+  `warmup -> work/recovery repeats -> cooldown`, with time, distance, open, and
+  skipped targets.
+- During an active Wear run, interval guidance appears before ghost guidance:
+  the core page shows a compact current-step pill and the active pager includes
+  an interval page with current step, remaining target, and next step.
+- Interval step changes reuse the watch haptic / voice cue settings. V1 does
+  not save interval lap summaries into `RunSession`; the completed run remains
+  a normal run record.
 - The Ready pager always exposes a small `고스트 선택` page. With zero cached
   routes it shows `없음`; with cached routes it shows only those options. With
   one route, Ready still keeps the direct `고스트런 시작` / `일반 시작` actions.
@@ -236,8 +250,12 @@ Recommended architecture:
 - Watch displays elapsed time, distance, pace, heart rate, and active calories
   when Health Services provides them.
 - Watch feedback is haptic plus large text. Wear OS V1 also plays short
-  watch-local TTS cues for 1km summaries and optional ghost status changes.
-  Phone-routed voice cues are a later phone companion feature.
+  watch-local TTS cues: `1km 알림` controls 1km haptic and voice summaries
+  with average pace and elapsed time, `음성 안내` is the TTS master switch,
+  and `고스트 음성` controls optional ghost status changes. Voice cue volume is
+  adjustable on the phone and watch, then applied to Wear OS TTS output. When
+  the runner changes voice volume, the watch plays a short `음량 테스트` cue.
+  Phone-routed voice cues are a later companion feature.
 - Maps, history browsing, charts, shoe management, and detailed settings are
   phone-only in v1.
 

@@ -13,14 +13,15 @@ class GhostSessionPickerSheet extends StatelessWidget {
     return DraggableScrollableSheet(
       key: const Key('ghost-session-draggable-sheet'),
       expand: false,
-      initialChildSize: 0.68,
-      minChildSize: 0.38,
-      maxChildSize: 0.96,
+      initialChildSize: 1.0,
+      minChildSize: 0.0,
+      maxChildSize: 1.0,
       snap: true,
-      snapSizes: const <double>[0.68, 0.96],
+      snapAnimationDuration: const Duration(milliseconds: 80),
+      shouldCloseOnMinExtent: true,
       builder: (BuildContext context, ScrollController scrollController) {
         return SafeArea(
-          top: false,
+          top: true,
           child: Container(
             key: const Key('ghost-session-sheet'),
             color: AppColors.black,

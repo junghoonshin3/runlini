@@ -23,7 +23,7 @@ class SettingsShoeCoursesScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('shoe-courses-screen'),
       backgroundColor: AppColors.black,
-      appBar: AppBar(title: const Text('러닝화 코스')),
+      appBar: AppBar(title: const Text('러닝화 기록')),
       body: sessionsAsync.when(
         data: (sessions) {
           final shoeSessions = sessions
@@ -59,7 +59,7 @@ class SettingsShoeCoursesScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.voltGreen),
         ),
-        error: (_, _) => const Center(child: Text('코스를 불러오지 못했어요.')),
+        error: (_, _) => const Center(child: Text('기록을 불러오지 못했어요.')),
       ),
     );
   }
@@ -112,7 +112,7 @@ class _ShoeCoursesHeader extends StatelessWidget {
           Text('${shoe.brand} ${shoe.name}', style: _titleStyle(context)),
           const SizedBox(height: 8),
           Text(
-            '$runCount개 코스 · '
+            '$runCount개 기록 · '
             '${formatRunDistance(totalDistanceM, displaySettings, decimals: 2)}',
             style: Theme.of(
               context,
@@ -121,7 +121,7 @@ class _ShoeCoursesHeader extends StatelessWidget {
           if (runCount == 0) ...[
             const SizedBox(height: 14),
             const Text(
-              '이 러닝화로 저장된 코스가 없어요.',
+              '이 러닝화로 저장된 기록이 없어요.',
               style: TextStyle(
                 color: AppColors.muted,
                 fontWeight: FontWeight.w800,

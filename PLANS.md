@@ -10,6 +10,9 @@ domain behavior, or is likely to take more than one focused session.
 - Include: summary, progress checklist, decisions, validation steps, and recovery notes.
 - Update the same plan as you learn. Do not create throwaway plans in chat only.
 - When implementation diverges from the plan, record why.
+- Keep `docs/exec-plans/active/` small. Move finished plans to
+  `docs/exec-plans/archive/completed/`, and move stale replaced plans to
+  `docs/exec-plans/archive/superseded/`.
 
 ## Minimum Structure
 

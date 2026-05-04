@@ -64,6 +64,41 @@ void main() {
     expect(find.text('Distance Gap · 0.03 mi'), findsOneWidget);
   });
 
+  testWidgets('can move primary metrics from header into metric strip', (
+    tester,
+  ) async {
+    const displaySettings = RunDisplaySettings(
+      distanceUnit: RunDistanceUnit.mi,
+      paceUnit: RunPaceUnit.minPerMi,
+      speedUnit: RunSpeedUnit.mph,
+    );
+    await _pumpPanel(
+      tester,
+      _session(),
+      displaySettings: displaySettings,
+      showHeaderSummaryMetrics: false,
+    );
+
+    expect(find.byKey(const Key('run-detail-header-summary')), findsNothing);
+    expect(find.text('Distance (mi)'), findsOneWidget);
+    expect(find.text('Time'), findsOneWidget);
+    expect(find.text('Avg. Pace (min/mi)'), findsOneWidget);
+    expect(find.text('Avg. Speed (mph)'), findsOneWidget);
+    expect(find.text('Calories (kcal)'), findsOneWidget);
+  });
+
+  testWidgets('moves sync status to bottom', (tester) async {
+    await _pumpPanel(tester, _session());
+
+    final syncFinder = find.byKey(const Key('detail-sync-status-section'));
+    final paceFinder = find.byKey(const Key('detail-chart-pace'));
+
+    expect(
+      tester.getTopLeft(syncFinder).dy,
+      greaterThan(tester.getTopLeft(paceFinder).dy),
+    );
+  });
+
   testWidgets('lays out split rows on a narrow mobile screen', (tester) async {
     tester.view.physicalSize = const Size(320, 900);
     tester.view.devicePixelRatio = 1;
@@ -156,6 +191,8 @@ Future<void> _pumpPanel(
   RunSession session, {
   RunDisplaySettings displaySettings = const RunDisplaySettings(),
   RunPrivacySettings privacySettings = const RunPrivacySettings(),
+  bool includePrimaryMetrics = true,
+  bool showHeaderSummaryMetrics = true,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -164,6 +201,8 @@ Future<void> _pumpPanel(
           session: session,
           displaySettings: displaySettings,
           privacySettings: privacySettings,
+          includePrimaryMetrics: includePrimaryMetrics,
+          showHeaderSummaryMetrics: showHeaderSummaryMetrics,
         ),
       ),
     ),

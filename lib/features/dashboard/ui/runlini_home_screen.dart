@@ -15,6 +15,8 @@ import 'package:runlini/features/run_tracking/ui/running/running_tab_screen.dart
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 import 'package:runlini/features/settings/ui/startup_weight_screen.dart';
 
+part 'runlini_home_screen_sync.dart';
+
 class RunliniHomeScreen extends ConsumerStatefulWidget {
   const RunliniHomeScreen({super.key});
 
@@ -27,6 +29,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   bool _healthSyncScheduled = false;
   bool _wearDraftSyncScheduled = false;
   bool _wearGhostConfigSyncScheduled = false;
+  bool _wearIntervalSyncScheduled = false;
 
   @override
   void initState() {
@@ -45,6 +48,8 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
     if (state == AppLifecycleState.resumed) {
       _syncWearDrafts();
       _syncRecentWatchGhostConfigs();
+      _syncWatchIntervalConfig();
+      _syncWatchVoiceSettings();
     }
   }
 
@@ -66,9 +71,11 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
     }
 
     _listenForRunSessionChanges();
+    _listenForRunSettingsChanges();
     _scheduleHealthSync();
     _scheduleWearDraftSync();
     _scheduleWearGhostConfigSync();
+    _scheduleWearIntervalSync();
 
     return Stack(
       children: [
@@ -124,80 +131,6 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
           ),
       ],
     );
-  }
-
-  void _scheduleHealthSync() {
-    if (_healthSyncScheduled) {
-      return;
-    }
-    _healthSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      ref.read(healthSyncControllerProvider.notifier).syncIfAuthorized();
-    });
-  }
-
-  void _scheduleWearDraftSync() {
-    if (_wearDraftSyncScheduled) {
-      return;
-    }
-    _wearDraftSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncWearDrafts();
-    });
-  }
-
-  void _scheduleWearGhostConfigSync() {
-    if (_wearGhostConfigSyncScheduled) {
-      return;
-    }
-    _wearGhostConfigSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncRecentWatchGhostConfigs();
-    });
-  }
-
-  void _syncWearDrafts() {
-    if (!mounted) {
-      return;
-    }
-    ref.read(wearDraftSyncControllerProvider.notifier).syncPendingDrafts();
-  }
-
-  void _listenForRunSessionChanges() {
-    ref.listen(runSessionListProvider, (previous, next) {
-      if (previous?.hasValue == true && next.hasValue) {
-        _syncRecentWatchGhostConfigs();
-      }
-    });
-  }
-
-  Future<void> _syncRecentWatchGhostConfigs() async {
-    if (!mounted) {
-      return;
-    }
-    try {
-      final sessions = await ref.read(runSessionListProvider.future);
-      if (!mounted) {
-        return;
-      }
-      final selectedSessionId = ref
-          .read(ghostSettingsProvider)
-          .selectedSessionId;
-      await ref
-          .read(watchGhostConfigSyncServiceProvider)
-          .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
-    } catch (_) {
-      // Wear config sync is best-effort and retried on foreground.
-    }
   }
 }
 

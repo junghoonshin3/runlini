@@ -53,7 +53,8 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
-    expect(find.byKey(const Key('settings-button')), findsOneWidget);
+    expect(find.byKey(const Key('settings-button')), findsNothing);
+    expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
     expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
     expect(find.text('START'), findsOneWidget);
     expect(sessionRepository.savedSessions.length, 3);
@@ -102,7 +103,8 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
-    expect(find.byKey(const Key('settings-button')), findsOneWidget);
+    expect(find.byKey(const Key('settings-button')), findsNothing);
+    expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
     expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
     expect(sessionRepository.savedSessions.length, 2);
     expect(healthRecorder.cancelCalls, 1);

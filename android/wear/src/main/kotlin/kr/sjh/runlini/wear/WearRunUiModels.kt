@@ -1,6 +1,6 @@
 package kr.sjh.runlini.wear
 
-internal enum class WearActiveRunPage { Core, Ghost, Details, Controls }
+internal enum class WearActiveRunPage { Core, Interval, Ghost, Details, Controls }
 
 internal enum class WearReadyPage { Ready, Ghosts, Settings }
 
@@ -19,6 +19,9 @@ internal object WearActiveRunPageModel {
         return buildList {
             add(WearActiveRunPage.Controls)
             add(WearActiveRunPage.Core)
+            if (state.settings.intervalWorkout.enabled) {
+                add(WearActiveRunPage.Interval)
+            }
             if (state.isGhostRun) {
                 add(WearActiveRunPage.Ghost)
             }

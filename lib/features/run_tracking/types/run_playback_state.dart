@@ -14,6 +14,7 @@ class RunPlaybackState {
     this.resumedAt,
     this.activeSessionId,
     this.pendingFinishedSession,
+    this.intervalManualAdvanceCount = 0,
   });
 
   const RunPlaybackState.idle()
@@ -32,6 +33,7 @@ class RunPlaybackState {
   final DateTime? resumedAt;
   final String? activeSessionId;
   final RunSession? pendingFinishedSession;
+  final int intervalManualAdvanceCount;
 
   bool get hasActiveSession =>
       status == RunScreenStatus.running || status == RunScreenStatus.paused;
@@ -62,6 +64,7 @@ class RunPlaybackState {
     Object? resumedAt = _unset,
     Object? activeSessionId = _unset,
     Object? pendingFinishedSession = _unset,
+    int? intervalManualAdvanceCount,
   }) {
     return RunPlaybackState(
       status: status ?? this.status,
@@ -80,6 +83,8 @@ class RunPlaybackState {
       pendingFinishedSession: identical(pendingFinishedSession, _unset)
           ? this.pendingFinishedSession
           : pendingFinishedSession as RunSession?,
+      intervalManualAdvanceCount:
+          intervalManualAdvanceCount ?? this.intervalManualAdvanceCount,
     );
   }
 }

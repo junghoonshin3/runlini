@@ -72,6 +72,27 @@ class WearRunUiModelsTest {
     }
 
     @Test
+    fun pageModelInsertsIntervalPageWhenEnabled() {
+        val pages = WearActiveRunPageModel.pagesFor(
+            WearRunState(
+                settings = WearRunSettings(
+                    intervalWorkout = WearIntervalWorkout(enabled = true),
+                ),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                WearActiveRunPage.Controls,
+                WearActiveRunPage.Core,
+                WearActiveRunPage.Interval,
+                WearActiveRunPage.Details,
+            ),
+            pages,
+        )
+    }
+
+    @Test
     fun pageModelStartsActivePagerOnCorePage() {
         val pages = WearActiveRunPageModel.pagesFor(WearRunState())
 
@@ -208,6 +229,22 @@ class WearRunUiModelsTest {
         assertEquals(12, layout.labelSizeSp)
         assertEquals(19, layout.titleSizeSp)
         assertTrue(WearGhostReadyModelBuilder.actionRowFits(widthDp = 192, heightDp = 192))
+    }
+
+    @Test
+    fun voiceVolumeControlsKeepFixedWidthAtOneHundredPercent() {
+        val zeroWidth = WearVolumeRowLayoutModel.controlWidthFor(0.0f)
+        val ninetyWidth = WearVolumeRowLayoutModel.controlWidthFor(0.9f)
+        val fullWidth = WearVolumeRowLayoutModel.controlWidthFor(1.0f)
+
+        assertEquals(zeroWidth, ninetyWidth)
+        assertEquals(ninetyWidth, fullWidth)
+        assertEquals(98, fullWidth)
+        assertTrue(
+            WearVolumeRowLayoutModel.valueSlotCanShow(
+                WearVolumeRowLayoutModel.percentLabel(1.0f),
+            ),
+        )
     }
 
     @Test

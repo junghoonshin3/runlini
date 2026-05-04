@@ -71,10 +71,9 @@ void main() {
     );
   });
 
-  test('uses the configured countdown length', () async {
+  test('always uses the fixed 3 second countdown', () async {
     final container = ProviderContainer(
       overrides: [
-        runStartCountdownSecondsProvider.overrideWithValue(5),
         runStartCountdownStepDurationProvider.overrideWithValue(
           const Duration(milliseconds: 1),
         ),
@@ -96,6 +95,6 @@ void main() {
         );
 
     expect(result, RunTrackingToggleResult.started);
-    expect(seenSeconds, <int>[5, 4, 3, 2, 1]);
+    expect(seenSeconds, <int>[3, 2, 1]);
   });
 }

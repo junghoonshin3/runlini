@@ -82,6 +82,7 @@ class HealthServicesRunController(
             observeDebugGpsInjection()
         }
         observeGhostConfigChanges()
+        observeSettingsChanges()
     }
 
     private val callback = object : ExerciseUpdateCallback {
@@ -431,7 +432,12 @@ class HealthServicesRunController(
 
     fun updateSettings(settings: WearRunSettings) {
         settingsStore.save(settings)
-        _state.value = _state.value.copy(settings = settings)
+        _state.value = withCurrentIntervalFrame(_state.value.copy(settings = settings))
+        WearRunSettingsChangeBus.notifyChanged()
+    }
+
+    fun playVoiceTestCue(volume: Float) {
+        alertController.playVoiceTestCue(volume)
     }
 
     private fun observeGhostConfigChanges() {
@@ -440,6 +446,28 @@ class HealthServicesRunController(
                 refreshGhostConfigCache()
             }
         }
+    }
+
+    private fun observeSettingsChanges() {
+        scope.launch {
+            WearRunSettingsChangeBus.changes.collect {
+                val settings = settingsStore.current()
+                _state.value = withCurrentIntervalFrame(
+                    _state.value.copy(settings = settings),
+                )
+            }
+        }
+    }
+
+    private fun withCurrentIntervalFrame(state: WearRunState): WearRunState {
+        if (!state.isActive) return state.copy(intervalFrame = null)
+        return state.copy(
+            intervalFrame = WearIntervalWorkoutCalculator().calculate(
+                workout = state.settings.intervalWorkout,
+                elapsedMs = state.elapsedMs,
+                distanceM = state.distanceM,
+            ),
+        )
     }
 
     fun dispose(clearExerciseCallback: Boolean = true) {
@@ -518,11 +546,16 @@ class HealthServicesRunController(
             distanceM = state.distanceM,
             averagePaceSecPerKm = state.averagePaceSecPerKm,
             settings = state.settings,
+            elapsedMs = state.elapsedMs,
         )
         alertController.onGhostFrame(
             frame = state.ghostFrame,
             settings = state.settings,
             isGhostRun = state.isGhostRun,
+        )
+        alertController.onIntervalFrame(
+            frame = state.intervalFrame,
+            settings = state.settings,
         )
     }
 

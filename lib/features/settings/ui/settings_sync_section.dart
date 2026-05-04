@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/core/health/health_route_client.dart';
+import 'package:runlini/core/wear/watch_connection_client.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
@@ -29,6 +30,7 @@ class SettingsSyncSection extends ConsumerWidget {
     final connectionState = ref.watch(healthConnectionStatusProvider);
     final backupState = ref.watch(healthBackupControllerProvider);
     final wearSyncState = ref.watch(wearDraftSyncControllerProvider);
+    final watchConnectionState = ref.watch(watchConnectionStatusProvider);
     final sessions =
         ref.watch(runSessionListProvider).value ?? const <RunSession>[];
     final failedCount = sessions.where((RunSession session) {
@@ -89,9 +91,10 @@ class SettingsSyncSection extends ConsumerWidget {
               status: _wearStatusText(
                 wearSyncState.value,
                 wearSyncState.isLoading,
+                watchConnectionState.value,
               ),
               actionKey: const Key('settings-wear-sync-button'),
-              actionLabel: wearSyncState.isLoading ? '처리 중...' : '워치 동기화',
+              actionLabel: wearSyncState.isLoading ? '가져오는 중...' : '워치 기록 가져오기',
               onPressed: wearSyncState.isLoading
                   ? null
                   : () => _syncWearRecords(context, ref),
@@ -190,6 +193,9 @@ class SettingsSyncSection extends ConsumerWidget {
   }
 
   Future<void> _syncWearRecords(BuildContext context, WidgetRef ref) async {
+    final connectionStatus = await ref
+        .read(watchConnectionStatusProvider.notifier)
+        .check();
     final result = await ref
         .read(wearDraftSyncControllerProvider.notifier)
         .syncPendingDrafts();
@@ -197,9 +203,9 @@ class SettingsSyncSection extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(_wearSyncMessage(result))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_wearSyncMessage(result, connectionStatus))),
+    );
   }
 
   Future<void> _syncRecentGhostConfigs(WidgetRef ref) async {
@@ -216,30 +222,48 @@ class SettingsSyncSection extends ConsumerWidget {
     }
   }
 
-  String _wearStatusText(WearDraftSyncResult? result, bool isLoading) {
+  String _wearStatusText(
+    WearDraftSyncResult? result,
+    bool isLoading,
+    WatchConnectionStatus? connectionStatus,
+  ) {
     if (isLoading) {
-      return '동기화 중';
+      return '가져오는 중';
     }
     if (result == null) {
+      if (connectionStatus == WatchConnectionStatus.connected) {
+        return '연결됨';
+      }
+      if (connectionStatus == WatchConnectionStatus.disconnected) {
+        return '연결 안 됨';
+      }
       return '대기';
     }
     if (result.failedCount > 0) {
       return '실패';
     }
     if (result.importedCount > 0 || result.ackedCount > 0) {
-      return '동기화됨';
+      return '가져옴';
     }
-    return '대기';
+    return connectionStatus == WatchConnectionStatus.connected
+        ? '연결됨'
+        : '연결 안 됨';
   }
 
-  String _wearSyncMessage(WearDraftSyncResult result) {
+  String _wearSyncMessage(
+    WearDraftSyncResult result,
+    WatchConnectionStatus connectionStatus,
+  ) {
     if (result.failedCount > 0) {
       return '일부 워치 기록을 가져오지 못했어요.';
     }
     if (result.importedCount > 0) {
       return '${result.importedCount}개의 워치 기록을 가져왔어요.';
     }
-    return '워치 동기화를 마쳤어요.';
+    if (connectionStatus == WatchConnectionStatus.connected) {
+      return '가져올 워치 기록이 없어요.';
+    }
+    return '워치가 연결되면 다시 시도해 주세요.';
   }
 
   Future<void> _retryFailedBackups(

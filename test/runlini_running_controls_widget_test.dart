@@ -66,7 +66,8 @@ void main() {
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
       expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
-      expect(find.byKey(const Key('settings-button')), findsOneWidget);
+      expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
       expect(find.byKey(const Key('pause-run-button')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);
@@ -75,11 +76,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
       await tester.pump();
-
       expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
       expect(find.byKey(const Key('run-status-label')), findsNothing);
       expect(find.byKey(const Key('ghost-status-label')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsNothing);
       expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);
       expect(find.text('0.00 mi'), findsOneWidget);
@@ -127,7 +128,8 @@ void main() {
       await tester.tap(find.byKey(const Key('save-run-button')));
       await tester.pump();
 
-      expect(find.byKey(const Key('settings-button')), findsOneWidget);
+      expect(find.byKey(const Key('settings-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
       expect(find.text('START'), findsOneWidget);
     },

@@ -24,6 +24,11 @@ class RunDetailSyncStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final platform = targetPlatform ?? defaultTargetPlatform;
+    final showHealthSendAction =
+        recordSource == RunSessionRecordSource.appLocal &&
+        status != RunSessionSyncStatus.synced &&
+        onRetry != null;
     return Container(
       key: const Key('detail-sync-status-section'),
       width: double.infinity,
@@ -44,18 +49,24 @@ class RunDetailSyncStatusSection extends StatelessWidget {
             sourceSummary: sourceSummary,
             targetPlatform: targetPlatform,
           ),
-          if (status == RunSessionSyncStatus.syncFailed &&
-              recordSource == RunSessionRecordSource.appLocal)
+          if (showHealthSendAction)
             RunCompactButton(
-              key: const Key('retry-health-backup-button'),
-              label: healthDestinationRetryLabel(
-                targetPlatform ?? defaultTargetPlatform,
-              ),
+              key: const Key('send-health-workout-button'),
+              label: _actionLabel(status, platform),
               onPressed: onRetry,
-              danger: true,
+              danger: status == RunSessionSyncStatus.syncFailed,
             ),
         ],
       ),
     );
+  }
+
+  String _actionLabel(RunSessionSyncStatus status, TargetPlatform platform) {
+    return switch (status) {
+      RunSessionSyncStatus.syncFailed => healthDestinationRetryLabel(platform),
+      RunSessionSyncStatus.localOnly ||
+      RunSessionSyncStatus.syncSkipped => healthDestinationSendLabel(platform),
+      RunSessionSyncStatus.synced => healthDestinationSendLabel(platform),
+    };
   }
 }

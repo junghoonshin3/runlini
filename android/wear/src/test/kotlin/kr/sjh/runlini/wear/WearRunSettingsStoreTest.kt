@@ -20,6 +20,7 @@ class WearRunSettingsStoreTest {
             vibrationEnabled = false,
             kmAlertEnabled = true,
             voiceCueEnabled = false,
+            voiceCueVolume = 0.6f,
             ghostVoiceCueEnabled = true,
         )
 
@@ -57,10 +58,20 @@ class WearRunSettingsStoreTest {
                 vibrationEnabled = false,
                 kmAlertEnabled = true,
                 voiceCueEnabled = true,
+                voiceCueVolume = 1.0f,
                 ghostVoiceCueEnabled = false,
             ),
             store.current(),
         )
+    }
+
+    @Test
+    fun storeClampsVoiceVolume() {
+        val persistence = FakeSettingsPersistence()
+        persistence.write("""{"voiceCueVolume": 2.0}""")
+        val store = WearRunSettingsStore(persistence)
+
+        assertEquals(1.0f, store.current().voiceCueVolume)
     }
 
     @Test

@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:runlini/core/persistence/runlini_database.dart';
 import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:sqflite/sqflite.dart';
+
+part 'sqflite_run_settings_repository_shoes.dart';
+part 'sqflite_run_settings_repository_values.dart';
 
 class SqfliteRunSettingsRepository implements RunSettingsRepository {
   const SqfliteRunSettingsRepository({required RunliniDatabase database})
@@ -68,6 +74,14 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         RunLocationTrackingPreset.balanced,
       ),
       showGhostMarker: _bool(values[_showGhostMarkerKey]),
+      intervalWorkout: _intervalWorkout(values[_intervalWorkoutKey]),
+      voiceCueEnabled: _boolWithDefault(values[_voiceCueEnabledKey], true),
+      kmVoiceCueEnabled: _boolWithDefault(values[_kmVoiceCueEnabledKey], true),
+      ghostVoiceCueEnabled: _boolWithDefault(
+        values[_ghostVoiceCueEnabledKey],
+        false,
+      ),
+      voiceCueVolume: _voiceCueVolume(values[_voiceCueVolumeKey]),
       bodyWeightKg: _bodyWeightKg(values[_bodyWeightKgKey]),
       defaultShoeId: values[_defaultShoeIdKey],
     );
@@ -130,6 +144,23 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         settings.locationTrackingPreset.name,
       );
       await _saveValue(txn, _showGhostMarkerKey, '${settings.showGhostMarker}');
+      await _saveValue(
+        txn,
+        _intervalWorkoutKey,
+        jsonEncode(settings.intervalWorkout.toJson()),
+      );
+      await _saveValue(txn, _voiceCueEnabledKey, '${settings.voiceCueEnabled}');
+      await _saveValue(
+        txn,
+        _kmVoiceCueEnabledKey,
+        '${settings.kmVoiceCueEnabled}',
+      );
+      await _saveValue(
+        txn,
+        _ghostVoiceCueEnabledKey,
+        '${settings.ghostVoiceCueEnabled}',
+      );
+      await _saveValue(txn, _voiceCueVolumeKey, '${settings.voiceCueVolume}');
       if (settings.bodyWeightKg == null) {
         await txn.delete(
           'app_settings',
@@ -189,92 +220,4 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
       whereArgs: <Object?>[id],
     );
   }
-
-  Future<void> _saveValue(DatabaseExecutor db, String key, String value) async {
-    await db.insert('app_settings', <String, Object?>{
-      'key': key,
-      'value': value,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  RunShoe _shoeFromRow(Map<String, Object?> row) {
-    return RunShoe(
-      id: row['id']! as String,
-      name: row['name']! as String,
-      brand: row['brand']! as String,
-      distanceLimitKm: (row['distance_limit_km']! as num).toDouble(),
-      retired: (row['retired']! as num).toInt() == 1,
-      createdAt: DateTime.parse(row['created_at']! as String),
-      deleted: ((row['deleted'] as num?)?.toInt() ?? 0) == 1,
-      imagePath: row['image_path'] as String?,
-    );
-  }
-
-  Map<String, Object?> _shoeRow(RunShoe shoe) {
-    return <String, Object?>{
-      'id': shoe.id,
-      'name': shoe.name,
-      'brand': shoe.brand,
-      'distance_limit_km': shoe.distanceLimitKm,
-      'retired': shoe.retired ? 1 : 0,
-      'deleted': shoe.deleted ? 1 : 0,
-      'image_path': shoe.imagePath,
-      'created_at': shoe.createdAt.toIso8601String(),
-    };
-  }
-
-  bool _bool(String? value) => value == 'true';
-
-  int _countdownSeconds(String? value) {
-    final parsed = int.tryParse(value ?? '') ?? defaultRunCountdownSeconds;
-    return parsed.clamp(runCountdownMinSeconds, runCountdownMaxSeconds).toInt();
-  }
-
-  double? _bodyWeightKg(String? value) {
-    final parsed = double.tryParse(value ?? '');
-    if (parsed == null ||
-        parsed < runBodyWeightMinKg ||
-        parsed > runBodyWeightMaxKg) {
-      return null;
-    }
-    return parsed;
-  }
-
-  double _distanceGoalM(
-    String? value,
-    double fallback,
-    double minM,
-    double maxM,
-  ) {
-    final parsed = double.tryParse(value ?? '');
-    if (parsed == null || parsed < minM || parsed > maxM) {
-      return fallback;
-    }
-    return parsed;
-  }
-
-  T _enumByName<T extends Enum>(List<T> values, String? name, T fallback) {
-    for (final value in values) {
-      if (value.name == name) {
-        return value;
-      }
-    }
-    return fallback;
-  }
 }
-
-const _distanceUnitKey = 'distance_unit';
-const _paceUnitKey = 'pace_unit';
-const _speedUnitKey = 'speed_unit';
-const _hideRouteMapKey = 'hide_route_map';
-const _hideStartEndAreaKey = 'hide_start_end_area';
-const _hideHeartRateKey = 'hide_heart_rate';
-const _hideCaloriesKey = 'hide_calories';
-const _weeklyDistanceGoalKey = 'weekly_distance_goal_m';
-const _monthlyDistanceGoalKey = 'monthly_distance_goal_m';
-const _yearlyDistanceGoalKey = 'yearly_distance_goal_m';
-const _countdownSecondsKey = 'run_countdown_seconds';
-const _locationTrackingPresetKey = 'location_tracking_preset';
-const _showGhostMarkerKey = 'show_ghost_marker';
-const _bodyWeightKgKey = 'body_weight_kg';
-const _defaultShoeIdKey = 'default_shoe_id';

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 
 enum RunDistanceUnit { km, mi }
 
@@ -23,6 +24,9 @@ const double runMonthlyDistanceGoalMinM = 1000;
 const double runMonthlyDistanceGoalMaxM = 1500000;
 const double runYearlyDistanceGoalMinM = 1000;
 const double runYearlyDistanceGoalMaxM = 20000000;
+const double runVoiceCueVolumeMin = 0;
+const double runVoiceCueVolumeMax = 1;
+const double defaultRunVoiceCueVolume = 1;
 
 @immutable
 class RunDisplaySettings {
@@ -131,6 +135,11 @@ class RunSettingsState {
     this.countdownSeconds = defaultRunCountdownSeconds,
     this.locationTrackingPreset = RunLocationTrackingPreset.balanced,
     this.showGhostMarker = false,
+    this.intervalWorkout = const RunIntervalWorkout(),
+    this.voiceCueEnabled = true,
+    this.kmVoiceCueEnabled = true,
+    this.ghostVoiceCueEnabled = false,
+    this.voiceCueVolume = defaultRunVoiceCueVolume,
     this.bodyWeightKg,
     this.defaultShoeId,
   });
@@ -141,6 +150,11 @@ class RunSettingsState {
   final int countdownSeconds;
   final RunLocationTrackingPreset locationTrackingPreset;
   final bool showGhostMarker;
+  final RunIntervalWorkout intervalWorkout;
+  final bool voiceCueEnabled;
+  final bool kmVoiceCueEnabled;
+  final bool ghostVoiceCueEnabled;
+  final double voiceCueVolume;
   final double? bodyWeightKg;
   final String? defaultShoeId;
 
@@ -151,6 +165,11 @@ class RunSettingsState {
     int? countdownSeconds,
     RunLocationTrackingPreset? locationTrackingPreset,
     bool? showGhostMarker,
+    RunIntervalWorkout? intervalWorkout,
+    bool? voiceCueEnabled,
+    bool? kmVoiceCueEnabled,
+    bool? ghostVoiceCueEnabled,
+    double? voiceCueVolume,
     double? bodyWeightKg,
     bool clearBodyWeightKg = false,
     String? defaultShoeId,
@@ -164,6 +183,11 @@ class RunSettingsState {
       locationTrackingPreset:
           locationTrackingPreset ?? this.locationTrackingPreset,
       showGhostMarker: showGhostMarker ?? this.showGhostMarker,
+      intervalWorkout: intervalWorkout ?? this.intervalWorkout,
+      voiceCueEnabled: voiceCueEnabled ?? this.voiceCueEnabled,
+      kmVoiceCueEnabled: kmVoiceCueEnabled ?? this.kmVoiceCueEnabled,
+      ghostVoiceCueEnabled: ghostVoiceCueEnabled ?? this.ghostVoiceCueEnabled,
+      voiceCueVolume: voiceCueVolume ?? this.voiceCueVolume,
       bodyWeightKg: clearBodyWeightKg
           ? null
           : bodyWeightKg ?? this.bodyWeightKg,

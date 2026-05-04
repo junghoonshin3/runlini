@@ -33,11 +33,8 @@ final ghostRaceFrameProvider = Provider<GhostRaceFrame?>((Ref ref) {
       );
 });
 
-final ghostAwareRunMapViewStateProvider = Provider<RunMapViewState?>((Ref ref) {
+final ghostAwareRunMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final mapViewState = ref.watch(runMapViewStateProvider);
-  if (mapViewState == null) {
-    return null;
-  }
 
   final ghostRaceFrame = ref.watch(ghostRaceFrameProvider);
   final showGhostMarker =

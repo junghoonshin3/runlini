@@ -42,7 +42,9 @@ internal data class WearRunActions(
     val onVibrationEnabledChange: (Boolean) -> Unit,
     val onKmAlertEnabledChange: (Boolean) -> Unit,
     val onVoiceCueEnabledChange: (Boolean) -> Unit,
+    val onVoiceCueVolumeChange: (Float) -> Unit,
     val onGhostVoiceCueEnabledChange: (Boolean) -> Unit,
+    val onIntervalWorkoutChange: (WearIntervalWorkout) -> Unit,
     val onGhostSelect: (String) -> Unit,
 ) {
     companion object {
@@ -58,7 +60,9 @@ internal data class WearRunActions(
             onVibrationEnabledChange = {},
             onKmAlertEnabledChange = {},
             onVoiceCueEnabledChange = {},
+            onVoiceCueVolumeChange = {},
             onGhostVoiceCueEnabledChange = {},
+            onIntervalWorkoutChange = {},
             onGhostSelect = {},
         )
     }
