@@ -22,6 +22,7 @@ class WearRunSettingsStoreTest {
             voiceCueEnabled = false,
             voiceCueVolume = 0.6f,
             ghostVoiceCueEnabled = true,
+            autoPauseEnabled = true,
         )
 
         store.save(settings)
@@ -60,6 +61,7 @@ class WearRunSettingsStoreTest {
                 voiceCueEnabled = true,
                 voiceCueVolume = 1.0f,
                 ghostVoiceCueEnabled = false,
+                autoPauseEnabled = false,
             ),
             store.current(),
         )

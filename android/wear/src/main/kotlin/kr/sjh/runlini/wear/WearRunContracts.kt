@@ -9,6 +9,8 @@ enum class WearRunPhase { Ready, CountingDown, Running, Paused, Reviewing, Feedb
 
 enum class WearRunFeedbackType { Saved, Discarded }
 
+enum class WearPauseReason { Manual, Auto }
+
 data class WearRunPoint(
     val latitude: Double,
     val longitude: Double,
@@ -58,6 +60,7 @@ data class WearRunState(
     val isGhostRun: Boolean = false,
     val ghostFrame: WearGhostFrame? = null,
     val intervalFrame: WearIntervalFrame? = null,
+    val pauseReason: WearPauseReason? = null,
     val statusMessage: String? = null,
     val errorMessage: String? = null,
     val feedbackType: WearRunFeedbackType? = null,

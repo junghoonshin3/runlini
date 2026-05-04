@@ -40,6 +40,10 @@ void main() {
       RunLocationTrackingPreset.highAccuracy,
     );
 
+    await tester.tap(find.byKey(const Key('auto-pause-enabled-switch')));
+    await tester.pumpAndSettle();
+    expect(repository.settings.autoPauseEnabled, isTrue);
+
     await tester.tap(find.byKey(const Key('show-ghost-marker-switch')));
     await tester.pumpAndSettle();
     expect(repository.settings.showGhostMarker, isTrue);

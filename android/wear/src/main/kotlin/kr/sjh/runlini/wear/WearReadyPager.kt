@@ -41,6 +41,7 @@ internal fun WearReadyPager(
                 WearReadyPage.Settings -> WearSettingsScreen(
                     settings = state.settings,
                     onCountdownEnabledChange = actions.onCountdownEnabledChange,
+                    onAutoPauseEnabledChange = actions.onAutoPauseEnabledChange,
                     onVibrationEnabledChange = actions.onVibrationEnabledChange,
                     onKmAlertEnabledChange = actions.onKmAlertEnabledChange,
                     onVoiceCueEnabledChange = actions.onVoiceCueEnabledChange,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/core/motion/run_motion_evidence_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
@@ -98,6 +99,27 @@ class TrackingLocationStreamClient implements LocationStreamClient {
 
   Future<void> emit(LiveLocationSample sample) async {
     _controller.add(sample);
+    await Future<void>.delayed(Duration.zero);
+  }
+
+  Future<void> close() async {
+    await _controller.close();
+  }
+}
+
+class TrackingMotionEvidenceClient implements RunMotionEvidenceClient {
+  final StreamController<RunMotionEvidence> _controller =
+      StreamController<RunMotionEvidence>.broadcast();
+  int watchCallCount = 0;
+
+  @override
+  Stream<RunMotionEvidence> watchMotionEvidence() {
+    watchCallCount += 1;
+    return _controller.stream;
+  }
+
+  Future<void> emit(RunMotionEvidence evidence) async {
+    _controller.add(evidence);
     await Future<void>.delayed(Duration.zero);
   }
 

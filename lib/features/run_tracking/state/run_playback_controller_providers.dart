@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
-import 'package:runlini/features/run_tracking/service/finished_run_session_builder.dart';
-import 'package:runlini/features/run_tracking/service/run_health_export_status_mapper.dart';
+import 'package:runlini/core/motion/run_motion_evidence_client.dart';
+import 'package:runlini/features/run_tracking/service/run_auto_pause_detector.dart';
+import 'package:runlini/features/run_tracking/service/run_playback_sample_fusion.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_motion_evidence_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_core_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_playback_support_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
@@ -12,19 +15,22 @@ import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
-final finishedRunSessionBuilderProvider = Provider<FinishedRunSessionBuilder>(
-  (Ref ref) => const FinishedRunSessionBuilder(),
-);
+part 'run_playback_ingest_extension.dart';
 
-final runHealthExportStatusMapperProvider =
-    Provider<RunHealthExportStatusMapper>(
-      (Ref ref) => const RunHealthExportStatusMapper(),
-    );
-
-class RunPlaybackController extends Notifier<RunPlaybackState> {
+class RunPlaybackController extends Notifier<RunPlaybackState>
+    with RunPlaybackLiveSampleIngest {
   @override
-  RunPlaybackState build() => const RunPlaybackState.idle();
+  RunPlaybackState build() {
+    ref.listen(runSettingsControllerProvider, (previous, next) {
+      final autoPauseEnabled = next.value?.autoPauseEnabled;
+      if (autoPauseEnabled != null) {
+        _applyAutoPauseSetting(autoPauseEnabled);
+      }
+    });
+    return const RunPlaybackState.idle();
+  }
 
   Future<RunTrackingToggleResult> start() async {
     var seedSample = ref.read(liveLocationProvider);
@@ -34,16 +40,23 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     }
 
     final startedAt = ref.read(runPlaybackClockProvider)();
+    final settings =
+        ref.read(runSettingsControllerProvider).value ??
+        const RunSettingsState();
+    final seedPoint = seedSample.toRunPoint(elapsedMs: 0);
     state = RunPlaybackState(
       status: RunScreenStatus.running,
       currentPointIndex: 0,
-      recordedPoints: <RunPoint>[seedSample.toRunPoint(elapsedMs: 0)],
+      recordedPoints: <RunPoint>[seedPoint],
+      rawPoints: <RunPoint>[seedPoint],
       elapsedBeforePauseMs: 0,
       startedAt: startedAt,
       resumedAt: startedAt,
       activeSessionId: 'live_${startedAt.millisecondsSinceEpoch}',
       intervalManualAdvanceCount: 0,
+      autoPauseEnabled: settings.autoPauseEnabled,
     );
+    ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(true);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(true);
     return RunTrackingToggleResult.started;
   }
@@ -59,6 +72,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     }
 
     final startedAt = state.startedAt;
+    ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(false);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(false);
     if (startedAt == null) {
       state = const RunPlaybackState.idle();
@@ -167,7 +181,9 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
         ref.read(runPlaybackClockProvider)(),
       ),
       resumedAt: null,
+      pauseReason: RunPauseReason.manual,
     );
+    ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(false);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(false);
   }
 
@@ -180,7 +196,9 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     state = state.copyWith(
       status: RunScreenStatus.running,
       resumedAt: resumedAt,
+      pauseReason: null,
     );
+    ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(true);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(true);
   }
 
@@ -202,23 +220,22 @@ class RunPlaybackController extends Notifier<RunPlaybackState> {
     );
   }
 
-  void ingestLiveSample(LiveLocationSample sample) {
-    if (state.status != RunScreenStatus.running || state.startedAt == null) {
+  void _applyAutoPauseSetting(bool enabled) {
+    if (!state.hasActiveSession || state.autoPauseEnabled == enabled) {
       return;
     }
 
-    final nextPoints = ref.read(runPointSanitizerProvider).filter(<RunPoint>[
-      ...state.recordedPoints,
-      sample.toRunPoint(elapsedMs: state.elapsedAt(sample.capturedAt)),
-    ]);
-    if (nextPoints.length == state.recordedPoints.length) {
+    if (!enabled && state.isAutoPaused) {
+      state = state.copyWith(
+        status: RunScreenStatus.running,
+        resumedAt: ref.read(runPlaybackClockProvider)(),
+        pauseReason: null,
+        autoPauseEnabled: false,
+      );
       return;
     }
 
-    state = state.copyWith(
-      recordedPoints: nextPoints,
-      currentPointIndex: nextPoints.length - 1,
-    );
+    state = state.copyWith(autoPauseEnabled: enabled);
   }
 }
 

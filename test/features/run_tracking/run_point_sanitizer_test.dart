@@ -78,6 +78,83 @@ void main() {
       expect(filtered, hasLength(1));
     });
 
+    test(
+      'drops a long stationary drift cluster outside single-point radius',
+      () {
+        final points = <RunPoint>[
+          const RunPoint(
+            latitude: 37.0,
+            longitude: 127.0,
+            timestampRelMs: 0,
+            speedMps: 0,
+            horizontalAccuracyM: 8,
+            source: RunPointSource.simulated,
+          ),
+          for (var index = 1; index <= 6; index += 1)
+            RunPoint(
+              latitude: 37.0 + (0.00002 * index),
+              longitude: 127.0,
+              timestampRelMs: index * 5000,
+              speedMps: 0,
+              horizontalAccuracyM: 8,
+              source: RunPointSource.simulated,
+            ),
+        ];
+
+        final filtered = sanitizer.filter(points);
+
+        expect(filtered, hasLength(1));
+      },
+    );
+
+    test('accepts stable movement after stationary drift', () {
+      final filtered = sanitizer.filter(const [
+        RunPoint(
+          latitude: 37.0,
+          longitude: 127.0,
+          timestampRelMs: 0,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00004,
+          longitude: 127.0,
+          timestampRelMs: 5000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00008,
+          longitude: 127.0,
+          timestampRelMs: 10000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00025,
+          longitude: 127.0,
+          timestampRelMs: 15000,
+          speedMps: 1.4,
+          horizontalAccuracyM: 6,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 37.00045,
+          longitude: 127.0,
+          timestampRelMs: 20000,
+          speedMps: 1.4,
+          horizontalAccuracyM: 6,
+          source: RunPointSource.simulated,
+        ),
+      ]);
+
+      expect(filtered, hasLength(2));
+      expect(filtered.last.latitude, 37.00045);
+    });
+
     test('accepts movement once it escapes the stationary noise radius', () {
       final filtered = sanitizer.filter(const [
         RunPoint(
@@ -104,10 +181,18 @@ void main() {
           horizontalAccuracyM: 8,
           source: RunPointSource.simulated,
         ),
+        RunPoint(
+          latitude: 37.00028,
+          longitude: 127.0,
+          timestampRelMs: 25 * 1000,
+          speedMps: 0,
+          horizontalAccuracyM: 8,
+          source: RunPointSource.simulated,
+        ),
       ]);
 
       expect(filtered, hasLength(2));
-      expect(filtered.last.latitude, 37.0002);
+      expect(filtered.last.latitude, 37.00028);
     });
 
     test('loads legacy point json without accuracy fields', () {

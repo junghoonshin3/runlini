@@ -10,6 +10,10 @@ class RunPointSanitizer {
     this.maxHorizontalAccuracyM = 35,
     this.minMovementM = 3,
     this.stationarySpeedMps = 0.7,
+    this.resumeSpeedMps = 1.2,
+    this.stationaryWindowMs = 8 * 1000,
+    this.stationaryClusterRadiusM = 15,
+    this.resumeConfirmationCount = 2,
   });
 
   final double maxMetersPerSecond;
@@ -17,17 +21,45 @@ class RunPointSanitizer {
   final double maxHorizontalAccuracyM;
   final double minMovementM;
   final double stationarySpeedMps;
+  final double resumeSpeedMps;
+  final int stationaryWindowMs;
+  final double stationaryClusterRadiusM;
+  final int resumeConfirmationCount;
 
   static const Distance _distance = Distance();
 
   List<RunPoint> filter(List<RunPoint> points) {
     final accepted = <RunPoint>[];
 
+    final recentRaw = <RunPoint>[];
+    var stationaryLocked = false;
+
     for (final point in points) {
+      _addRecentRaw(recentRaw, point);
       final previous = accepted.isEmpty ? null : accepted.last;
       final previousPrevious = accepted.length < 2
           ? null
           : accepted[accepted.length - 2];
+      if (previous != null) {
+        if (stationaryLocked) {
+          if (isMovementConfirmed(
+            recentRawPoints: recentRaw,
+            anchor: previous,
+          )) {
+            stationaryLocked = false;
+          } else {
+            continue;
+          }
+        } else if (hasStationaryWindow(recentRaw) ||
+            _looksLikeStationaryDrift(
+              previous,
+              point,
+              _distanceMeters(previous, point),
+            )) {
+          stationaryLocked = hasStationaryWindow(recentRaw);
+          continue;
+        }
+      }
       if (_isAcceptable(
         previousPrevious: previousPrevious,
         previous: previous,
@@ -38,6 +70,55 @@ class RunPointSanitizer {
     }
 
     return accepted;
+  }
+
+  bool hasStationaryWindow(List<RunPoint> rawPoints) {
+    if (rawPoints.length < 2) {
+      return false;
+    }
+    final latest = rawPoints.last;
+    final window = rawPoints
+        .where(
+          (point) =>
+              latest.timestampRelMs - point.timestampRelMs <=
+              stationaryWindowMs + 3000,
+        )
+        .toList(growable: false);
+    if (window.length < 2) {
+      return false;
+    }
+    if (latest.timestampRelMs - window.first.timestampRelMs <
+        stationaryWindowMs) {
+      return false;
+    }
+    final anchor = window.first;
+    for (final point in window) {
+      if (_hasPoorAccuracy(point) || !_hasStationarySpeed(point)) {
+        return false;
+      }
+      if (_distanceMeters(anchor, point) > _stationaryRadius(anchor, point)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool isMovementConfirmed({
+    required List<RunPoint> recentRawPoints,
+    required RunPoint? anchor,
+  }) {
+    if (anchor == null || recentRawPoints.length < resumeConfirmationCount) {
+      return false;
+    }
+    final startIndex = math.max(
+      0,
+      recentRawPoints.length - resumeConfirmationCount,
+    );
+    final recent = recentRawPoints.skip(startIndex).toList(growable: false);
+    if (recent.length < resumeConfirmationCount) {
+      return false;
+    }
+    return recent.every((point) => _isMovementPoint(anchor, point));
   }
 
   bool _isAcceptable({
@@ -110,6 +191,37 @@ class RunPointSanitizer {
 
     final accuracy = point.speedAccuracyMps;
     return accuracy != null && speed - accuracy <= stationarySpeedMps;
+  }
+
+  bool _isMovementPoint(RunPoint anchor, RunPoint point) {
+    if (_hasPoorAccuracy(point)) {
+      return false;
+    }
+    final speed = point.speedMps;
+    final speedAccuracy = point.speedAccuracyMps;
+    final speedLooksMoving =
+        speed != null &&
+        speed >= resumeSpeedMps &&
+        (speedAccuracy == null || speed - speedAccuracy > stationarySpeedMps);
+    final distanceLooksMoving =
+        _distanceMeters(anchor, point) > _stationaryRadius(anchor, point);
+    return speedLooksMoving || distanceLooksMoving;
+  }
+
+  double _stationaryRadius(RunPoint left, RunPoint right) {
+    return math.max(
+      stationaryClusterRadiusM,
+      _combinedAccuracyRadiusM(left, right) ?? minMovementM,
+    );
+  }
+
+  void _addRecentRaw(List<RunPoint> points, RunPoint point) {
+    points.add(point);
+    points.removeWhere(
+      (candidate) =>
+          point.timestampRelMs - candidate.timestampRelMs >
+          stationaryWindowMs + 5 * 1000,
+    );
   }
 
   double? _combinedAccuracyRadiusM(RunPoint previous, RunPoint next) {

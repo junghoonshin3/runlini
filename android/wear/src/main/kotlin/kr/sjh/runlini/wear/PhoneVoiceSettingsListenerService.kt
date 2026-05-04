@@ -31,6 +31,10 @@ class PhoneVoiceSettingsListenerService : WearableListenerService() {
                         "ghostVoiceCueEnabled",
                         current.ghostVoiceCueEnabled,
                     ),
+                    autoPauseEnabled = dataMap.getBoolean(
+                        "autoPauseEnabled",
+                        current.autoPauseEnabled,
+                    ),
                     voiceCueVolume = volume,
                 ),
             )

@@ -88,6 +88,7 @@ const _monthlyDistanceGoalKey = 'monthly_distance_goal_m';
 const _yearlyDistanceGoalKey = 'yearly_distance_goal_m';
 const _countdownSecondsKey = 'run_countdown_seconds';
 const _locationTrackingPresetKey = 'location_tracking_preset';
+const _autoPauseEnabledKey = 'auto_pause_enabled';
 const _showGhostMarkerKey = 'show_ghost_marker';
 const _intervalWorkoutKey = 'run_interval_workout';
 const _voiceCueEnabledKey = 'voice_cue_enabled';

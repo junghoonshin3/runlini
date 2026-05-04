@@ -87,11 +87,14 @@ extension on _RunliniHomeScreenState {
       final nextKmVoiceEnabled = next.value?.kmVoiceCueEnabled;
       final previousGhostVoiceEnabled = previous?.value?.ghostVoiceCueEnabled;
       final nextGhostVoiceEnabled = next.value?.ghostVoiceCueEnabled;
+      final previousAutoPauseEnabled = previous?.value?.autoPauseEnabled;
+      final nextAutoPauseEnabled = next.value?.autoPauseEnabled;
       final voiceSettingsChanged =
           previousVolume != nextVolume ||
           previousVoiceEnabled != nextVoiceEnabled ||
           previousKmVoiceEnabled != nextKmVoiceEnabled ||
-          previousGhostVoiceEnabled != nextGhostVoiceEnabled;
+          previousGhostVoiceEnabled != nextGhostVoiceEnabled ||
+          previousAutoPauseEnabled != nextAutoPauseEnabled;
       if (nextVolume != null && voiceSettingsChanged) {
         _syncWatchVoiceSettings(
           playTestCue: previousVolume != null && previousVolume != nextVolume,
@@ -132,6 +135,7 @@ extension on _RunliniHomeScreenState {
             voiceCueEnabled: settings.voiceCueEnabled,
             kmVoiceCueEnabled: settings.kmVoiceCueEnabled,
             ghostVoiceCueEnabled: settings.ghostVoiceCueEnabled,
+            autoPauseEnabled: settings.autoPauseEnabled,
             volume: settings.voiceCueVolume,
             playTestCue: playTestCue,
           );

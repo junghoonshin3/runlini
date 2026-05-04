@@ -55,6 +55,7 @@ internal object WearVolumeRowLayoutModel {
 internal fun WearSettingsScreen(
     settings: WearRunSettings,
     onCountdownEnabledChange: (Boolean) -> Unit,
+    onAutoPauseEnabledChange: (Boolean) -> Unit,
     onVibrationEnabledChange: (Boolean) -> Unit,
     onKmAlertEnabledChange: (Boolean) -> Unit,
     onVoiceCueEnabledChange: (Boolean) -> Unit,
@@ -106,6 +107,12 @@ internal fun WearSettingsScreen(
                 label = "카운트다운",
                 checked = settings.countdownEnabled,
                 onCheckedChange = onCountdownEnabledChange,
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            WearSettingToggleRow(
+                label = "자동 일시정지",
+                checked = settings.autoPauseEnabled,
+                onCheckedChange = onAutoPauseEnabledChange,
             )
             Spacer(modifier = Modifier.height(5.dp))
             WearSettingToggleRow(

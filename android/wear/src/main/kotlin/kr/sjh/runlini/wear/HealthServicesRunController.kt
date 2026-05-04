@@ -59,6 +59,7 @@ class HealthServicesRunController(
     private val ghostGapCalculator: WearGhostGapCalculator = WearGhostGapCalculator(),
     private val debugGpsInjectionMerger: WearDebugGpsInjectionMerger =
         WearDebugGpsInjectionMerger(),
+    private val autoPauseDetector: WearAutoPauseDetector = WearAutoPauseDetector(),
     private val deviceName: String =
         "${Build.MANUFACTURER.trim()} ${Build.MODEL.trim()}".trim(),
 ) {
@@ -76,6 +77,7 @@ class HealthServicesRunController(
     private var countdownJob: Job? = null
     private var feedbackJob: Job? = null
     private var lastCheckpointRealtimeMs: Long = 0L
+    private val autoPauseSettingsApplier = WearAutoPauseSettingsApplier(reducer)
 
     init {
         if (BuildConfig.DEBUG) {
@@ -93,7 +95,7 @@ class HealthServicesRunController(
                 update.exerciseStateInfo.state.isEnded -> WearRunPhase.Reviewing
                 else -> WearRunPhase.Running
             }
-            val sample = debugGpsInjectionMerger.filterHealthServicesSample(
+            val rawSample = debugGpsInjectionMerger.filterHealthServicesSample(
                 update.latestMetrics.toMetricSample(
                     activeDurationMs = update.activeDurationCheckpoint
                         ?.activeDuration
@@ -101,6 +103,24 @@ class HealthServicesRunController(
                 ),
                 now,
             )
+            when (autoPauseDetector.onSample(_state.value, rawSample)) {
+                WearAutoPauseDecision.Pause -> {
+                    scope.launch { runCatching { exerciseClient.pauseExercise() } }
+                    setState(
+                        reducer.pause(_state.value, now, WearPauseReason.Auto),
+                        forceCheckpoint = true,
+                    )
+                    return
+                }
+                WearAutoPauseDecision.Resume -> {
+                    scope.launch { runCatching { exerciseClient.resumeExercise() } }
+                    setState(reducer.resume(_state.value, now), forceCheckpoint = true)
+                    startTicker()
+                    return
+                }
+                WearAutoPauseDecision.None -> Unit
+            }
+            val sample = autoPauseDetector.filterStationaryDrift(_state.value, rawSample)
             val next = reducer.applyMetrics(
                 _state.value.copy(phase = phase),
                 sample,
@@ -238,6 +258,7 @@ class HealthServicesRunController(
     private fun startRunInternal(ghostConfig: WearGhostConfig?) {
         scope.launch {
             alertController.reset()
+            autoPauseDetector.reset()
             val startedAt = System.currentTimeMillis()
             setState(
                 reducer.start(
@@ -273,7 +294,10 @@ class HealthServicesRunController(
         scope.launch {
             countdownJob?.cancel()
             runCatching { exerciseClient.pauseExercise() }
-            setState(reducer.pause(_state.value, nowRealtimeMs()), forceCheckpoint = true)
+            setState(
+                reducer.pause(_state.value, nowRealtimeMs(), WearPauseReason.Manual),
+                forceCheckpoint = true,
+            )
         }
     }
 
@@ -288,6 +312,7 @@ class HealthServicesRunController(
     fun stopRun() {
         scope.launch {
             countdownJob?.cancel()
+            autoPauseDetector.reset()
             runCatching { exerciseClient.endExercise() }
             setState(
                 applyGhostFrame(
@@ -432,7 +457,7 @@ class HealthServicesRunController(
 
     fun updateSettings(settings: WearRunSettings) {
         settingsStore.save(settings)
-        _state.value = withCurrentIntervalFrame(_state.value.copy(settings = settings))
+        applySettingsToActiveState(settings)
         WearRunSettingsChangeBus.notifyChanged()
     }
 
@@ -451,11 +476,24 @@ class HealthServicesRunController(
     private fun observeSettingsChanges() {
         scope.launch {
             WearRunSettingsChangeBus.changes.collect {
-                val settings = settingsStore.current()
-                _state.value = withCurrentIntervalFrame(
-                    _state.value.copy(settings = settings),
-                )
+                applySettingsToActiveState(settingsStore.current())
             }
+        }
+    }
+
+    private fun applySettingsToActiveState(settings: WearRunSettings) {
+        val result = autoPauseSettingsApplier.apply(
+            state = _state.value,
+            settings = settings,
+            realtimeMs = nowRealtimeMs(),
+        )
+        if (result.shouldResumeExercise) {
+            scope.launch { runCatching { exerciseClient.resumeExercise() } }
+        }
+        val next = withCurrentIntervalFrame(result.state)
+        setState(next, forceCheckpoint = next.isActive)
+        if (next.phase == WearRunPhase.Running) {
+            startTicker()
         }
     }
 
@@ -530,9 +568,32 @@ class HealthServicesRunController(
     private fun observeDebugGpsInjection() {
         scope.launch {
             WearDebugGpsInjectionBus.samples.collect { sample ->
-                if (_state.value.phase != WearRunPhase.Running) return@collect
+                if (
+                    _state.value.phase != WearRunPhase.Running &&
+                    !(_state.value.phase == WearRunPhase.Paused &&
+                        _state.value.pauseReason == WearPauseReason.Auto)
+                ) return@collect
                 val now = nowRealtimeMs()
-                val metricSample = debugGpsInjectionMerger.recordInjectedSample(sample, now)
+                val rawMetricSample = debugGpsInjectionMerger.recordInjectedSample(sample, now)
+                when (autoPauseDetector.onSample(_state.value, rawMetricSample)) {
+                    WearAutoPauseDecision.Pause -> {
+                        setState(
+                            reducer.pause(_state.value, now, WearPauseReason.Auto),
+                            forceCheckpoint = true,
+                        )
+                        return@collect
+                    }
+                    WearAutoPauseDecision.Resume -> {
+                        setState(reducer.resume(_state.value, now), forceCheckpoint = true)
+                        startTicker()
+                        return@collect
+                    }
+                    WearAutoPauseDecision.None -> Unit
+                }
+                val metricSample = autoPauseDetector.filterStationaryDrift(
+                    _state.value,
+                    rawMetricSample,
+                )
                 val next = reducer.applyMetrics(_state.value, metricSample, now)
                 val framed = applyGhostFrame(next)
                 emitRunAlerts(framed)

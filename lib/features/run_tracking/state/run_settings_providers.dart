@@ -77,6 +77,11 @@ class RunSettingsController extends AsyncNotifier<RunSettingsState> {
     await _save(current.copyWith(locationTrackingPreset: preset));
   }
 
+  Future<void> setAutoPauseEnabled(bool enabled) async {
+    final current = state.value ?? const RunSettingsState();
+    await _save(current.copyWith(autoPauseEnabled: enabled));
+  }
+
   Future<void> setShowGhostMarker(bool visible) async {
     final current = state.value ?? const RunSettingsState();
     await _save(current.copyWith(showGhostMarker: visible));
