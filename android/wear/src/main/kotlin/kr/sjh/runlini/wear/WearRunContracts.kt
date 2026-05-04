@@ -20,6 +20,7 @@ data class WearRunPoint(
     val horizontalAccuracyM: Double? = null,
     val elevationM: Double? = null,
     val heartRateBpm: Int? = null,
+    val cadenceSpm: Double? = null,
 )
 
 data class WearMetricSample(
@@ -133,6 +134,7 @@ object WearRunDraftJsonMapper {
             .put("horizontalAccuracyM", point.horizontalAccuracyM)
             .put("elevationM", point.elevationM)
             .put("heartRateBpm", point.heartRateBpm)
+            .put("cadenceSpm", point.cadenceSpm)
             .put("source", "wearOs")
     }
 }

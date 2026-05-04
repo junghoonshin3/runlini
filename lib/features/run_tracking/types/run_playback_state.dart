@@ -20,6 +20,7 @@ class RunPlaybackState {
     this.activeSessionId,
     this.pendingFinishedSession,
     this.intervalManualAdvanceCount = 0,
+    this.cadenceStepCount = 0,
     this.pauseReason,
     this.autoPauseEnabled = false,
     this.stationaryDriftLocked = false,
@@ -44,6 +45,7 @@ class RunPlaybackState {
   final String? activeSessionId;
   final RunSession? pendingFinishedSession;
   final int intervalManualAdvanceCount;
+  final int cadenceStepCount;
   final RunPauseReason? pauseReason;
   final bool autoPauseEnabled;
   final bool stationaryDriftLocked;
@@ -83,6 +85,7 @@ class RunPlaybackState {
     Object? activeSessionId = _unset,
     Object? pendingFinishedSession = _unset,
     int? intervalManualAdvanceCount,
+    int? cadenceStepCount,
     Object? pauseReason = _unset,
     bool? autoPauseEnabled,
     bool? stationaryDriftLocked,
@@ -108,6 +111,7 @@ class RunPlaybackState {
           : pendingFinishedSession as RunSession?,
       intervalManualAdvanceCount:
           intervalManualAdvanceCount ?? this.intervalManualAdvanceCount,
+      cadenceStepCount: cadenceStepCount ?? this.cadenceStepCount,
       pauseReason: identical(pauseReason, _unset)
           ? this.pauseReason
           : pauseReason as RunPauseReason?,

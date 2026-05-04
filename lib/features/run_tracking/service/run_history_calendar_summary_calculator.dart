@@ -1,11 +1,11 @@
 import 'package:runlini/features/run_tracking/types/run_history_day_summary.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 class RunHistoryCalendarSummaryCalculator {
   const RunHistoryCalendarSummaryCalculator();
 
   Map<DateTime, RunHistoryDaySummary> calculate({
-    required List<RunSession> sessions,
+    required List<RunSessionSummary> sessions,
   }) {
     final mutableSummaries = <DateTime, _MutableDaySummary>{};
     for (final session in sessions) {

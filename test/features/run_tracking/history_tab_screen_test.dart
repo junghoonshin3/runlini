@@ -9,6 +9,7 @@ import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.da
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_tab_screen.dart';
 
 void main() {
@@ -25,8 +26,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => [todaySession, yesterdaySession],
+          runSessionSummaryListProvider.overrideWith(
+            (Ref ref) async => [
+              RunSessionSummary.fromSession(todaySession),
+              RunSessionSummary.fromSession(yesterdaySession),
+            ],
           ),
         ],
         child: MaterialApp(
@@ -88,7 +92,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          runSessionListProvider.overrideWith((Ref ref) async => [wearSession]),
+          runSessionSummaryListProvider.overrideWith(
+            (Ref ref) async => [RunSessionSummary.fromSession(wearSession)],
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
@@ -126,9 +132,13 @@ void main() {
         overrides: [
           healthSyncServiceProvider.overrideWithValue(healthSync),
           wearDraftSyncServiceProvider.overrideWithValue(wearSync),
-          runSessionListProvider.overrideWith((Ref ref) async {
+          runSessionSummaryListProvider.overrideWith((Ref ref) async {
             historyBuilds += 1;
-            return [_session('today-run', DateTime(2026, 4, 28, 7))];
+            return [
+              RunSessionSummary.fromSession(
+                _session('today-run', DateTime(2026, 4, 28, 7)),
+              ),
+            ];
           }),
         ],
         child: MaterialApp(
@@ -163,9 +173,11 @@ void main() {
         overrides: [
           healthSyncServiceProvider.overrideWithValue(_FakeHealthSyncService()),
           wearDraftSyncServiceProvider.overrideWithValue(wearSync),
-          runSessionListProvider.overrideWith(
+          runSessionSummaryListProvider.overrideWith(
             (Ref ref) async => [
-              _session('today-run', DateTime(2026, 4, 28, 7)),
+              RunSessionSummary.fromSession(
+                _session('today-run', DateTime(2026, 4, 28, 7)),
+              ),
             ],
           ),
         ],

@@ -12,6 +12,7 @@ void main() {
       distanceM: 2000,
       durationMs: 720000,
       sourceSummary: 'test',
+      averageCadenceSpm: 171.6,
       points: const [
         RunPoint(
           latitude: 0,
@@ -21,6 +22,7 @@ void main() {
           speedMps: 2.8,
           elevationM: 3,
           heartRateBpm: 140,
+          cadenceSpm: 168,
           source: RunPointSource.deviceGps,
         ),
         RunPoint(
@@ -31,6 +33,7 @@ void main() {
           speedMps: 2.9,
           elevationM: 8,
           heartRateBpm: 150,
+          cadenceSpm: 172,
           source: RunPointSource.deviceGps,
         ),
         RunPoint(
@@ -41,6 +44,7 @@ void main() {
           speedMps: 3.0,
           elevationM: 6,
           heartRateBpm: 160,
+          cadenceSpm: 176,
           source: RunPointSource.deviceGps,
         ),
       ],
@@ -49,6 +53,7 @@ void main() {
     final detail = const RunSessionDetailCalculator().calculate(session);
 
     expect(detail.averageSpeedKmh, closeTo(10, 0.1));
+    expect(detail.averageCadenceSpm, 171.6);
     expect(detail.averageHeartRateBpm, 150);
     expect(detail.elevationGainM, closeTo(5, 0.1));
     expect(detail.paceSamplesSecPerKm.map((sample) => sample.value), [
@@ -67,6 +72,11 @@ void main() {
     expect(detail.elevationSamplesM.first.elapsedMs, 0);
     expect(detail.heartRateSamplesBpm, hasLength(3));
     expect(detail.heartRateSamplesBpm.last.value, 160);
+    expect(detail.cadenceSamplesSpm.map((sample) => sample.value), [
+      168,
+      172,
+      176,
+    ]);
     expect(detail.splits.length, greaterThanOrEqualTo(2));
     expect(detail.splits.first.paceSecPerKm, greaterThan(0));
   });
@@ -102,6 +112,95 @@ void main() {
 
     expect(detail.splits.first.distanceM, closeTo(1609.344, 0.1));
     expect(detail.splits.first.paceSecPerKm, greaterThan(0));
+  });
+
+  test('leaves cadence chart samples empty when points have no cadence', () {
+    final session = RunSession(
+      id: 'no-cadence-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 12),
+      distanceM: 2000,
+      durationMs: 720000,
+      sourceSummary: 'test',
+      averageCadenceSpm: 170,
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          source: RunPointSource.healthConnect,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(session);
+
+    expect(detail.averageCadenceSpm, 170);
+    expect(detail.cadenceSamplesSpm, isEmpty);
+  });
+
+  test('filters impossible direct pace samples from detail graph data', () {
+    final session = RunSession(
+      id: 'pace-outlier-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 10),
+      distanceM: 1000,
+      durationMs: 600000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          paceSecPerKm: 12266,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.009,
+          timestampRelMs: 600000,
+          paceSecPerKm: 600,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(session);
+
+    expect(detail.paceSamplesSecPerKm, hasLength(1));
+    expect(detail.paceSamplesSecPerKm.single.value, 600);
+  });
+
+  test('falls back to segment pace when all direct samples are outliers', () {
+    final session = RunSession(
+      id: 'pace-fallback-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 10),
+      distanceM: 1000,
+      durationMs: 600000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          paceSecPerKm: 12266,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.009,
+          timestampRelMs: 600000,
+          paceSecPerKm: 12266,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(session);
+
+    expect(detail.paceSamplesSecPerKm, hasLength(1));
+    expect(detail.paceSamplesSecPerKm.single.value, closeTo(600, 20));
   });
 
   test('ignores impossible elevation sentinel values', () {

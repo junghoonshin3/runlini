@@ -111,6 +111,7 @@ class RunSessionDetailScreen extends ConsumerWidget {
         .read(runSessionRepositoryProvider)
         .saveSession(session.copyWith(shoeId: shoe.id));
     ref.invalidate(runSessionListProvider);
+    ref.invalidate(runSessionSummaryListProvider);
     ref.invalidate(runSessionByIdProvider(session.id));
     if (!context.mounted) {
       return;
@@ -204,6 +205,7 @@ class RunSessionDetailScreen extends ConsumerWidget {
       );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         container.invalidate(runSessionListProvider);
+        container.invalidate(runSessionSummaryListProvider);
         container.invalidate(runSessionByIdProvider(session.id));
       });
     }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:runlini/core/location/run_pace_sample_sanitizer.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 
@@ -67,6 +68,8 @@ class LocationTrackingConfig {
 class GeolocatorRunLocationClient
     implements DeviceLocationClient, LocationStreamClient {
   const GeolocatorRunLocationClient();
+
+  static const _paceSanitizer = RunPaceSampleSanitizer();
 
   @override
   Future<LiveLocationSample?> fetchLastKnownSample() async {
@@ -187,20 +190,12 @@ class GeolocatorRunLocationClient
       longitude: position.longitude,
       capturedAt: position.timestamp,
       source: RunPointSource.deviceGps,
-      paceSecPerKm: _paceFromSpeed(position.speed),
-      speedMps: position.speed > 0 ? position.speed : null,
+      paceSecPerKm: _paceSanitizer.paceFromSpeedMps(position.speed),
+      speedMps: _paceSanitizer.acceptedSpeedMps(position.speed),
       horizontalAccuracyM: _positiveOrNull(position.accuracy),
       speedAccuracyMps: _positiveOrNull(position.speedAccuracy),
       elevationM: _elevationOrNull(position.altitude),
     );
-  }
-
-  double? _paceFromSpeed(double speedMetersPerSecond) {
-    if (speedMetersPerSecond <= 0) {
-      return null;
-    }
-
-    return 1000 / speedMetersPerSecond;
   }
 
   double? _positiveOrNull(double value) {

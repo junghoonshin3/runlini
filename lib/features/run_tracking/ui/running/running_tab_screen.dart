@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/core/map/map_config_client.dart';
+import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
 import 'package:runlini/features/run_tracking/state/run_ghost_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
@@ -56,7 +58,10 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
 
       final locationController = ref.read(liveLocationProvider.notifier);
       try {
-        await locationController.bootstrapInitialLocation();
+        await StartupTrace.measure(
+          'location bootstrap',
+          locationController.bootstrapInitialLocation,
+        );
       } catch (error) {
         debugPrint('Runlini initial location bootstrap skipped: $error');
       }
@@ -64,7 +69,10 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
         return;
       }
       try {
-        await locationController.syncTracking();
+        await StartupTrace.measure(
+          'location tracking startup',
+          locationController.syncTracking,
+        );
       } catch (error) {
         debugPrint('Runlini live location startup skipped: $error');
       }
@@ -80,6 +88,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final ghostRaceFrame = ref.watch(ghostRaceFrameProvider);
     final intervalFrame = ref.watch(runIntervalFrameProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
+    final mapControlsReady = ref.watch(runMapControlsReadyProvider);
     final settings =
         ref.watch(runSettingsControllerProvider).value ??
         const RunSettingsState();
@@ -93,7 +102,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
       child: Stack(
         children: [
           Positioned.fill(child: RunMapPanel(mapViewState: mapViewState)),
-          if (playbackState.hasActiveSession && liveRunMetrics != null)
+          if (mapControlsReady &&
+              playbackState.hasActiveSession &&
+              liveRunMetrics != null)
             Positioned(
               top: 16,
               left: 16,
@@ -118,7 +129,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 ],
               ),
             ),
-          if (!isReviewing) ...[
+          if (mapControlsReady && !isReviewing) ...[
             if (playbackState.hasActiveSession || !countdownState.isActive)
               Positioned(
                 left: 20,

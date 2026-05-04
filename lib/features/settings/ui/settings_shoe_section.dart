@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_shoe_image_thumbnail.dart';
 import 'package:runlini/features/settings/ui/settings_section_panel.dart';
@@ -18,9 +17,9 @@ class SettingsShoeSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shoes = ref.watch(runShoeListProvider).value ?? const <RunShoe>[];
     final settings = ref.watch(runSettingsControllerProvider).value;
-    final sessions =
-        ref.watch(runSessionListProvider).value ?? const <RunSession>[];
-    final distanceByShoe = shoeDistanceKmById(sessions);
+    final summaries =
+        ref.watch(runSessionSummaryListProvider).value ?? const [];
+    final distanceByShoe = shoeDistanceKmById(summaries);
     final defaultShoe = defaultShoeFor(shoes, settings?.defaultShoeId);
 
     return SettingsSectionPanel(

@@ -8,7 +8,6 @@ import 'package:runlini/features/health_sync/types/health_sync_status.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_panel.dart';
@@ -37,7 +36,7 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final sessionsAsync = ref.watch(runSessionListProvider);
+    final summariesAsync = ref.watch(runSessionSummaryListProvider);
     final displaySettings = ref.watch(runDisplaySettingsProvider);
     final distanceGoals = ref.watch(runDistanceGoalSettingsProvider);
     final healthSyncState = ref.watch(healthSyncControllerProvider);
@@ -47,22 +46,22 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
 
     return SafeArea(
       bottom: false,
-      child: sessionsAsync.when(
-        data: (List<RunSession> sessions) {
-          final visibleSessions = sessions
-              .where((session) => !_deletedSessionIds.contains(session.id))
+      child: summariesAsync.when(
+        data: (List<RunSessionSummary> summaries) {
+          final visibleSummaries = summaries
+              .where((summary) => !_deletedSessionIds.contains(summary.id))
               .toList(growable: false);
-          final filteredSessions = visibleSessions
+          final filteredSummaries = visibleSummaries
               .where(
-                (RunSession session) =>
-                    _isSameDay(session.startedAt, _selectedDate),
+                (RunSessionSummary summary) =>
+                    _isSameDay(summary.startedAt, _selectedDate),
               )
               .toList(growable: false);
-          final showRecovery = visibleSessions.isEmpty;
+          final showRecovery = visibleSummaries.isEmpty;
           final content = <Widget>[
             const _HistoryHeader(),
             HistoryDistanceProgressPanel(
-              sessions: visibleSessions,
+              sessions: visibleSummaries,
               displaySettings: displaySettings,
               distanceGoals: distanceGoals,
               onChangeGoals: () {
@@ -76,7 +75,7 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
               )
             else ...[
               HistoryCalendarPanel(
-                sessions: visibleSessions,
+                sessions: visibleSummaries,
                 displaySettings: displaySettings,
                 distanceGoals: distanceGoals,
                 selectedDate: _selectedDate,
@@ -93,15 +92,15 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
                 },
               ),
               _HistoryListLabel(selectedDate: _selectedDate),
-              if (filteredSessions.isEmpty)
+              if (filteredSummaries.isEmpty)
                 const HistoryNoRunsOnDatePanel()
               else
-                for (final session in filteredSessions)
+                for (final summary in filteredSummaries)
                   RunSessionSummaryTile(
-                    key: Key('history-session-${session.id}'),
-                    summary: RunSessionSummary.fromSession(session),
+                    key: Key('history-session-${summary.id}'),
+                    summary: summary,
                     displaySettings: displaySettings,
-                    onTap: () => _openDetail(context, session),
+                    onTap: () => _openDetail(context, summary),
                   ),
             ],
           ];
@@ -150,11 +149,18 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
     await ref
         .read(wearDraftSyncControllerProvider.notifier)
         .syncPendingDrafts();
-    ref.invalidate(runSessionListProvider);
-    await ref.read(runSessionListProvider.future);
+    ref.invalidate(runSessionSummaryListProvider);
+    await ref.read(runSessionSummaryListProvider.future);
   }
 
-  Future<void> _openDetail(BuildContext context, RunSession session) async {
+  Future<void> _openDetail(
+    BuildContext context,
+    RunSessionSummary summary,
+  ) async {
+    final session = await ref.read(runSessionByIdProvider(summary.id).future);
+    if (session == null || !context.mounted) {
+      return;
+    }
     final result = await Navigator.of(context).push<RunSessionDetailResult>(
       MaterialPageRoute<RunSessionDetailResult>(
         builder: (BuildContext context) =>

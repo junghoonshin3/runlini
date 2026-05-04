@@ -159,6 +159,12 @@ class RunDetailMetricStrip extends StatelessWidget {
             ? 'Hidden'
             : detail.averageHeartRateBpm?.toString() ?? '--',
       ),
+      _MetricItem(
+        'Avg. Cadence (spm)',
+        detail.averageCadenceSpm == null
+            ? '--'
+            : detail.averageCadenceSpm!.round().toString(),
+      ),
       if (shoeName != null) _MetricItem('Shoes', shoeName!),
     ];
 

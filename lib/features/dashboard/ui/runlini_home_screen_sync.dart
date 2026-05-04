@@ -1,68 +1,51 @@
 part of 'runlini_home_screen.dart';
 
+final startupSyncDelayProvider = Provider<Duration>(
+  (Ref ref) => const Duration(milliseconds: 700),
+);
+
 extension on _RunliniHomeScreenState {
-  void _scheduleHealthSync() {
-    if (_healthSyncScheduled) {
+  void _scheduleStartupSync() {
+    if (_startupSyncScheduled) {
       return;
     }
-    _healthSyncScheduled = true;
+    _startupSyncScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      ref.read(healthSyncControllerProvider.notifier).syncIfAuthorized();
+      _startupSyncTimer = Timer(ref.read(startupSyncDelayProvider), () async {
+        if (!mounted) {
+          return;
+        }
+        await StartupTrace.measure('startup sync', () async {
+          await ref
+              .read(healthSyncControllerProvider.notifier)
+              .syncIfAuthorized();
+          if (!mounted) {
+            return;
+          }
+          await _syncWearDrafts();
+          await _syncRecentWatchGhostConfigs();
+          await _syncWatchIntervalConfig();
+          await _syncWatchVoiceSettings();
+        });
+      });
     });
   }
 
-  void _scheduleWearDraftSync() {
-    if (_wearDraftSyncScheduled) {
-      return;
-    }
-    _wearDraftSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncWearDrafts();
-    });
-  }
-
-  void _scheduleWearGhostConfigSync() {
-    if (_wearGhostConfigSyncScheduled) {
-      return;
-    }
-    _wearGhostConfigSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncRecentWatchGhostConfigs();
-    });
-  }
-
-  void _scheduleWearIntervalSync() {
-    if (_wearIntervalSyncScheduled) {
-      return;
-    }
-    _wearIntervalSyncScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _syncWatchIntervalConfig();
-      _syncWatchVoiceSettings();
-    });
-  }
-
-  void _syncWearDrafts() {
+  Future<void> _syncWearDrafts() {
     if (!mounted) {
-      return;
+      return Future<void>.value();
     }
-    ref.read(wearDraftSyncControllerProvider.notifier).syncPendingDrafts();
+    return ref
+        .read(wearDraftSyncControllerProvider.notifier)
+        .syncPendingDrafts()
+        .then((_) {});
   }
 
   void _listenForRunSessionChanges() {
-    ref.listen(runSessionListProvider, (previous, next) {
+    ref.listen(runSessionSummaryListProvider, (previous, next) {
       if (previous?.hasValue == true && next.hasValue) {
         _syncRecentWatchGhostConfigs();
       }
@@ -149,13 +132,15 @@ extension on _RunliniHomeScreenState {
       return;
     }
     try {
-      final sessions = await ref.read(runSessionListProvider.future);
-      if (!mounted) {
-        return;
-      }
       final selectedSessionId = ref
           .read(ghostSettingsProvider)
           .selectedSessionId;
+      final sessions = await ref.read(
+        recentWatchGhostSessionsProvider(selectedSessionId).future,
+      );
+      if (!mounted) {
+        return;
+      }
       await ref
           .read(watchGhostConfigSyncServiceProvider)
           .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);

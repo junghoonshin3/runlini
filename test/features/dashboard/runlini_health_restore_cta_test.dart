@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/health/health_route_client.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/features/dashboard/ui/runlini_home_screen.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
@@ -26,7 +27,7 @@ void main() {
       find.byKey(const Key('history-session-healthconnect-widget')),
     );
 
-    expect(route.requestAuthorizationValues, [false, true]);
+    expect(route.requestAuthorizationValues, [true]);
     expect(find.text('Health 기록 가져오기를 마쳤어요.'), findsOneWidget);
   });
 
@@ -108,6 +109,7 @@ Future<void> _pumpEmptyHistory(
         runSessionRepositoryProvider.overrideWithValue(
           FakeRunSessionRepository(),
         ),
+        startupSyncDelayProvider.overrideWithValue(const Duration(days: 1)),
         healthRouteClientProvider.overrideWithValue(routeClient),
         locationStreamClientProvider.overrideWithValue(
           const SilentLocationStreamClient(),

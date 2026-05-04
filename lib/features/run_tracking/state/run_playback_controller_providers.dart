@@ -29,6 +29,9 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
         _applyAutoPauseSetting(autoPauseEnabled);
       }
     });
+    ref.listen(runMotionEvidenceProvider, (previous, next) {
+      _accumulateCadenceSteps(next);
+    });
     return const RunPlaybackState.idle();
   }
 
@@ -44,6 +47,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
         ref.read(runSettingsControllerProvider).value ??
         const RunSettingsState();
     final seedPoint = seedSample.toRunPoint(elapsedMs: 0);
+    _resetCadenceTracking();
     state = RunPlaybackState(
       status: RunScreenStatus.running,
       currentPointIndex: 0,
@@ -76,6 +80,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(false);
     if (startedAt == null) {
       state = const RunPlaybackState.idle();
+      _resetCadenceTracking();
       try {
         await ref.read(healthWorkoutRecorderProvider).cancelRunCapture();
       } catch (error) {
@@ -102,6 +107,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
           durationMs: durationMs,
           recordedPoints: recordedPoints,
           bodyWeightKg: bodyWeightKg,
+          cadenceStepCount: state.cadenceStepCount,
           ghostSummary: ghostSummary,
         );
     state = state.copyWith(
@@ -153,6 +159,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
 
     state = const RunPlaybackState.idle();
+    _resetCadenceTracking();
     return exportResult;
   }
 
@@ -168,6 +175,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
 
     state = const RunPlaybackState.idle();
+    _resetCadenceTracking();
   }
 
   Future<void> pause() async {
@@ -183,6 +191,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
       resumedAt: null,
       pauseReason: RunPauseReason.manual,
     );
+    _markCadenceEvidenceSeen(ref.read(runMotionEvidenceProvider));
     ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(false);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(false);
   }
@@ -198,6 +207,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
       resumedAt: resumedAt,
       pauseReason: null,
     );
+    _markCadenceEvidenceSeen(ref.read(runMotionEvidenceProvider));
     ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(true);
     ref.read(liveLocationProvider.notifier).setWorkoutTrackingEnabled(true);
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
@@ -14,16 +15,18 @@ import 'helpers/runlini_widget_harness.dart';
 
 void main() {
   testWidgets('shows the history tab by default', (WidgetTester tester) async {
+    final deviceLocationClient = _CountingDeviceLocationClient();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
           ),
+          deviceLocationClientProvider.overrideWithValue(deviceLocationClient),
         ],
         child: const RunliniApp(),
       ),
@@ -49,6 +52,40 @@ void main() {
     expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
     expect(find.byKey(const Key('pause-run-button')), findsNothing);
     expect(find.byKey(const Key('resume-run-button')), findsNothing);
+    expect(deviceLocationClient.lastKnownFetchCount, 0);
+    expect(deviceLocationClient.currentFetchCount, 0);
+  });
+
+  testWidgets('hides running controls while the map surface is not ready', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          runMapControlsReadyProvider.overrideWithValue(false),
+          staticMapStateOverride(
+            fallbackMapCenter: const MapCoordinate(
+              latitude: 37.0,
+              longitude: 127.0,
+            ),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+
+    expect(find.byKey(const Key('run-map')), findsOneWidget);
+    expect(find.byKey(const Key('run-interval-button')), findsNothing);
+    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('current-location-button')), findsNothing);
+    expect(find.byKey(const Key('start-stop-button')), findsNothing);
+    expect(find.text('START'), findsNothing);
   });
 
   testWidgets(
@@ -208,4 +245,21 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byKey(const Key('runner-marker-layer')), findsNothing);
   });
+}
+
+class _CountingDeviceLocationClient implements DeviceLocationClient {
+  int lastKnownFetchCount = 0;
+  int currentFetchCount = 0;
+
+  @override
+  Future<LiveLocationSample?> fetchLastKnownSample() async {
+    lastKnownFetchCount += 1;
+    return null;
+  }
+
+  @override
+  Future<LiveLocationSample?> fetchCurrentSample() async {
+    currentFetchCount += 1;
+    return null;
+  }
 }

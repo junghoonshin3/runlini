@@ -1,6 +1,8 @@
 part of 'run_playback_controller_providers.dart';
 
 mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
+  DateTime? _lastCadenceEvidenceAt;
+
   void ingestLiveSample(LiveLocationSample sample) {
     if (!state.hasActiveSession ||
         state.startedAt == null ||
@@ -16,10 +18,13 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
         _isDuplicateRawPoint(state.rawPoints.last, rawPoint)) {
       return;
     }
-    final recordedPoint = sample.toRunPoint(
-      elapsedMs: state.elapsedAt(sample.capturedAt),
-    );
     final motionEvidence = ref.read(runMotionEvidenceProvider);
+    final cadenceSpm = ref
+        .read(runCadenceEstimatorProvider)
+        .recentSpm(motionEvidence, at: sample.capturedAt);
+    final recordedPoint = sample
+        .toRunPoint(elapsedMs: state.elapsedAt(sample.capturedAt))
+        .copyWith(cadenceSpm: cadenceSpm);
     final fusion = ref
         .read(runPlaybackSampleFusionProvider)
         .fuse(
@@ -94,6 +99,7 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
       pauseReason: RunPauseReason.auto,
       stationaryDriftLocked: true,
     );
+    _markCadenceEvidenceSeen(motionEvidence);
   }
 
   void _applyAutoResume(
@@ -111,6 +117,7 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
       pauseReason: null,
       stationaryDriftLocked: false,
     );
+    _markCadenceEvidenceSeen(motionEvidence);
   }
 
   int _lastIndex(RunPlaybackSampleFusionResult fusion) =>
@@ -120,4 +127,49 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
       previous.timestampRelMs == next.timestampRelMs &&
       previous.latitude == next.latitude &&
       previous.longitude == next.longitude;
+
+  void _accumulateCadenceSteps(List<RunMotionEvidence> evidence) {
+    if (state.status != RunScreenStatus.running) {
+      _markCadenceEvidenceSeen(evidence);
+      return;
+    }
+
+    var stepDelta = 0;
+    DateTime? latest;
+    for (final item in evidence) {
+      final last = _lastCadenceEvidenceAt;
+      if (last != null && !item.timestamp.isAfter(last)) {
+        continue;
+      }
+      latest = latest == null || item.timestamp.isAfter(latest)
+          ? item.timestamp
+          : latest;
+      if (item.isAvailable) {
+        stepDelta += item.stepDelta;
+      }
+    }
+    if (latest != null) {
+      _lastCadenceEvidenceAt = latest;
+    }
+    if (stepDelta <= 0) {
+      return;
+    }
+    state = state.copyWith(
+      cadenceStepCount: state.cadenceStepCount + stepDelta,
+    );
+  }
+
+  void _markCadenceEvidenceSeen(List<RunMotionEvidence> evidence) {
+    DateTime? latest;
+    for (final item in evidence) {
+      latest = latest == null || item.timestamp.isAfter(latest)
+          ? item.timestamp
+          : latest;
+    }
+    _lastCadenceEvidenceAt = latest;
+  }
+
+  void _resetCadenceTracking() {
+    _lastCadenceEvidenceAt = null;
+  }
 }

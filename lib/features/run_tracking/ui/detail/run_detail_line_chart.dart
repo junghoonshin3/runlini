@@ -18,6 +18,7 @@ class RunDetailLineChart extends StatelessWidget {
     required this.valueFormatter,
     required this.summaryFormatter,
     this.note,
+    this.summaryAverageValue,
   });
 
   final String title;
@@ -29,6 +30,7 @@ class RunDetailLineChart extends StatelessWidget {
   final String Function(double average, double min, double max)
   summaryFormatter;
   final String? note;
+  final double? summaryAverageValue;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,14 @@ class RunDetailLineChart extends StatelessWidget {
     final max = values.reduce(math.max);
     final average =
         values.reduce((left, right) => left + right) / values.length;
-    final yBounds = ChartBounds.from(min: min, max: max);
+    final summaryAverage =
+        summaryAverageValue != null && _isRenderableValue(summaryAverageValue!)
+        ? summaryAverageValue!
+        : average;
+    final yBounds = ChartBounds.from(
+      min: math.min(min, summaryAverage),
+      max: math.max(max, summaryAverage),
+    );
     final maxXSeconds = math.max(
       1.0,
       math.max(durationMs, validSamples.last.elapsedMs) / 1000,
@@ -66,7 +75,7 @@ class RunDetailLineChart extends StatelessWidget {
         children: [
           _ChartHeader(
             title: title,
-            summary: summaryFormatter(average, min, max),
+            summary: summaryFormatter(summaryAverage, min, max),
             note: note,
           ),
           const SizedBox(height: 18),
@@ -91,7 +100,7 @@ class RunDetailLineChart extends StatelessWidget {
                 extraLinesData: ExtraLinesData(
                   horizontalLines: [
                     HorizontalLine(
-                      y: average,
+                      y: summaryAverage,
                       color: AppColors.chalk.withValues(alpha: 0.32),
                       strokeWidth: 1,
                       dashArray: const [6, 6],

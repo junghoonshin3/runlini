@@ -78,6 +78,7 @@ class SettingsShoeCoursesScreen extends ConsumerWidget {
       return;
     }
     ref.invalidate(runSessionListProvider);
+    ref.invalidate(runSessionSummaryListProvider);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(result.message)));

@@ -1,6 +1,7 @@
 import 'package:runlini/core/fixtures/fake_run_fixture_loader.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 class FixtureRunSessionRepository implements RunSessionRepository {
   FixtureRunSessionRepository({required FakeRunFixtureLoader loader})
@@ -29,6 +30,12 @@ class FixtureRunSessionRepository implements RunSessionRepository {
           right.startedAt.compareTo(left.startedAt),
     );
     return List<RunSession>.unmodifiable(sessions);
+  }
+
+  @override
+  Future<List<RunSessionSummary>> listSessionSummaries() async {
+    final sessions = await listSessions();
+    return sessions.map(RunSessionSummary.fromSession).toList(growable: false);
   }
 
   @override

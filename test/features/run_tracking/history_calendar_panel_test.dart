@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/theme/app_theme.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_panel.dart';
 
@@ -226,7 +227,7 @@ void main() {
 class _SelectableCalendar extends StatefulWidget {
   const _SelectableCalendar({required this.sessions});
 
-  final List<RunSession> sessions;
+  final List<RunSessionSummary> sessions;
 
   @override
   State<_SelectableCalendar> createState() => _SelectableCalendarState();
@@ -267,13 +268,15 @@ class _Host extends StatelessWidget {
   }
 }
 
-RunSession _session(String id, DateTime startedAt, double distanceM) {
-  return RunSession(
-    id: id,
-    startedAt: startedAt,
-    distanceM: distanceM,
-    durationMs: 600000,
-    sourceSummary: 'test',
-    points: const [],
+RunSessionSummary _session(String id, DateTime startedAt, double distanceM) {
+  return RunSessionSummary.fromSession(
+    RunSession(
+      id: id,
+      startedAt: startedAt,
+      distanceM: distanceM,
+      durationMs: 600000,
+      sourceSummary: 'test',
+      points: const [],
+    ),
   );
 }

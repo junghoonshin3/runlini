@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/repo/sqflite_run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
@@ -20,7 +21,10 @@ final runSettingsRepositoryProvider = Provider<RunSettingsRepository>((
 class RunSettingsController extends AsyncNotifier<RunSettingsState> {
   @override
   FutureOr<RunSettingsState> build() {
-    return ref.watch(runSettingsRepositoryProvider).loadSettings();
+    return StartupTrace.measure(
+      'settings load',
+      () => ref.watch(runSettingsRepositoryProvider).loadSettings(),
+    );
   }
 
   Future<void> setDistanceUnit(RunDistanceUnit unit) async {

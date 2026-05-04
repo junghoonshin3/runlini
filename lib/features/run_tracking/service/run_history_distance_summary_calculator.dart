@@ -1,19 +1,19 @@
 import 'package:runlini/features/run_tracking/types/run_history_distance_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 class RunHistoryDistanceSummaryCalculator {
   const RunHistoryDistanceSummaryCalculator();
 
   RunHistoryDistanceSummary calculate({
-    required List<RunSession> sessions,
+    required List<RunSessionSummary> sessions,
     required RunHistoryPeriod period,
     required DateTime now,
     required double goalDistanceM,
   }) {
     final range = _rangeFor(period, now);
     final periodSessions = sessions
-        .where((RunSession session) {
+        .where((RunSessionSummary session) {
           final startedAt = session.startedAt.toLocal();
           return !startedAt.isBefore(range.start) &&
               startedAt.isBefore(range.end);
@@ -21,7 +21,7 @@ class RunHistoryDistanceSummaryCalculator {
         .toList(growable: false);
     final distanceM = periodSessions.fold<double>(
       0,
-      (double total, RunSession session) => total + session.distanceM,
+      (double total, RunSessionSummary session) => total + session.distanceM,
     );
 
     return RunHistoryDistanceSummary(

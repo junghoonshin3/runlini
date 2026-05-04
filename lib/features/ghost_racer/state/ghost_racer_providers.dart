@@ -28,7 +28,9 @@ class GhostSettingsNotifier extends Notifier<GhostSettingsState> {
 
   Future<void> _syncRecentGhostConfigs({String? selectedSessionId}) async {
     try {
-      final sessions = await ref.read(runSessionListProvider.future);
+      final sessions = await ref.read(
+        recentWatchGhostSessionsProvider(selectedSessionId).future,
+      );
       await ref
           .read(watchGhostConfigSyncServiceProvider)
           .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
@@ -51,14 +53,7 @@ final selectedGhostSessionProvider = FutureProvider<RunSession?>((
     return null;
   }
 
-  final sessions = await ref.watch(runSessionListProvider.future);
-  for (final session in sessions) {
-    if (session.id == settings.selectedSessionId) {
-      return session;
-    }
-  }
-
-  return null;
+  return ref.watch(runSessionByIdProvider(settings.selectedSessionId!).future);
 });
 
 final selectedGhostPolylinePointsProvider = FutureProvider<List<MapCoordinate>>(

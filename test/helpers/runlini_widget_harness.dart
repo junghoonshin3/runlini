@@ -13,6 +13,7 @@ import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_map_static_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 final disableStartupWeightPromptOverride = startupWeightPromptEnabledProvider
     .overrideWithValue(false);
@@ -147,15 +148,18 @@ class FakeRunSessionRepository implements RunSessionRepository {
       List<RunSession>.unmodifiable(_sessions);
 
   @override
+  Future<List<RunSessionSummary>> listSessionSummaries() async =>
+      _sessions.map(RunSessionSummary.fromSession).toList(growable: false);
+
+  @override
   Future<void> saveSession(RunSession session) async {
     _sessions.removeWhere((existing) => existing.id == session.id);
     _sessions.add(session);
   }
 
   @override
-  Future<void> deleteSession(String id) async {
-    _sessions.removeWhere((existing) => existing.id == id);
-  }
+  Future<void> deleteSession(String id) async =>
+      _sessions.removeWhere((existing) => existing.id == id);
 
   @override
   Future<bool> isDeletedExternalSession(RunSession session) async => false;
@@ -186,18 +190,14 @@ Future<void> pumpUntilFound(
   }
 }
 
-Future<void> openHistoryTab(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.list_alt_rounded));
-  await tester.pump();
-}
+Future<void> openHistoryTab(WidgetTester tester) async =>
+    _tapBottomTab(tester, Icons.list_alt_rounded);
 
-Future<void> openRunningTab(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.directions_run_rounded));
-  await tester.pump();
-}
+Future<void> openRunningTab(WidgetTester tester) async =>
+    _tapBottomTab(tester, Icons.directions_run_rounded);
 
-Future<void> openSettingsTab(WidgetTester tester) async {
-  await tester.tap(find.byIcon(Icons.settings_rounded));
+Future<void> _tapBottomTab(WidgetTester tester, IconData icon) async {
+  await tester.tap(find.byIcon(icon));
   await tester.pump();
 }
 
@@ -293,7 +293,7 @@ RunSession _sampleRunSession({
     startedAt: startedAt,
     distanceM: 1000,
     durationMs: 600000,
-    sourceSummary: 'fixture:test',
+    sourceSummary: 'device:gps',
     points: points,
   );
 }

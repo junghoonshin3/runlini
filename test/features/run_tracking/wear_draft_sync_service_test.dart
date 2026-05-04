@@ -8,6 +8,7 @@ import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/watch_run_draft.dart';
 import 'package:runlini/features/run_tracking/types/watch_run_platform.dart';
 
@@ -175,6 +176,10 @@ class _FakeRunSessionRepository implements RunSessionRepository {
   Future<List<RunSession>> listSessions() async {
     return List<RunSession>.unmodifiable(sessions);
   }
+
+  @override
+  Future<List<RunSessionSummary>> listSessionSummaries() async =>
+      sessions.map(RunSessionSummary.fromSession).toList(growable: false);
 
   @override
   Future<bool> isDeletedExternalSession(RunSession session) async {

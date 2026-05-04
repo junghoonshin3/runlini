@@ -63,6 +63,7 @@ class WearRunStateReducerTest {
                         horizontalAccuracyM = 6.0,
                         elevationM = 12.0,
                         heartRateBpm = 142,
+                        cadenceSpm = 172.0,
                     ),
                 ),
             ),
@@ -81,6 +82,7 @@ class WearRunStateReducerTest {
         assertEquals(18.4, state.caloriesKcal ?: 0.0, 0.01)
         assertEquals(1, state.points.size)
         assertEquals(37.5665, state.points.first().latitude, 0.0001)
+        assertEquals(172.0, state.points.first().cadenceSpm ?: 0.0, 0.01)
     }
 
     @Test

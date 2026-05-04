@@ -14,12 +14,15 @@ import 'package:runlini/features/run_tracking/state/run_settings_providers.dart'
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/types/watch_ghost_config.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
+
+part 'settings_wear_sync_fakes.dart';
 
 void main() {
   testWidgets('manual Wear sync button shows imported result', (tester) async {
@@ -38,7 +41,9 @@ void main() {
           runSettingsRepositoryProvider.overrideWithValue(
             _FakeRunSettingsRepository(),
           ),
-          runSessionListProvider.overrideWith((ref) async => [_session()]),
+          runSessionRepositoryProvider.overrideWithValue(
+            _MemoryRunSessionRepository([_session()]),
+          ),
           wearDraftSyncServiceProvider.overrideWithValue(wearSyncService),
           watchConnectionClientProvider.overrideWithValue(
             const _FakeWatchConnectionClient(
@@ -147,7 +152,9 @@ Future<void> _pumpSyncSection(
         runSettingsRepositoryProvider.overrideWithValue(
           _FakeRunSettingsRepository(),
         ),
-        runSessionListProvider.overrideWith((ref) async => [_session()]),
+        runSessionRepositoryProvider.overrideWithValue(
+          _MemoryRunSessionRepository([_session()]),
+        ),
         wearDraftSyncServiceProvider.overrideWithValue(wearSyncService),
         watchConnectionClientProvider.overrideWithValue(
           _FakeWatchConnectionClient(connectionStatus),
@@ -199,97 +206,4 @@ RunSession _session() {
       ),
     ],
   );
-}
-
-class _FakeWearDraftSyncService extends WearDraftSyncService {
-  _FakeWearDraftSyncService(this.result)
-    : super(
-        inboxClient: _NoopWearDraftInboxClient(),
-        importService: WatchRunSessionImportService(
-          repository: _NoopRunSessionRepository(),
-        ),
-      );
-
-  final WearDraftSyncResult result;
-  int calls = 0;
-
-  @override
-  Future<WearDraftSyncResult> syncPendingDrafts() async {
-    calls += 1;
-    return result;
-  }
-}
-
-class _NoopWearDraftInboxClient implements WearDraftInboxClient {
-  @override
-  Future<void> ackWearDraft(String id) async {}
-
-  @override
-  Future<List<WearDraftEnvelope>> pendingWearDrafts() async {
-    return const <WearDraftEnvelope>[];
-  }
-}
-
-class _FakeWatchConnectionClient implements WatchConnectionClient {
-  const _FakeWatchConnectionClient(this.status);
-
-  final WatchConnectionStatus status;
-
-  @override
-  Future<WatchConnectionStatus> connectionStatus() async => status;
-}
-
-class _NoopRunSessionRepository implements RunSessionRepository {
-  @override
-  Future<void> deleteSession(String id) async {}
-
-  @override
-  Future<RunSession?> findById(String id) async => null;
-
-  @override
-  Future<bool> isDeletedExternalSession(RunSession session) async => false;
-
-  @override
-  Future<List<RunSession>> listSessions() async => const <RunSession>[];
-
-  @override
-  Future<void> saveSession(RunSession session) async {}
-}
-
-class _FakeRunSettingsRepository implements RunSettingsRepository {
-  @override
-  Future<void> deleteShoe(String id) async {}
-
-  @override
-  Future<RunSettingsState> loadSettings() async => const RunSettingsState();
-
-  @override
-  Future<List<RunShoe>> listShoes() async => const <RunShoe>[];
-
-  @override
-  Future<void> retireShoe(String id) async {}
-
-  @override
-  Future<void> saveSettings(RunSettingsState settings) async {}
-
-  @override
-  Future<void> saveShoe(RunShoe shoe) async {}
-}
-
-class _FakeWatchGhostConfigClient implements WatchGhostConfigClient {
-  List<WatchGhostConfig> sentConfigs = const [];
-
-  @override
-  Future<void> clearGhostConfig() async {}
-
-  @override
-  Future<void> sendGhostConfig(WatchGhostConfig config) async {}
-
-  @override
-  Future<void> sendGhostConfigs({
-    required String? activeId,
-    required List<WatchGhostConfig> configs,
-  }) async {
-    sentConfigs = configs;
-  }
 }

@@ -8,6 +8,7 @@ import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 import 'helpers/runlini_widget_harness.dart';
@@ -17,7 +18,9 @@ void main() {
     WidgetTester tester,
   ) async {
     final healthRecorder = FakeHealthWorkoutRecorder();
-    final sessionRepository = FakeRunSessionRepository(sampleRunSessions());
+    final sessionRepository = FakeRunSessionRepository(
+      _hiddenSampleRunSessions(),
+    );
     await _pumpRunningApp(
       tester,
       healthRecorder: healthRecorder,
@@ -161,4 +164,10 @@ Future<void> _startAndStopRun(WidgetTester tester) async {
   await tester.pump();
   await tester.tap(find.byKey(const Key('start-stop-button')));
   await tester.pump();
+}
+
+List<RunSession> _hiddenSampleRunSessions() {
+  return sampleRunSessions()
+      .map((session) => session.copyWith(sourceSummary: 'fixture:test'))
+      .toList(growable: false);
 }

@@ -1,4 +1,5 @@
 import 'package:latlong2/latlong.dart';
+import 'package:runlini/core/location/run_pace_sample_sanitizer.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_detail.dart';
@@ -7,6 +8,7 @@ class RunSessionDetailCalculator {
   const RunSessionDetailCalculator();
 
   static const Distance _distance = Distance();
+  static const _paceSanitizer = RunPaceSampleSanitizer();
 
   RunSessionDetail calculate(
     RunSession session, {
@@ -23,6 +25,7 @@ class RunSessionDetailCalculator {
           ? null
           : (session.durationMs / 1000) / distanceKm,
       averageSpeedKmh: _averageSpeed(distanceKm, session.durationMs),
+      averageCadenceSpm: session.averageCadenceSpm,
       caloriesLabel: session.caloriesKcal == null
           ? '-- kcal'
           : '${session.caloriesKcal!.round()} kcal',
@@ -46,6 +49,15 @@ class RunSessionDetailCalculator {
             (point) => RunMetricSample(
               elapsedMs: point.timestampRelMs,
               value: point.heartRateBpm!.toDouble(),
+            ),
+          )
+          .toList(growable: false),
+      cadenceSamplesSpm: session.points
+          .where((point) => _isUsableCadence(point.cadenceSpm))
+          .map(
+            (point) => RunMetricSample(
+              elapsedMs: point.timestampRelMs,
+              value: point.cadenceSpm!,
             ),
           )
           .toList(growable: false),
@@ -92,6 +104,13 @@ class RunSessionDetailCalculator {
     return elevation != null && elevation.isFinite && elevation.abs() <= 12000;
   }
 
+  bool _isUsableCadence(double? cadenceSpm) {
+    return cadenceSpm != null &&
+        cadenceSpm.isFinite &&
+        cadenceSpm > 0 &&
+        cadenceSpm <= 260;
+  }
+
   List<RunMetricSample> _speedSamples(List<RunPoint> points) {
     final direct = points
         .where(
@@ -135,12 +154,7 @@ class RunSessionDetailCalculator {
 
   List<RunMetricSample> _paceSamples(List<RunPoint> points) {
     final direct = points
-        .where(
-          (point) =>
-              point.paceSecPerKm != null &&
-              point.paceSecPerKm!.isFinite &&
-              point.paceSecPerKm! > 0,
-        )
+        .where((point) => _paceSanitizer.isRenderablePace(point.paceSecPerKm))
         .map(
           (point) => RunMetricSample(
             elapsedMs: point.timestampRelMs,
@@ -164,11 +178,12 @@ class RunSessionDetailCalculator {
       if (elapsedMs <= 0 || meters <= 0) {
         continue;
       }
+      final pace = (elapsedMs / 1000) / (meters / 1000);
+      if (!_paceSanitizer.isRenderablePace(pace)) {
+        continue;
+      }
       samples.add(
-        RunMetricSample(
-          elapsedMs: current.timestampRelMs,
-          value: (elapsedMs / 1000) / (meters / 1000),
-        ),
+        RunMetricSample(elapsedMs: current.timestampRelMs, value: pace),
       );
     }
     return samples;

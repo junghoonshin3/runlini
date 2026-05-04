@@ -20,23 +20,36 @@ class FinishedRunSessionBuilder {
     required int durationMs,
     required List<RunPoint> recordedPoints,
     required double? bodyWeightKg,
+    int cadenceStepCount = 0,
     RunSessionGhostSummary? ghostSummary,
   }) {
     final distanceM = _calculateDistanceMeters(recordedPoints);
+    final safeDurationMs = durationMs < 0 ? 0 : durationMs;
     return RunSession(
       id: id,
       startedAt: startedAt,
       endedAt: endedAt,
       distanceM: distanceM,
-      durationMs: durationMs < 0 ? 0 : durationMs,
+      durationMs: safeDurationMs,
       sourceSummary: 'device:gps',
       points: List<RunPoint>.unmodifiable(recordedPoints),
+      averageCadenceSpm: _averageCadence(
+        stepCount: cadenceStepCount,
+        durationMs: safeDurationMs,
+      ),
       caloriesKcal: calorieCalculator.activeCaloriesKcal(
         distanceM: distanceM,
         bodyWeightKg: bodyWeightKg,
       ),
       ghostSummary: ghostSummary,
     );
+  }
+
+  double? _averageCadence({required int stepCount, required int durationMs}) {
+    if (stepCount <= 0 || durationMs <= 0) {
+      return null;
+    }
+    return stepCount / (durationMs / Duration.millisecondsPerMinute);
   }
 
   double _calculateDistanceMeters(List<RunPoint> recordedPoints) {
