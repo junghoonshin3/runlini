@@ -3,7 +3,7 @@
 ## Purpose
 
 Turn the Settings tab's running section from read-only status text into real
-controls for pre-start countdown length and live-location quality.
+controls for live-location quality and runner-facing preferences.
 
 ## Context and Orientation
 
@@ -17,9 +17,10 @@ controls for pre-start countdown length and live-location quality.
 
 - [x] Add running settings to `RunSettingsState`
 - [x] Persist countdown seconds and location tracking preset
-- [x] Render countdown and location preset controls in the Settings tab
-- [x] Drive countdown length from settings
+- [x] Render location preset controls in the Settings tab
+- [x] Keep phone start countdown fixed at 3 seconds
 - [x] Drive location stream config from settings
+- [x] Remove phone Settings countdown controls while keeping countdown behavior
 - [x] Add provider, repository, and widget coverage
 - [x] Update platform docs for preset-based live location cadence
 - [x] Run guardrails, analyzer, and tests
@@ -27,7 +28,10 @@ controls for pre-start countdown length and live-location quality.
 ## Decisions
 
 - Countdown cannot be disabled in v1.
-- Countdown range is `3..10` seconds, defaulting to `3`.
+- Phone countdown is fixed at `3` seconds and no longer reads persisted
+  `countdownSeconds` values.
+- Countdown length remains persisted for compatibility, but phone Settings no
+  longer exposes a countdown length control.
 - Location updates use presets instead of direct second/meter input.
 - `balanced` preserves the previous default: passive `3s / 5m`, workout
   `1s / 3m`.
@@ -36,8 +40,8 @@ controls for pre-start countdown length and live-location quality.
 
 1. Extend settings types/repository/controller with `countdownSeconds` and
    `locationTrackingPreset`.
-2. Add Settings tab controls for countdown seconds and tracking preset.
-3. Replace the hard-coded `3` countdown loop with the configured value.
+2. Add Settings tab controls for tracking preset and keep countdown hidden.
+3. Keep the phone countdown loop fixed to `defaultRunCountdownSeconds`.
 4. Pass a `LocationTrackingConfig` into the location stream client whenever
    live tracking starts, and restart the stream when the preset changes.
 5. Keep app data and run-session persistence unchanged.
