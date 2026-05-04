@@ -50,6 +50,14 @@ class SettingsRunningSection extends ConsumerWidget {
             style: _hintStyle,
           ),
           const SizedBox(height: 18),
+          _VoiceCueSwitch(
+            switchKey: const Key('auto-pause-enabled-switch'),
+            label: '자동 일시정지',
+            hint: '멈춰 있으면 시간과 거리 누적을 멈춰요.',
+            value: settings.autoPauseEnabled,
+            onChanged: controller.setAutoPauseEnabled,
+          ),
+          const SizedBox(height: 18),
           _GhostMarkerSwitch(
             value: settings.showGhostMarker,
             onChanged: controller.setShowGhostMarker,

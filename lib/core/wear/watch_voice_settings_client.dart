@@ -7,6 +7,7 @@ abstract class WatchVoiceSettingsClient {
     required bool voiceCueEnabled,
     required bool kmVoiceCueEnabled,
     required bool ghostVoiceCueEnabled,
+    required bool autoPauseEnabled,
     required double volume,
     bool playTestCue = false,
   });
@@ -30,6 +31,7 @@ class MethodChannelWatchVoiceSettingsClient
     required bool voiceCueEnabled,
     required bool kmVoiceCueEnabled,
     required bool ghostVoiceCueEnabled,
+    required bool autoPauseEnabled,
     required double volume,
     bool playTestCue = false,
   }) async {
@@ -41,6 +43,7 @@ class MethodChannelWatchVoiceSettingsClient
         'voiceCueEnabled': voiceCueEnabled,
         'kmVoiceCueEnabled': kmVoiceCueEnabled,
         'ghostVoiceCueEnabled': ghostVoiceCueEnabled,
+        'autoPauseEnabled': autoPauseEnabled,
         'volume': volume.clamp(0, 1).toDouble(),
         'playTestCue': playTestCue,
       });

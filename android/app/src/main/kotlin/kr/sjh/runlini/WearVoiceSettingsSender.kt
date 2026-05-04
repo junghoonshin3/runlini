@@ -13,6 +13,7 @@ class WearVoiceSettingsSender(
         voiceCueEnabled: Boolean,
         kmVoiceCueEnabled: Boolean,
         ghostVoiceCueEnabled: Boolean,
+        autoPauseEnabled: Boolean,
         volume: Double,
         playTestCue: Boolean = false,
     ) {
@@ -20,6 +21,7 @@ class WearVoiceSettingsSender(
             dataMap.putBoolean("voiceCueEnabled", voiceCueEnabled)
             dataMap.putBoolean("kmVoiceCueEnabled", kmVoiceCueEnabled)
             dataMap.putBoolean("ghostVoiceCueEnabled", ghostVoiceCueEnabled)
+            dataMap.putBoolean("autoPauseEnabled", autoPauseEnabled)
             dataMap.putDouble("volume", volume.coerceIn(0.0, 1.0))
             dataMap.putBoolean("playTestCue", playTestCue)
             dataMap.putLong("updatedAtEpochMs", System.currentTimeMillis())

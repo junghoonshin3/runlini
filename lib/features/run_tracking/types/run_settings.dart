@@ -134,6 +134,7 @@ class RunSettingsState {
     this.distanceGoals = const RunDistanceGoalSettings(),
     this.countdownSeconds = defaultRunCountdownSeconds,
     this.locationTrackingPreset = RunLocationTrackingPreset.balanced,
+    this.autoPauseEnabled = false,
     this.showGhostMarker = false,
     this.intervalWorkout = const RunIntervalWorkout(),
     this.voiceCueEnabled = true,
@@ -149,6 +150,7 @@ class RunSettingsState {
   final RunDistanceGoalSettings distanceGoals;
   final int countdownSeconds;
   final RunLocationTrackingPreset locationTrackingPreset;
+  final bool autoPauseEnabled;
   final bool showGhostMarker;
   final RunIntervalWorkout intervalWorkout;
   final bool voiceCueEnabled;
@@ -164,6 +166,7 @@ class RunSettingsState {
     RunDistanceGoalSettings? distanceGoals,
     int? countdownSeconds,
     RunLocationTrackingPreset? locationTrackingPreset,
+    bool? autoPauseEnabled,
     bool? showGhostMarker,
     RunIntervalWorkout? intervalWorkout,
     bool? voiceCueEnabled,
@@ -182,6 +185,7 @@ class RunSettingsState {
       countdownSeconds: countdownSeconds ?? this.countdownSeconds,
       locationTrackingPreset:
           locationTrackingPreset ?? this.locationTrackingPreset,
+      autoPauseEnabled: autoPauseEnabled ?? this.autoPauseEnabled,
       showGhostMarker: showGhostMarker ?? this.showGhostMarker,
       intervalWorkout: intervalWorkout ?? this.intervalWorkout,
       voiceCueEnabled: voiceCueEnabled ?? this.voiceCueEnabled,

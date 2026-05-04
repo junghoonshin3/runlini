@@ -3,9 +3,12 @@ package kr.sjh.runlini
 import com.google.android.gms.wearable.Wearable
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
+    private val motionEvidenceStreamHandler = RunMotionEvidenceStreamHandler(this)
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -20,6 +23,11 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        EventChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            MOTION_EVIDENCE_CHANNEL,
+        ).setStreamHandler(motionEvidenceStreamHandler)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -143,6 +151,7 @@ class MainActivity : FlutterFragmentActivity() {
                     val voiceCueEnabled = call.argument<Boolean>("voiceCueEnabled") ?: true
                     val kmVoiceCueEnabled = call.argument<Boolean>("kmVoiceCueEnabled") ?: true
                     val ghostVoiceCueEnabled = call.argument<Boolean>("ghostVoiceCueEnabled") ?: false
+                    val autoPauseEnabled = call.argument<Boolean>("autoPauseEnabled") ?: false
                     val volume = call.argument<Double>("volume")
                     val playTestCue = call.argument<Boolean>("playTestCue") ?: false
                     if (volume == null) {
@@ -156,6 +165,7 @@ class MainActivity : FlutterFragmentActivity() {
                             voiceCueEnabled = voiceCueEnabled,
                             kmVoiceCueEnabled = kmVoiceCueEnabled,
                             ghostVoiceCueEnabled = ghostVoiceCueEnabled,
+                            autoPauseEnabled = autoPauseEnabled,
                             volume = volume,
                             playTestCue = playTestCue,
                         )
@@ -167,8 +177,19 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        if (!motionEvidenceStreamHandler.onRequestPermissionsResult(requestCode, grantResults)) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
     companion object {
         private const val MAP_CONFIG_CHANNEL = "runlini/map_config"
+        private const val MOTION_EVIDENCE_CHANNEL = "runlini/motion_evidence"
         private const val WEAR_DRAFTS_CHANNEL = "runlini/wear_drafts"
         private const val WATCH_CONNECTION_CHANNEL = "runlini/watch_connection"
         private const val WEAR_GHOST_CONFIG_CHANNEL = "runlini/wear_ghost_config"

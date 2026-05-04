@@ -18,6 +18,8 @@
 	<string>Runlini uses your route to record runs and compare them with ghost sessions.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Runlini keeps tracking your run even when the screen changes during an active session.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Runlini uses step motion to reduce GPS drift while recording runs.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Runlini reads your workout entries so the runs you save can stay consistent with Apple Health.</string>
 	<key>NSHealthUpdateUsageDescription</key>

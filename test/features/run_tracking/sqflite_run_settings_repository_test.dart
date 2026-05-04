@@ -36,6 +36,7 @@ void main() {
         ),
         countdownSeconds: 7,
         locationTrackingPreset: RunLocationTrackingPreset.highAccuracy,
+        autoPauseEnabled: true,
         showGhostMarker: true,
         voiceCueEnabled: false,
         kmVoiceCueEnabled: false,
@@ -74,6 +75,7 @@ void main() {
       settings.locationTrackingPreset,
       RunLocationTrackingPreset.highAccuracy,
     );
+    expect(settings.autoPauseEnabled, isTrue);
     expect(settings.showGhostMarker, isTrue);
     expect(settings.voiceCueEnabled, isFalse);
     expect(settings.kmVoiceCueEnabled, isFalse);

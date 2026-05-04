@@ -73,6 +73,7 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         values[_locationTrackingPresetKey],
         RunLocationTrackingPreset.balanced,
       ),
+      autoPauseEnabled: _bool(values[_autoPauseEnabledKey]),
       showGhostMarker: _bool(values[_showGhostMarkerKey]),
       intervalWorkout: _intervalWorkout(values[_intervalWorkoutKey]),
       voiceCueEnabled: _boolWithDefault(values[_voiceCueEnabledKey], true),
@@ -142,6 +143,11 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         txn,
         _locationTrackingPresetKey,
         settings.locationTrackingPreset.name,
+      );
+      await _saveValue(
+        txn,
+        _autoPauseEnabledKey,
+        '${settings.autoPauseEnabled}',
       );
       await _saveValue(txn, _showGhostMarkerKey, '${settings.showGhostMarker}');
       await _saveValue(
