@@ -38,3 +38,12 @@ final androidGoogleMapsConfiguredProvider = FutureProvider<bool>((Ref ref) {
 
   return ref.watch(mapConfigClientProvider).isAndroidGoogleMapsConfigured();
 });
+
+final runMapControlsReadyProvider = Provider<bool>((Ref ref) {
+  if (_isFlutterTest || !Platform.isAndroid) {
+    return true;
+  }
+  return ref
+      .watch(androidGoogleMapsConfiguredProvider)
+      .maybeWhen(data: (configured) => configured, orElse: () => false);
+});

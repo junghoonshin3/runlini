@@ -12,6 +12,7 @@ import 'package:runlini/features/run_tracking/state/run_playback_providers.dart'
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 
@@ -202,6 +203,10 @@ class TestRunSessionRepository implements RunSessionRepository {
     listCalls += 1;
     return List<RunSession>.unmodifiable(savedSessions);
   }
+
+  @override
+  Future<List<RunSessionSummary>> listSessionSummaries() async =>
+      savedSessions.map(RunSessionSummary.fromSession).toList(growable: false);
 
   @override
   Future<void> saveSession(RunSession session) async {

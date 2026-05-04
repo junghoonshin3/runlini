@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
@@ -26,10 +29,8 @@ class RunliniHomeScreen extends ConsumerStatefulWidget {
 
 class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
     with WidgetsBindingObserver {
-  bool _healthSyncScheduled = false;
-  bool _wearDraftSyncScheduled = false;
-  bool _wearGhostConfigSyncScheduled = false;
-  bool _wearIntervalSyncScheduled = false;
+  bool _startupSyncScheduled = false;
+  Timer? _startupSyncTimer;
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
 
   @override
   void dispose() {
+    _startupSyncTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -61,28 +63,21 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
     final promptEnabled = ref.watch(startupWeightPromptEnabledProvider);
 
     if (promptEnabled &&
-        settingsState.isLoading &&
-        settingsState.value == null) {
-      return const _StartupLoadingScreen();
-    }
-
-    if (promptEnabled && settingsState.value?.bodyWeightKg == null) {
+        settingsState.hasValue &&
+        settingsState.value?.bodyWeightKg == null) {
       return const StartupWeightScreen();
     }
 
     _listenForRunSessionChanges();
     _listenForRunSettingsChanges();
-    _scheduleHealthSync();
-    _scheduleWearDraftSync();
-    _scheduleWearGhostConfigSync();
-    _scheduleWearIntervalSync();
+    _scheduleStartupSync();
 
     return Stack(
       children: [
         Scaffold(
-          body: IndexedStack(
+          body: LazyTabStack(
             index: currentTab.index,
-            children: const [
+            children: const <Widget>[
               HistoryTabScreen(),
               RunningTabScreen(),
               SettingsTabScreen(),
@@ -134,20 +129,47 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   }
 }
 
-class _StartupLoadingScreen extends StatelessWidget {
-  const _StartupLoadingScreen();
+class LazyTabStack extends StatefulWidget {
+  const LazyTabStack({super.key, required this.index, required this.children});
+
+  final int index;
+  final List<Widget> children;
+
+  @override
+  State<LazyTabStack> createState() => _LazyTabStackState();
+}
+
+class _LazyTabStackState extends State<LazyTabStack> {
+  final Set<int> _mountedIndexes = <int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _mountedIndexes.add(widget.index);
+  }
+
+  @override
+  void didUpdateWidget(covariant LazyTabStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _mountedIndexes.add(widget.index);
+    _mountedIndexes.removeWhere((index) => index >= widget.children.length);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.black,
-      body: Center(
-        child: SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(color: AppColors.voltGreen),
-        ),
-      ),
+    final mountedIndexes = _mountedIndexes.toList()..sort();
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        for (final index in mountedIndexes)
+          Offstage(
+            offstage: index != widget.index,
+            child: TickerMode(
+              enabled: index == widget.index,
+              child: widget.children[index],
+            ),
+          ),
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/features/run_tracking/service/run_history_distance_summary_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 void main() {
   const calculator = RunHistoryDistanceSummaryCalculator();
@@ -83,13 +84,15 @@ void main() {
   });
 }
 
-RunSession _session(String id, DateTime startedAt, double distanceM) {
-  return RunSession(
-    id: id,
-    startedAt: startedAt,
-    distanceM: distanceM,
-    durationMs: 600000,
-    sourceSummary: 'test',
-    points: const [],
+RunSessionSummary _session(String id, DateTime startedAt, double distanceM) {
+  return RunSessionSummary.fromSession(
+    RunSession(
+      id: id,
+      startedAt: startedAt,
+      distanceM: distanceM,
+      durationMs: 600000,
+      sourceSummary: 'test',
+      points: const [],
+    ),
   );
 }

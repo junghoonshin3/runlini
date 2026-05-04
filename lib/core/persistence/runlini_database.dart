@@ -1,4 +1,5 @@
 import 'package:path/path.dart' as p;
+import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RunliniDatabase {
@@ -10,7 +11,7 @@ class RunliniDatabase {
        _databaseName = databaseName,
        _databasePath = databasePath;
 
-  static const int version = 6;
+  static const int version = 7;
 
   final DatabaseFactory _databaseFactory;
   final String _databaseName;
@@ -26,14 +27,19 @@ class RunliniDatabase {
     final path =
         _databasePath ??
         p.join(await _databaseFactory.getDatabasesPath(), _databaseName);
-    return _database = await _databaseFactory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(
-        version: version,
-        onCreate: _create,
-        onUpgrade: _upgrade,
+    final database = await StartupTrace.measure(
+      'database open',
+      () => _databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: version,
+          onCreate: _create,
+          onUpgrade: _upgrade,
+        ),
       ),
     );
+    _database = database;
+    return database;
   }
 
   Future<void> close() async {
@@ -73,6 +79,7 @@ CREATE TABLE run_points (
   speed_mps REAL,
   elevation_m REAL,
   heart_rate_bpm INTEGER,
+  cadence_spm REAL,
   source TEXT NOT NULL,
   PRIMARY KEY (session_id, sequence_index),
   FOREIGN KEY (session_id) REFERENCES run_sessions(id) ON DELETE CASCADE
@@ -113,6 +120,9 @@ CREATE TABLE run_points (
         'run_sessions',
         "capture_source TEXT NOT NULL DEFAULT 'phoneGps'",
       );
+    }
+    if (oldVersion < 7) {
+      await _addColumnIfMissing(db, 'run_points', 'cadence_spm REAL');
     }
   }
 

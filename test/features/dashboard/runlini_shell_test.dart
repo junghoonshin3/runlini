@@ -67,8 +67,8 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
@@ -175,7 +175,7 @@ void main() {
       await indicator.onRefresh();
       await tester.pumpAndSettle();
 
-      expect(healthRoute.requestAuthorizationValues, [false, false]);
+      expect(healthRoute.requestAuthorizationValues, [false]);
     },
   );
 }

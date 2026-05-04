@@ -16,8 +16,8 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
@@ -74,8 +74,8 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
@@ -113,8 +113,8 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
@@ -148,7 +148,9 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith((Ref ref) async => const []),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(),
+          ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
           ),
@@ -178,8 +180,8 @@ void main() {
       ProviderScope(
         overrides: [
           disableStartupWeightPromptOverride,
-          runSessionListProvider.overrideWith(
-            (Ref ref) async => sampleRunSessions(),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
           ),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),

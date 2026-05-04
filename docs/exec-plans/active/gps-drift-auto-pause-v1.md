@@ -16,6 +16,10 @@
 - 자동 일시정지 상태에서 OFF로 바꾸면 즉시 running으로 돌아가고, 수동 pause는 건드리지 않는다.
 - motion evidence가 available이면 stationary lock 이후 재개는 최근 4초 안의 step/cadence 증거가 있어야 한다.
 - motion evidence가 unavailable/permission denied이면 기능 실패가 아니라 GPS-only V1 기준으로 fallback한다.
+- GPS speed 기반 pace는 `0.7m/s` 이하 정지 노이즈에서 만들지 않는다.
+- 상세 Pace 그래프는 `2:00/km~30:00/km` 범위만 표시하고, Avg는 세션 전체 평균 페이스를 쓴다.
+- 폰 러닝은 active running 중 step evidence로 평균/그래프 케이던스를 저장한다.
+- Wear 러닝은 Health Services cadence를 point cadence로 보존한다.
 
 ## Progress
 
@@ -28,6 +32,8 @@
 - [x] 폰 playback pipeline에 motion window와 stationary-lock gate를 연결했다.
 - [x] Wear auto pause detector가 cadence를 resume evidence로 사용하도록 보강했다.
 - [x] 폰/워치 자동 일시정지 설정을 active run 중 즉시 반영하도록 수정했다.
+- [x] 시작 직후 저속 GPS 노이즈가 상세 Pace 그래프 평균을 오염시키지 않도록 보정했다.
+- [x] 상세 화면 평균 케이던스 카드와 케이던스 그래프를 추가했다.
 - [x] V2 검증 명령을 다시 실행했다.
 
 ## Validation

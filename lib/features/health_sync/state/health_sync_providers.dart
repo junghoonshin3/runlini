@@ -86,6 +86,7 @@ class HealthSyncController extends AsyncNotifier<HealthSyncStatus> {
     if (result.hasValue) {
       final status = result.requireValue;
       ref.invalidate(runSessionListProvider);
+      ref.invalidate(runSessionSummaryListProvider);
       return status;
     }
     final status = HealthSyncStatus.failed(result.error.toString());

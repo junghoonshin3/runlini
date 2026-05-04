@@ -1,14 +1,14 @@
-import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 
-Map<String, double> shoeDistanceKmById(List<RunSession> sessions) {
+Map<String, double> shoeDistanceKmById(List<RunSessionSummary> sessions) {
   final totals = <String, double>{};
-  for (final session in sessions) {
-    final shoeId = session.shoeId;
+  for (final summary in sessions) {
+    final shoeId = summary.shoeId;
     if (shoeId == null) {
       continue;
     }
-    totals[shoeId] = (totals[shoeId] ?? 0) + (session.distanceM / 1000);
+    totals[shoeId] = (totals[shoeId] ?? 0) + summary.distanceKm;
   }
   return totals;
 }

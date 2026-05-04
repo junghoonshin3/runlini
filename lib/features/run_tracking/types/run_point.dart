@@ -20,6 +20,7 @@ class RunPoint {
     this.speedAccuracyMps,
     this.elevationM,
     this.heartRateBpm,
+    this.cadenceSpm,
   });
 
   final double latitude;
@@ -31,6 +32,7 @@ class RunPoint {
   final double? speedAccuracyMps;
   final double? elevationM;
   final int? heartRateBpm;
+  final double? cadenceSpm;
   final RunPointSource source;
 
   RunPoint copyWith({
@@ -43,6 +45,7 @@ class RunPoint {
     double? speedAccuracyMps,
     double? elevationM,
     int? heartRateBpm,
+    double? cadenceSpm,
     RunPointSource? source,
   }) {
     return RunPoint(
@@ -55,6 +58,7 @@ class RunPoint {
       speedAccuracyMps: speedAccuracyMps ?? this.speedAccuracyMps,
       elevationM: elevationM ?? this.elevationM,
       heartRateBpm: heartRateBpm ?? this.heartRateBpm,
+      cadenceSpm: cadenceSpm ?? this.cadenceSpm,
       source: source ?? this.source,
     );
   }
@@ -70,6 +74,7 @@ class RunPoint {
       speedAccuracyMps: (json['speedAccuracyMps'] as num?)?.toDouble(),
       elevationM: (json['elevationM'] as num?)?.toDouble(),
       heartRateBpm: (json['heartRateBpm'] as num?)?.round(),
+      cadenceSpm: (json['cadenceSpm'] as num?)?.toDouble(),
       source: RunPointSource.values.byName(json['source'] as String),
     );
   }
@@ -85,6 +90,7 @@ class RunPoint {
       'speedAccuracyMps': speedAccuracyMps,
       'elevationM': elevationM,
       'heartRateBpm': heartRateBpm,
+      'cadenceSpm': cadenceSpm,
       'source': source.name,
     };
   }

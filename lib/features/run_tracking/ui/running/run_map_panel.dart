@@ -63,7 +63,7 @@ class RunMapPanel extends ConsumerWidget {
           recenterTick: recenterTick,
         );
       },
-      loading: _MapStatusPanel.loading,
+      loading: () => const ColoredBox(color: AppColors.black),
       error: (Object error, StackTrace stackTrace) => const _MapStatusPanel(
         headline: 'MAP SETUP ERROR',
         message: 'Android map configuration could not be read.',
@@ -92,12 +92,6 @@ class _MapStatusPanel extends StatelessWidget {
     required this.headline,
     required this.message,
   });
-
-  const _MapStatusPanel.loading()
-    : this(
-        headline: 'MAP SETUP',
-        message: 'Checking native map configuration...',
-      );
 
   final String headline;
   final String message;

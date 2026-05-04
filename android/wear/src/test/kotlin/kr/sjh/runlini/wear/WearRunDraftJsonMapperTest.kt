@@ -34,6 +34,7 @@ class WearRunDraftJsonMapperTest {
                     horizontalAccuracyM = 5.5,
                     elevationM = 44.0,
                     heartRateBpm = 138,
+                    cadenceSpm = 172.0,
                 ),
             ),
         )
@@ -58,6 +59,7 @@ class WearRunDraftJsonMapperTest {
         assertEquals(37.1, point.getDouble("lat"), 0.0001)
         assertEquals(127.2, point.getDouble("lng"), 0.0001)
         assertEquals(3_000L, point.getLong("timestampRelMs"))
+        assertEquals(172.0, point.getDouble("cadenceSpm"), 0.01)
         assertEquals("wearOs", point.getString("source"))
     }
 }

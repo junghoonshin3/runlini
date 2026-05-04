@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/wear/watch_ghost_config_client.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
+import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
@@ -18,7 +19,7 @@ void main() {
       endedAt: DateTime.utc(2026, 4, 19, 6, 42),
       distanceM: 2400,
       durationMs: 720000,
-      sourceSummary: 'fixture:test',
+      sourceSummary: 'device:gps',
       points: const [
         RunPoint(
           latitude: 37.0,
@@ -39,7 +40,7 @@ void main() {
     final summary = RunSessionSummary.fromSession(session);
     final container = ProviderContainer(
       overrides: [
-        runSessionListProvider.overrideWith((Ref ref) async => [session]),
+        runSessionRepositoryProvider.overrideWithValue(_Repository([session])),
       ],
     );
     addTearDown(container.dispose);
@@ -61,7 +62,7 @@ void main() {
     final client = _FakeWatchGhostConfigClient();
     final container = ProviderContainer(
       overrides: [
-        runSessionListProvider.overrideWith((Ref ref) async => [session]),
+        runSessionRepositoryProvider.overrideWithValue(_Repository([session])),
         watchGhostConfigClientProvider.overrideWithValue(client),
       ],
     );
@@ -82,7 +83,9 @@ void main() {
       final client = _FakeWatchGhostConfigClient();
       final container = ProviderContainer(
         overrides: [
-          runSessionListProvider.overrideWith((Ref ref) async => [_session()]),
+          runSessionRepositoryProvider.overrideWithValue(
+            _Repository([_session()]),
+          ),
           watchGhostConfigClientProvider.overrideWithValue(client),
         ],
       );
@@ -104,7 +107,7 @@ RunSession _session() {
     endedAt: DateTime.utc(2026, 4, 19, 6, 42),
     distanceM: 2400,
     durationMs: 720000,
-    sourceSummary: 'fixture:test',
+    sourceSummary: 'device:gps',
     points: const [
       RunPoint(
         latitude: 37.0,
@@ -122,6 +125,38 @@ RunSession _session() {
       ),
     ],
   );
+}
+
+class _Repository implements RunSessionRepository {
+  const _Repository(this.sessions);
+
+  final List<RunSession> sessions;
+
+  @override
+  Future<void> deleteSession(String id) async {}
+
+  @override
+  Future<RunSession?> findById(String id) async {
+    for (final session in sessions) {
+      if (session.id == id) {
+        return session;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<bool> isDeletedExternalSession(RunSession session) async => false;
+
+  @override
+  Future<List<RunSession>> listSessions() async => sessions;
+
+  @override
+  Future<List<RunSessionSummary>> listSessionSummaries() async =>
+      sessions.map(RunSessionSummary.fromSession).toList(growable: false);
+
+  @override
+  Future<void> saveSession(RunSession session) async {}
 }
 
 class _FakeWatchGhostConfigClient implements WatchGhostConfigClient {

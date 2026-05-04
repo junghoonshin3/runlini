@@ -708,6 +708,7 @@ class HealthServicesRunController(
                 horizontalAccuracyM = accuracy?.horizontalPositionErrorMeters,
                 elevationM = location.altitude.takeIf { altitude -> altitude.isFinite() },
                 heartRateBpm = heartRate,
+                cadenceSpm = cadence,
             )
         }
         return WearMetricSample(

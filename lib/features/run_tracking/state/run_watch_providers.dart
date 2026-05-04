@@ -10,6 +10,8 @@ import 'package:runlini/features/run_tracking/service/watch_ghost_config_sync_se
 import 'package:runlini/features/run_tracking/service/watch_run_session_import_service.dart';
 import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 
 final watchRunSessionImportServiceProvider =
     Provider<WatchRunSessionImportService>((Ref ref) {
@@ -52,6 +54,45 @@ final watchGhostConfigSyncServiceProvider =
         client: ref.watch(watchGhostConfigClientProvider),
       );
     });
+
+final recentWatchGhostSessionsProvider =
+    FutureProvider.family<List<RunSession>, String?>((
+      Ref ref,
+      selectedId,
+    ) async {
+      final summaries = await ref.watch(runSessionSummaryListProvider.future);
+      final runnableSummaries =
+          summaries.where((summary) => summary.pointCount >= 2).toList()
+            ..sort((left, right) => right.startedAt.compareTo(left.startedAt));
+      final selectedSummary = selectedId == null
+          ? null
+          : _firstSummaryWithId(runnableSummaries, selectedId);
+      final ids = <String>[
+        if (selectedSummary != null) selectedSummary.id,
+        for (final summary in runnableSummaries)
+          if (summary.id != selectedSummary?.id) summary.id,
+      ].take(3).toList(growable: false);
+      final sessions = <RunSession>[];
+      for (final id in ids) {
+        final session = await ref.watch(runSessionByIdProvider(id).future);
+        if (session != null && session.points.length >= 2) {
+          sessions.add(session);
+        }
+      }
+      return List<RunSession>.unmodifiable(sessions);
+    });
+
+RunSessionSummary? _firstSummaryWithId(
+  Iterable<RunSessionSummary> summaries,
+  String id,
+) {
+  for (final summary in summaries) {
+    if (summary.id == id) {
+      return summary;
+    }
+  }
+  return null;
+}
 
 final wearDraftSyncServiceProvider = Provider<WearDraftSyncService>((Ref ref) {
   return WearDraftSyncService(

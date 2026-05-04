@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/fixtures/fake_run_fixture_loader.dart';
+import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/core/persistence/runlini_database.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/repo/sqflite_run_session_repository.dart';
@@ -25,7 +26,10 @@ final runSessionRepositoryProvider = Provider<RunSessionRepository>((Ref ref) {
 final runSessionListProvider = FutureProvider<List<RunSession>>((
   Ref ref,
 ) async {
-  final sessions = await ref.watch(runSessionRepositoryProvider).listSessions();
+  final sessions = await StartupTrace.measure(
+    'full session list load',
+    () => ref.watch(runSessionRepositoryProvider).listSessions(),
+  );
   final visibleSessions = sessions.where(_isUserVisibleLocalSession).toList()
     ..sort((left, right) => right.startedAt.compareTo(left.startedAt));
   return List<RunSession>.unmodifiable(visibleSessions);
@@ -34,15 +38,26 @@ final runSessionListProvider = FutureProvider<List<RunSession>>((
 final runSessionSummaryListProvider = FutureProvider<List<RunSessionSummary>>((
   Ref ref,
 ) async {
-  final sessions = await ref.watch(runSessionListProvider.future);
-  return sessions.map(RunSessionSummary.fromSession).toList(growable: false);
+  final summaries = await StartupTrace.measure(
+    'session summary list load',
+    () => ref.watch(runSessionRepositoryProvider).listSessionSummaries(),
+  );
+  final visibleSummaries =
+      summaries
+          .where((summary) => !summary.sourceSummary.startsWith('fixture:'))
+          .toList()
+        ..sort((left, right) => right.startedAt.compareTo(left.startedAt));
+  return List<RunSessionSummary>.unmodifiable(visibleSummaries);
 });
 
 final runSessionByIdProvider = FutureProvider.family<RunSession?, String>((
   Ref ref,
   String id,
 ) async {
-  return ref.watch(runSessionRepositoryProvider).findById(id);
+  return StartupTrace.measure(
+    'session detail load',
+    () => ref.watch(runSessionRepositoryProvider).findById(id),
+  );
 });
 
 bool _isUserVisibleLocalSession(RunSession session) {

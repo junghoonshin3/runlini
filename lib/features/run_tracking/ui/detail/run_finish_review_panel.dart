@@ -3,11 +3,10 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/service/run_session_detail_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/ui/detail/run_detail_charts_section.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_ghost_comparison.dart';
-import 'package:runlini/features/run_tracking/ui/detail/run_detail_line_chart.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_preview.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_shoe_section.dart';
-import 'package:runlini/features/run_tracking/ui/detail/run_detail_splits_table.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_summary_sections.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_sync_status_section.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_finish_review_actions.dart';
@@ -100,69 +99,11 @@ class RunFinishReviewPanel extends StatelessWidget {
                       else
                         RunDetailRoutePreview(points: session.points),
                       const SizedBox(height: 38),
-                      RunDetailLineChart(
-                        title: 'Pace (${paceUnitLabel(displaySettings)})',
-                        samples: detail.paceSamplesSecPerKm,
-                        color: AppColors.cyan,
-                        emptyLabel: '페이스 데이터가 아직 없어요.',
-                        durationMs: detail.durationMs,
-                        note: '낮을수록 빠른 페이스',
-                        valueFormatter: (value) =>
-                            formatRunPace(value, displaySettings),
-                        summaryFormatter: (average, min, max) =>
-                            'Avg ${formatRunPace(average, displaySettings)} · '
-                            '${formatRunPace(min, displaySettings)}-'
-                            '${formatRunPace(max, displaySettings)}',
-                      ),
-                      const SizedBox(height: 18),
-                      RunDetailLineChart(
-                        title: 'Speed',
-                        samples: detail.speedSamplesKmh,
-                        color: AppColors.cyan,
-                        emptyLabel: '스피드 데이터가 아직 없어요.',
-                        durationMs: detail.durationMs,
-                        valueFormatter: (value) =>
-                            formatRunSpeed(value, displaySettings),
-                        summaryFormatter: (average, min, max) =>
-                            'Avg ${formatRunSpeed(average, displaySettings)} · '
-                            '${formatRunSpeed(min, displaySettings)}-'
-                            '${formatRunSpeed(max, displaySettings)}',
-                      ),
-                      const SizedBox(height: 18),
-                      RunDetailLineChart(
-                        title: 'Elevation',
-                        samples: detail.elevationSamplesM,
-                        color: AppColors.voltGreen,
-                        emptyLabel: '고도 데이터가 아직 없어요.',
-                        durationMs: detail.durationMs,
-                        valueFormatter: (value) =>
-                            '${value.toStringAsFixed(1)} m',
-                        summaryFormatter: (average, min, max) =>
-                            'Avg ${average.toStringAsFixed(1)} m · '
-                            '${min.toStringAsFixed(1)}-'
-                            '${max.toStringAsFixed(1)} m',
-                      ),
-                      const SizedBox(height: 38),
-                      RunDetailSplitsTable(
-                        splits: detail.splits,
+                      RunDetailChartsSection(
+                        detail: detail,
                         displaySettings: displaySettings,
                         privacySettings: privacySettings,
                       ),
-                      const SizedBox(height: 18),
-                      if (privacySettings.hideHeartRate)
-                        const _HiddenDataPanel(label: 'Heart Rate Hidden')
-                      else
-                        RunDetailLineChart(
-                          title: 'Heart Rate',
-                          samples: detail.heartRateSamplesBpm,
-                          color: AppColors.orange,
-                          emptyLabel: '심박 데이터가 아직 없어요.',
-                          durationMs: detail.durationMs,
-                          valueFormatter: (value) => '${value.round()} bpm',
-                          summaryFormatter: (average, min, max) =>
-                              'Avg ${average.round()} bpm · '
-                              '${min.round()}-${max.round()} bpm',
-                        ),
                       if (onManageShoe != null || shoeName != null) ...[
                         const SizedBox(height: 38),
                         RunDetailShoeSection(

@@ -12,6 +12,8 @@ class RunSessionSummary {
     required this.captureSource,
     required this.syncStatus,
     this.averageCadenceSpm,
+    this.shoeId,
+    this.pointCount = 0,
   });
 
   final String id;
@@ -24,6 +26,8 @@ class RunSessionSummary {
   final RunSessionCaptureSource captureSource;
   final RunSessionSyncStatus syncStatus;
   final double? averageCadenceSpm;
+  final String? shoeId;
+  final int pointCount;
 
   double get distanceKm => distanceM / 1000;
 
@@ -44,6 +48,8 @@ class RunSessionSummary {
       captureSource: session.captureSource,
       syncStatus: session.syncStatus,
       averageCadenceSpm: session.averageCadenceSpm,
+      shoeId: session.shoeId,
+      pointCount: session.points.length,
     );
   }
 }

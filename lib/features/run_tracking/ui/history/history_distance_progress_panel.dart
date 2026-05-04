@@ -3,7 +3,7 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/service/run_history_distance_summary_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_history_distance_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_panel.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
@@ -20,7 +20,7 @@ class HistoryDistanceProgressPanel extends StatefulWidget {
     this.calculator = const RunHistoryDistanceSummaryCalculator(),
   });
 
-  final List<RunSession> sessions;
+  final List<RunSessionSummary> sessions;
   final RunDisplaySettings displaySettings;
   final RunDistanceGoalSettings distanceGoals;
   final VoidCallback? onChangeGoals;

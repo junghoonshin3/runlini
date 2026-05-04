@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/features/run_tracking/service/run_history_calendar_summary_calculator.dart';
-import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/common/run_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_chrome.dart';
@@ -19,7 +19,7 @@ class HistoryCalendarPanel extends StatefulWidget {
     this.calculator = const RunHistoryCalendarSummaryCalculator(),
   });
 
-  final List<RunSession> sessions;
+  final List<RunSessionSummary> sessions;
   final RunDisplaySettings displaySettings;
   final RunDistanceGoalSettings distanceGoals;
   final DateTime? selectedDate;

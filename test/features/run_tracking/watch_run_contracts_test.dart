@@ -74,6 +74,7 @@ void main() {
           timestampRelMs: 0,
           source: RunPointSource.watchOs,
           heartRateBpm: 145,
+          cadenceSpm: 172,
         ),
       ],
     );
@@ -83,6 +84,7 @@ void main() {
     expect(restored.platform, WatchRunPlatform.watchOs);
     expect(restored.externalWorkoutId, 'apple-workout-1');
     expect(restored.points.single.heartRateBpm, 145);
+    expect(restored.points.single.cadenceSpm, 172);
     expect(restored.ghostSummary?.result, RunSessionGhostResult.ahead);
     expect(restored.ghostSummary?.ghostSessionId, 'ghost-1');
   });

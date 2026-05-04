@@ -31,11 +31,11 @@ class SettingsSyncSection extends ConsumerWidget {
     final backupState = ref.watch(healthBackupControllerProvider);
     final wearSyncState = ref.watch(wearDraftSyncControllerProvider);
     final watchConnectionState = ref.watch(watchConnectionStatusProvider);
-    final sessions =
-        ref.watch(runSessionListProvider).value ?? const <RunSession>[];
-    final failedCount = sessions.where((RunSession session) {
-      return session.recordSource == RunSessionRecordSource.appLocal &&
-          session.syncStatus == RunSessionSyncStatus.syncFailed;
+    final summaries =
+        ref.watch(runSessionSummaryListProvider).value ?? const [];
+    final failedCount = summaries.where((summary) {
+      return summary.recordSource == RunSessionRecordSource.appLocal &&
+          summary.syncStatus == RunSessionSyncStatus.syncFailed;
     }).length;
     final isAndroid = platform == TargetPlatform.android;
     final isHealthBusy =
@@ -210,10 +210,12 @@ class SettingsSyncSection extends ConsumerWidget {
 
   Future<void> _syncRecentGhostConfigs(WidgetRef ref) async {
     try {
-      final sessions = await ref.read(runSessionListProvider.future);
       final selectedSessionId = ref
           .read(ghostSettingsProvider)
           .selectedSessionId;
+      final sessions = await ref.read(
+        recentWatchGhostSessionsProvider(selectedSessionId).future,
+      );
       await ref
           .read(watchGhostConfigSyncServiceProvider)
           .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);

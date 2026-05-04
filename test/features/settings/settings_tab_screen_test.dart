@@ -18,7 +18,9 @@ void main() {
       ProviderScope(
         overrides: [
           runSettingsRepositoryProvider.overrideWithValue(repository),
-          runSessionListProvider.overrideWith((ref) async => const []),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(),
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),

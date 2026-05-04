@@ -46,6 +46,115 @@ void main() {
     expect(sessions.single.captureSource, RunSessionCaptureSource.wearOs);
     expect(sessions.single.syncStatus, RunSessionSyncStatus.localOnly);
     expect(sessions.single.shoeId, 'shoe-1');
+    expect(sessions.single.points.first.cadenceSpm, 172);
+  });
+
+  test('lists session summaries without hydrating run points', () async {
+    final tempDir = await Directory.systemTemp.createTemp('runlini-db-test');
+    addTearDown(() => tempDir.delete(recursive: true));
+    final database = RunliniDatabase(
+      databaseFactory: databaseFactoryFfi,
+      databasePath: p.join(tempDir.path, 'runlini.db'),
+    );
+    addTearDown(database.close);
+    final repository = SqfliteRunSessionRepository(database: database);
+
+    await repository.saveSession(
+      _session(
+        id: 'summary-run',
+        recordSource: RunSessionRecordSource.appLocal,
+        syncStatus: RunSessionSyncStatus.localOnly,
+      ),
+    );
+
+    final summaries = await repository.listSessionSummaries();
+
+    expect(summaries, hasLength(1));
+    expect(summaries.single.id, 'summary-run');
+    expect(summaries.single.distanceM, 1200);
+    expect(summaries.single.averageCadenceSpm, 172);
+    expect(summaries.single.shoeId, 'shoe-1');
+    expect(summaries.single.pointCount, 2);
+  });
+
+  test('migrates old run points without cadence samples', () async {
+    final tempDir = await Directory.systemTemp.createTemp('runlini-db-test');
+    addTearDown(() => tempDir.delete(recursive: true));
+    final dbPath = p.join(tempDir.path, 'runlini.db');
+    final oldDb = await databaseFactoryFfi.openDatabase(
+      dbPath,
+      options: OpenDatabaseOptions(
+        version: 6,
+        onCreate: (db, version) async {
+          await db.execute('''
+CREATE TABLE run_sessions (
+  id TEXT PRIMARY KEY,
+  started_at TEXT NOT NULL,
+  ended_at TEXT,
+  distance_m REAL NOT NULL,
+  duration_ms INTEGER NOT NULL,
+  source_summary TEXT NOT NULL,
+  average_cadence_spm REAL,
+  calories_kcal REAL,
+  record_source TEXT NOT NULL,
+  capture_source TEXT NOT NULL DEFAULT 'phoneGps',
+  external_id TEXT,
+  last_synced_at TEXT,
+  sync_status TEXT NOT NULL,
+  ghost_summary_json TEXT,
+  shoe_id TEXT
+)
+''');
+          await db.execute('''
+CREATE TABLE run_points (
+  session_id TEXT NOT NULL,
+  sequence_index INTEGER NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  timestamp_rel_ms INTEGER NOT NULL,
+  pace_sec_per_km REAL,
+  speed_mps REAL,
+  elevation_m REAL,
+  heart_rate_bpm INTEGER,
+  source TEXT NOT NULL,
+  PRIMARY KEY (session_id, sequence_index)
+)
+''');
+        },
+      ),
+    );
+    await oldDb.insert('run_sessions', {
+      'id': 'old-run',
+      'started_at': DateTime.utc(2026, 4, 22, 6).toIso8601String(),
+      'distance_m': 0,
+      'duration_ms': 0,
+      'source_summary': 'device:gps',
+      'record_source': RunSessionRecordSource.appLocal.name,
+      'capture_source': RunSessionCaptureSource.phoneGps.name,
+      'sync_status': RunSessionSyncStatus.localOnly.name,
+    });
+    await oldDb.insert('run_points', {
+      'session_id': 'old-run',
+      'sequence_index': 0,
+      'lat': 37.5,
+      'lng': 127.0,
+      'timestamp_rel_ms': 0,
+      'source': RunPointSource.deviceGps.name,
+    });
+    await oldDb.close();
+
+    final database = RunliniDatabase(
+      databaseFactory: databaseFactoryFfi,
+      databasePath: dbPath,
+    );
+    addTearDown(database.close);
+
+    final session = await SqfliteRunSessionRepository(
+      database: database,
+    ).findById('old-run');
+
+    expect(session, isNotNull);
+    expect(session!.points.single.cadenceSpm, isNull);
   });
 
   test('updates a health synced session without creating duplicates', () async {
@@ -142,6 +251,7 @@ RunSession _session({
     lastSyncedAt: DateTime.utc(2026, 4, 22, 7),
     syncStatus: syncStatus,
     shoeId: 'shoe-1',
+    averageCadenceSpm: 172,
     caloriesKcal: caloriesKcal,
     captureSource: captureSource,
     points: const <RunPoint>[
@@ -149,6 +259,7 @@ RunSession _session({
         latitude: 37.5,
         longitude: 127,
         timestampRelMs: 0,
+        cadenceSpm: 172,
         source: RunPointSource.healthConnect,
       ),
       RunPoint(

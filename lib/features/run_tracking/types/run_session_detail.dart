@@ -7,12 +7,14 @@ class RunSessionDetail {
     required this.durationMs,
     required this.averagePaceSecPerKm,
     required this.averageSpeedKmh,
+    required this.averageCadenceSpm,
     required this.caloriesLabel,
     required this.splits,
     required this.paceSamplesSecPerKm,
     required this.speedSamplesKmh,
     required this.elevationSamplesM,
     required this.heartRateSamplesBpm,
+    required this.cadenceSamplesSpm,
     this.averageHeartRateBpm,
     this.elevationGainM,
   });
@@ -21,6 +23,7 @@ class RunSessionDetail {
   final int durationMs;
   final double? averagePaceSecPerKm;
   final double averageSpeedKmh;
+  final double? averageCadenceSpm;
   final String caloriesLabel;
   final int? averageHeartRateBpm;
   final double? elevationGainM;
@@ -29,6 +32,7 @@ class RunSessionDetail {
   final List<RunMetricSample> speedSamplesKmh;
   final List<RunMetricSample> elevationSamplesM;
   final List<RunMetricSample> heartRateSamplesBpm;
+  final List<RunMetricSample> cadenceSamplesSpm;
 }
 
 @immutable
