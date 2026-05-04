@@ -249,6 +249,11 @@ Recommended architecture:
   cached ghost exists.
 - Watch displays elapsed time, distance, pace, heart rate, and active calories
   when Health Services provides them.
+- Watch auto pause is opt-in. Runlini's stationary movement detector calls
+  Health Services pause/resume and never auto-resumes a manual pause. When
+  Health Services cadence is available, resume after a stationary lock also
+  requires cadence evidence; otherwise the watch falls back to GPS-only
+  movement confirmation.
 - Watch feedback is haptic plus large text. Wear OS V1 also plays short
   watch-local TTS cues: `1km 알림` controls 1km haptic and voice summaries
   with average pace and elapsed time, `음성 안내` is the TTS master switch,

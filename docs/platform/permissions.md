@@ -6,7 +6,8 @@
 - Compile and target SDK: 36
 - Google Maps SDK key via `android/local.properties` as `GOOGLE_MAPS_API_KEY`
 - `ACCESS_FINE_LOCATION` for live run capture
-- `ACTIVITY_RECOGNITION` for workout context where needed
+- `ACTIVITY_RECOGNITION` for live-run step evidence used by GPS drift
+  correction and optional auto pause/resume.
 - Live location cadence is controlled by the Settings tab tracking preset:
   - `절전`: before start or paused `5s / 10m`, actively running `2s / 5m`
   - `균형` default: before start or paused `3s / 5m`, actively running
@@ -62,6 +63,8 @@
 - Baseline iOS deployment target: 14.0
 - `io.flutter.embedded_views_preview = YES` for Apple Maps platform views
 - `NSLocationWhenInUseUsageDescription`
+- `NSMotionUsageDescription` for live-run step evidence used by GPS drift
+  correction and optional auto pause/resume.
 - Live location distance filters follow the same Settings tab preset:
   - `절전`: before start or paused `10m`, actively running `5m`
   - `균형` default: before start or paused `5m`, actively running `3m`
