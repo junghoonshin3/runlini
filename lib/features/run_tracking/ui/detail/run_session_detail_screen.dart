@@ -37,10 +37,10 @@ class RunSessionDetailScreen extends ConsumerWidget {
         privacySettings: privacySettings,
         shoeName: shoeName,
         shoeImagePath: shoe?.imagePath,
+        showHeaderSummaryMetrics: false,
         onClose: () => Navigator.of(context).maybePop(),
         onMore: () => _confirmDelete(context, ref, currentSession),
-        onRetryHealthBackup:
-            currentSession.syncStatus == RunSessionSyncStatus.syncFailed
+        onRetryHealthBackup: _canSendToHealth(currentSession)
             ? () => _retryHealthBackup(context, ref, currentSession)
             : null,
         onManageShoe: () => _manageShoe(context, ref, currentSession, shoes),
@@ -59,6 +59,11 @@ class RunSessionDetailScreen extends ConsumerWidget {
       }
     }
     return null;
+  }
+
+  bool _canSendToHealth(RunSession session) {
+    return session.recordSource == RunSessionRecordSource.appLocal &&
+        session.syncStatus != RunSessionSyncStatus.synced;
   }
 
   Future<void> _manageShoe(

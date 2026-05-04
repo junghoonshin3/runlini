@@ -100,9 +100,8 @@ void main() {
       await container.read(runMapStaticStateProvider.future);
       final mapViewState = container.read(runMapViewStateProvider);
 
-      expect(mapViewState, isNotNull);
       expect(
-        mapViewState!.mapCenter,
+        mapViewState.mapCenter,
         const MapCoordinate(latitude: 37.55, longitude: 126.97),
       );
       expect(
@@ -151,13 +150,70 @@ void main() {
       await container.read(runMapStaticStateProvider.future);
       final mapViewState = container.read(runMapViewStateProvider);
 
-      expect(mapViewState, isNotNull);
       expect(
-        mapViewState!.mapCenter,
+        mapViewState.mapCenter,
         const MapCoordinate(latitude: 37.44, longitude: 127.44),
       );
       expect(mapViewState.runnerMarkerPoint, isNull);
       expect(mapViewState.currentRunnerPolylinePoints, hasLength(1));
     },
   );
+
+  test(
+    'run map view state uses the Seoul fallback while static state loads',
+    () {
+      final pendingStaticState = Completer<RunMapStaticState>();
+      final container = ProviderContainer(
+        overrides: [
+          deviceLocationClientProvider.overrideWithValue(
+            const _FixedDeviceLocationClient(),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const _EmptyLocationStreamClient(),
+          ),
+          runMapStaticStateProvider.overrideWith((Ref ref) {
+            return pendingStaticState.future;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final mapViewState = container.read(runMapViewStateProvider);
+
+      expect(
+        mapViewState.mapCenter,
+        const MapCoordinate(latitude: 37.5665, longitude: 126.9780),
+      );
+      expect(mapViewState.runnerMarkerPoint, isNull);
+      expect(mapViewState.ghostPolylinePoints, isEmpty);
+      expect(mapViewState.ghostPolylineSegments, isEmpty);
+    },
+  );
+
+  test('run map view state keeps rendering when static state fails', () {
+    final container = ProviderContainer(
+      overrides: [
+        deviceLocationClientProvider.overrideWithValue(
+          const _FixedDeviceLocationClient(),
+        ),
+        locationStreamClientProvider.overrideWithValue(
+          const _EmptyLocationStreamClient(),
+        ),
+        runMapStaticStateProvider.overrideWith((Ref ref) async {
+          throw StateError('static map state failed');
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final mapViewState = container.read(runMapViewStateProvider);
+
+    expect(
+      mapViewState.mapCenter,
+      const MapCoordinate(latitude: 37.5665, longitude: 126.9780),
+    );
+    expect(mapViewState.runnerMarkerPoint, isNull);
+    expect(mapViewState.ghostPolylinePoints, isEmpty);
+    expect(mapViewState.ghostPolylineSegments, isEmpty);
+  });
 }

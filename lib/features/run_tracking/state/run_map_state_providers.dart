@@ -77,28 +77,28 @@ final currentRunnerPolylinePointsProvider = Provider<List<MapCoordinate>>((
   return mapCoordinatesFromRunPoints(playbackState.recordedPoints);
 });
 
-final runMapViewStateProvider = Provider<RunMapViewState?>((Ref ref) {
+final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final staticState = ref.watch(runMapStaticStateProvider).value;
-  if (staticState == null) {
-    return null;
-  }
 
   final currentRunnerPolylinePoints = ref.watch(
     currentRunnerPolylinePointsProvider,
   );
   final liveLocationPoint = ref.watch(liveLocationProvider)?.toMapCoordinate();
-  final ghostMapCenter = staticState.ghostPolylinePoints.isNotEmpty
-      ? staticState.ghostPolylinePoints.first
+  final ghostPolylinePoints =
+      staticState?.ghostPolylinePoints ?? const <MapCoordinate>[];
+  final ghostMapCenter = ghostPolylinePoints.isNotEmpty
+      ? ghostPolylinePoints.first
       : null;
+  final fallbackMapCenter =
+      staticState?.fallbackMapCenter ?? _defaultFallbackMapCenter;
 
   return RunMapViewState(
-    mapCenter:
-        liveLocationPoint ?? ghostMapCenter ?? staticState.fallbackMapCenter,
+    mapCenter: liveLocationPoint ?? ghostMapCenter ?? fallbackMapCenter,
     runnerMarkerPoint: liveLocationPoint,
     recenterTargetPoint: liveLocationPoint,
     currentRunnerPolylinePoints: currentRunnerPolylinePoints,
-    ghostPolylinePoints: staticState.ghostPolylinePoints,
-    ghostPolylineSegments: staticState.ghostPolylineSegments,
-    selectedGhostSession: staticState.selectedGhostSession,
+    ghostPolylinePoints: ghostPolylinePoints,
+    ghostPolylineSegments: staticState?.ghostPolylineSegments ?? const [],
+    selectedGhostSession: staticState?.selectedGhostSession,
   );
 });

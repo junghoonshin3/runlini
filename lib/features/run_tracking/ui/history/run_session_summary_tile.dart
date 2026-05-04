@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
-import 'package:runlini/features/run_tracking/ui/common/run_sync_status_badge.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 
 class RunSessionSummaryTile extends StatelessWidget {
@@ -29,22 +28,9 @@ class RunSessionSummaryTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  formatRunDate(summary.startedAt),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              const SizedBox(width: 10),
-              RunSyncStatusBadge(
-                status: summary.syncStatus,
-                recordSource: summary.recordSource,
-                sourceSummary: summary.sourceSummary,
-              ),
-            ],
+          Text(
+            formatRunDate(summary.startedAt),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 12),
           Row(

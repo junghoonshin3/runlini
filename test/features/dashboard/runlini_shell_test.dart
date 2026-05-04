@@ -43,7 +43,7 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
 
     expect(find.byKey(const Key('settings-tab-screen')), findsOneWidget);
-    expect(find.text('프로필'), findsOneWidget);
+    expect(find.text('위치 업데이트'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('기록 목표'),
       160,

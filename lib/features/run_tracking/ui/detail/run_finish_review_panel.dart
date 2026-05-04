@@ -28,6 +28,8 @@ class RunFinishReviewPanel extends StatelessWidget {
     this.privacySettings = const RunPrivacySettings(),
     this.shoeName,
     this.shoeImagePath,
+    this.includePrimaryMetrics = true,
+    this.showHeaderSummaryMetrics = true,
   });
 
   final RunSession session;
@@ -41,6 +43,8 @@ class RunFinishReviewPanel extends StatelessWidget {
   final RunPrivacySettings privacySettings;
   final String? shoeName;
   final String? shoeImagePath;
+  final bool includePrimaryMetrics;
+  final bool showHeaderSummaryMetrics;
 
   @override
   Widget build(BuildContext context) {
@@ -68,22 +72,15 @@ class RunFinishReviewPanel extends StatelessWidget {
                         session: session,
                         detail: detail,
                         displaySettings: displaySettings,
+                        showSummaryChips: showHeaderSummaryMetrics,
                       ),
                       const SizedBox(height: 14),
                       RunDetailMetricStrip(
                         detail: detail,
                         displaySettings: displaySettings,
                         privacySettings: privacySettings,
+                        includePrimaryMetrics: includePrimaryMetrics,
                       ),
-                      if (onSave == null && onDiscard == null) ...[
-                        const SizedBox(height: 12),
-                        RunDetailSyncStatusSection(
-                          status: session.syncStatus,
-                          recordSource: session.recordSource,
-                          sourceSummary: session.sourceSummary,
-                          onRetry: onRetryHealthBackup,
-                        ),
-                      ],
                       if (privacySettings.hideStartEndArea) ...[
                         const SizedBox(height: 12),
                         const _PrivacyBadge(),
@@ -172,6 +169,15 @@ class RunFinishReviewPanel extends StatelessWidget {
                           shoeName: shoeName,
                           shoeImagePath: shoeImagePath,
                           onManageShoe: onManageShoe,
+                        ),
+                      ],
+                      if (onSave == null && onDiscard == null) ...[
+                        const SizedBox(height: 38),
+                        RunDetailSyncStatusSection(
+                          status: session.syncStatus,
+                          recordSource: session.recordSource,
+                          sourceSummary: session.sourceSummary,
+                          onRetry: onRetryHealthBackup,
                         ),
                       ],
                     ],

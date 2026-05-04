@@ -52,7 +52,7 @@ void main() {
   });
 
   testWidgets(
-    'waits for the initial location bootstrap before mounting the map',
+    'shows the map immediately while initial location is still pending',
     (WidgetTester tester) async {
       final delayedCurrentSample = Completer<LiveLocationSample?>();
 
@@ -83,13 +83,18 @@ void main() {
       await tester.pump();
       await openRunningTab(tester);
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.byKey(const Key('run-map')), findsNothing);
+      expect(find.byKey(const Key('run-map')), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byKey(const Key('runner-marker-layer')), findsNothing);
 
       delayedCurrentSample.complete(sample(latitude: 37.55, longitude: 126.97));
-      await pumpUntilFound(tester, find.byKey(const Key('run-map')));
+      await pumpUntilFound(
+        tester,
+        find.byKey(const Key('runner-marker-layer')),
+      );
 
       expect(find.byKey(const Key('run-map')), findsOneWidget);
+      expect(find.byKey(const Key('runner-marker-layer')), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     },
   );
@@ -129,7 +134,7 @@ void main() {
   });
 
   testWidgets(
-    'falls back to the fixture center only after the startup timeout',
+    'shows the fallback map without waiting for the startup timeout',
     (WidgetTester tester) async {
       final pendingCurrentSample = Completer<LiveLocationSample?>();
 
@@ -163,14 +168,12 @@ void main() {
       await tester.pump();
       await openRunningTab(tester);
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.byKey(const Key('run-map')), findsNothing);
-
-      await tester.pump(const Duration(milliseconds: 20));
-
       expect(find.byKey(const Key('run-map')), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(find.byKey(const Key('runner-marker-layer')), findsNothing);
+
+      pendingCurrentSample.complete(null);
+      await tester.pump();
     },
   );
 

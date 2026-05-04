@@ -12,11 +12,13 @@ class RunDetailHeader extends StatelessWidget {
     required this.session,
     required this.detail,
     this.displaySettings = const RunDisplaySettings(),
+    this.showSummaryChips = true,
   });
 
   final RunSession session;
   final RunSessionDetail detail;
   final RunDisplaySettings displaySettings;
+  final bool showSummaryChips;
 
   @override
   Widget build(BuildContext context) {
@@ -32,31 +34,34 @@ class RunDetailHeader extends StatelessWidget {
           const Text('Run Detail', style: _headlineStyle),
           const SizedBox(height: 14),
           Text(_dateLine(session), style: _mutedStyle),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _HeaderSummaryChip(
-                label: 'Distance (${distanceUnitLabel(displaySettings)})',
-                value: _formatDistanceValue(
-                  detail.distanceKm * 1000,
-                  displaySettings,
+          if (showSummaryChips) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              key: const Key('run-detail-header-summary'),
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _HeaderSummaryChip(
+                  label: 'Distance (${distanceUnitLabel(displaySettings)})',
+                  value: _formatDistanceValue(
+                    detail.distanceKm * 1000,
+                    displaySettings,
+                  ),
                 ),
-              ),
-              _HeaderSummaryChip(
-                label: 'Time',
-                value: formatLiveRunElapsed(detail.durationMs),
-              ),
-              _HeaderSummaryChip(
-                label: 'Pace (${paceUnitLabel(displaySettings)})',
-                value: _formatPaceValue(
-                  detail.averagePaceSecPerKm,
-                  displaySettings,
+                _HeaderSummaryChip(
+                  label: 'Time',
+                  value: formatLiveRunElapsed(detail.durationMs),
                 ),
-              ),
-            ],
-          ),
+                _HeaderSummaryChip(
+                  label: 'Pace (${paceUnitLabel(displaySettings)})',
+                  value: _formatPaceValue(
+                    detail.averagePaceSecPerKm,
+                    displaySettings,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -106,25 +111,29 @@ class RunDetailMetricStrip extends StatelessWidget {
     this.displaySettings = const RunDisplaySettings(),
     this.privacySettings = const RunPrivacySettings(),
     this.shoeName,
+    this.includePrimaryMetrics = true,
   });
 
   final RunSessionDetail detail;
   final RunDisplaySettings displaySettings;
   final RunPrivacySettings privacySettings;
   final String? shoeName;
+  final bool includePrimaryMetrics;
 
   @override
   Widget build(BuildContext context) {
     final metrics = <_MetricItem>[
-      _MetricItem(
-        'Distance (${distanceUnitLabel(displaySettings)})',
-        _distanceValue(detail.distanceKm * 1000),
-      ),
-      _MetricItem('Time', formatLiveRunElapsed(detail.durationMs)),
-      _MetricItem(
-        'Avg. Pace (${paceUnitLabel(displaySettings)})',
-        _formatPaceValue(detail.averagePaceSecPerKm, displaySettings),
-      ),
+      if (includePrimaryMetrics) ...[
+        _MetricItem(
+          'Distance (${distanceUnitLabel(displaySettings)})',
+          _distanceValue(detail.distanceKm * 1000),
+        ),
+        _MetricItem('Time', formatLiveRunElapsed(detail.durationMs)),
+        _MetricItem(
+          'Avg. Pace (${paceUnitLabel(displaySettings)})',
+          _formatPaceValue(detail.averagePaceSecPerKm, displaySettings),
+        ),
+      ],
       _MetricItem(
         'Avg. Speed (${speedUnitLabel(displaySettings)})',
         speedForDisplay(
