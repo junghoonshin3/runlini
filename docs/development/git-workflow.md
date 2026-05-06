@@ -5,13 +5,27 @@ workflow should protect the codebase without slowing down fast iteration.
 
 ## Branch Strategy
 
-- Use strict task branches by default.
-- `main` should stay stable and should not collect active feature work.
-- One branch should represent one coherent task, fix, or docs update.
+- Runlini uses a lightweight `develop -> main` release gate.
+- `main` is the stable release branch. It should contain only versions that are
+  ready to ship or field-test as a completed build.
+- `develop` is the integration branch for current development. It should stay
+  buildable, but it may contain work that is still being tested.
+- Feature and fix branches start from `develop` and merge back into `develop`
+  by PR.
+- Tested release candidates merge from `develop` into `main` by PR.
+- One task branch should represent one coherent task, fix, or docs update.
 - Start each new task by checking the worktree:
 
 ```bash
 git status --short --branch
+```
+
+- Start normal development work from `develop`:
+
+```bash
+git switch develop
+git pull --ff-only
+git switch -c feature/some-work
 ```
 
 - If the worktree is dirty, decide whether the existing changes belong to the
@@ -26,13 +40,17 @@ git status --short --branch
   - large refactors
   - native platform changes
   - multi-session features
-  - work that needs review before it lands on `main`
+  - work that needs review before it lands on `develop`
 - Small docs-only edits may happen on the current branch only when the worktree
   is clean or the docs edit clearly belongs to that branch.
 - Keep branch names short and purpose-driven:
   - `feature/wear-ghost-start`
   - `fix/history-today-filter`
   - `docs/git-workflow`
+- Use `hotfix/*` only for urgent fixes based on `main`. Hotfixes must merge
+  back into both `main` and `develop`.
+- Use `release/*` only when a release needs a separate stabilization branch.
+  Otherwise, stabilize directly on `develop` and merge `develop` to `main`.
 - If a branch name no longer describes the work on it, stop and split the work
   before adding more commits.
 
@@ -139,6 +157,31 @@ When Android phone and Wear code both change, also run:
 
 If a command cannot be run, record the exact command and the reason.
 
+## Release Flow
+
+Feature and fix branches merge into `develop` after the relevant validation
+passes. Use `develop` for emulator, device, and integration testing.
+
+When `develop` is ready to promote:
+
+```bash
+git switch develop
+git pull --ff-only
+dart run tool/guardrails.dart
+flutter analyze
+flutter test
+```
+
+Run Wear or Android Gradle checks when those areas changed. Then open a PR from
+`develop` to `main`. After merge, tag the release when appropriate:
+
+```bash
+git switch main
+git pull --ff-only
+git tag v1.2.0
+git push origin v1.2.0
+```
+
 ## Push And PR
 
 - Push only when the user explicitly asks.
@@ -152,6 +195,8 @@ git status --short --branch
 ```
 
 - Feature branches should be merged through PR by default.
+- Feature and fix PRs target `develop`.
+- Release PRs target `main` and should normally come from `develop`.
 - Fast local work can be merged directly only when the user asks for it.
 - If no remote exists, configure `origin` intentionally before pushing.
 - New GitHub repositories default to private unless the user says otherwise.

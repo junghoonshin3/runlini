@@ -24,6 +24,8 @@ discoverable. Treat it as a map, not an encyclopedia.
 - When a rule becomes recurring, encode it in docs, tests, or tooling.
 - If behavior changes, update the matching doc in `docs/` in the same change.
 - Commit or push only when the user explicitly asks.
+- Branch from `develop` for normal work. Merge tested development from
+  `develop` into `main`; keep `main` stable.
 
 ## UX Defaults
 
