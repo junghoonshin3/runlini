@@ -87,6 +87,92 @@ void main() {
     },
   );
 
+  test('builds colored detail route sections from verified route segments', () {
+    const builder = PaceColoredRouteSegmentBuilder();
+    const routeSegments = <List<RunPoint>>[
+      <RunPoint>[
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.001,
+          timestampRelMs: 20000,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.002,
+          timestampRelMs: 60000,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.003,
+          timestampRelMs: 130000,
+          source: RunPointSource.simulated,
+        ),
+      ],
+    ];
+
+    final segments = builder.buildRouteSegments(routeSegments);
+    final colors = segments.map((segment) => segment.color).toSet();
+
+    expect(segments.length, greaterThan(3));
+    expect(colors.length, greaterThan(3));
+    expect(segments.first.color, AppColors.voltGreen);
+    expect(segments.last.color, AppColors.electricRed);
+  });
+
+  test('does not merge same-color chunks across route breaks', () {
+    const builder = PaceColoredRouteSegmentBuilder();
+    const routeSegments = <List<RunPoint>>[
+      <RunPoint>[
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.001,
+          timestampRelMs: 20000,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+      <RunPoint>[
+        RunPoint(
+          latitude: 0,
+          longitude: 0.02,
+          timestampRelMs: 60000,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.021,
+          timestampRelMs: 80000,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    ];
+
+    final segments = builder.buildRouteSegments(routeSegments);
+
+    expect(segments, hasLength(2));
+    for (final segment in segments) {
+      final longitudes = segment.points.map((point) => point.longitude);
+      expect(
+        longitudes.any((longitude) => longitude < 0.005) &&
+            longitudes.any((longitude) => longitude > 0.015),
+        isFalse,
+      );
+    }
+  });
+
   test('merges adjacent chunks that quantize to the same gradient color', () {
     const builder = PaceColoredRouteSegmentBuilder();
     final session = RunSession(

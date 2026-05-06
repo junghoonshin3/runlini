@@ -4,6 +4,7 @@ import 'package:runlini/features/run_tracking/service/run_auto_pause_detector.da
 import 'package:runlini/features/run_tracking/service/run_cadence_estimator.dart';
 import 'package:runlini/features/run_tracking/service/run_playback_sample_fusion.dart';
 import 'package:runlini/features/run_tracking/service/run_point_sanitizer.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/state/run_motion_evidence_providers.dart';
 
 enum RunTrackingToggleResult { started, stopped, unavailable }
@@ -20,6 +21,10 @@ final runPlaybackClockProvider = Provider<RunPlaybackClock>(
 
 final runPointSanitizerProvider = Provider<RunPointSanitizer>(
   (Ref ref) => const RunPointSanitizer(),
+);
+
+final runRouteSegmenterProvider = Provider<RunRouteSegmenter>(
+  (Ref ref) => const RunRouteSegmenter(),
 );
 
 final runAutoPauseDetectorProvider = Provider<RunAutoPauseDetector>(

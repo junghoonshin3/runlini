@@ -115,9 +115,13 @@ Current Android native V1 implementation:
   `/runlini/phone/interval_config` as an `intervalJson` asset. V1 supports
   `warmup -> work/recovery repeats -> cooldown`, with time, distance, open, and
   skipped targets.
-- During an active Wear run, interval guidance appears before ghost guidance:
-  the core page shows a compact current-step pill and the active pager includes
-  an interval page with current step, remaining target, and next step.
+- V1 treats ghost runs and interval runs as mutually exclusive active modes.
+  Phone users resolve the conflict with an explicit prompt. Wear ghost runs
+  silently ignore interval settings for that active run, while normal Wear runs
+  keep interval guidance.
+- During a normal active Wear interval run, the core page shows a compact
+  current-step pill and the active pager includes an interval page with current
+  step, remaining target, and next step.
 - Interval step changes reuse the watch haptic / voice cue settings. V1 does
   not save interval lap summaries into `RunSession`; the completed run remains
   a normal run record.
@@ -127,6 +131,10 @@ Current Android native V1 implementation:
 - Wear ghost runs include optional `ghostSummary` metadata in the completed
   `WatchRunDraft`; phone import stores it as the normal `RunSession`
   ghost comparison result.
+- Wear ghost runs detect a conservative route finish near the end of the cached
+  ghost route. The watch shows `고스트 완료` with `종료` / `계속`; it does not
+  auto-save. Choosing `계속` suppresses the completion prompt for that active
+  run, and choosing `종료` uses the existing review flow.
 - Live `WatchRunSnapshot` / `WatchRunEvent` streaming is not part of this slice.
 
 ### Android Testing Notes
@@ -257,10 +265,13 @@ Recommended architecture:
 - Watch feedback is haptic plus large text. Wear OS V1 also plays short
   watch-local TTS cues: `1km 알림` controls 1km haptic and voice summaries
   with average pace and elapsed time, `음성 안내` is the TTS master switch,
-  and `고스트 음성` controls optional ghost status changes. Voice cue volume is
-  adjustable on the phone and watch, then applied to Wear OS TTS output. When
-  the runner changes voice volume, the watch plays a short `음량 테스트` cue.
-  Phone-routed voice cues are a later companion feature.
+  and `고스트 음성` is kept as a setting while ghost-run voice policy is being
+  redesigned. During ghost runs, TTS is temporarily silent for kilometer,
+  interval, ghost-status, and completion cues; haptics continue to follow their
+  settings.
+  Voice cue volume is adjustable on the phone and watch, then applied to Wear
+  OS TTS output. When the runner changes voice volume, the watch plays a short
+  `음량 테스트` cue. Phone-routed voice cues are a later companion feature.
 - Maps, history browsing, charts, shoe management, and detailed settings are
   phone-only in v1.
 

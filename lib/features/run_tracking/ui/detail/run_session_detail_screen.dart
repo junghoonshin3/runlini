@@ -25,6 +25,10 @@ class RunSessionDetailScreen extends ConsumerWidget {
         ref.watch(runSessionByIdProvider(session.id)).value ?? session;
     final displaySettings = ref.watch(runDisplaySettingsProvider);
     final privacySettings = ref.watch(runPrivacySettingsProvider);
+    final ghostSummary = currentSession.ghostSummary;
+    final ghostSession = ghostSummary == null
+        ? null
+        : ref.watch(runSessionByIdProvider(ghostSummary.ghostSessionId)).value;
     final shoes = ref.watch(runShoeListProvider).value ?? const <RunShoe>[];
     final shoe = _shoeFor(currentSession, shoes);
     final shoeName = shoe == null ? null : '${shoe.brand} ${shoe.name}';
@@ -38,6 +42,8 @@ class RunSessionDetailScreen extends ConsumerWidget {
         shoeName: shoeName,
         shoeImagePath: shoe?.imagePath,
         showHeaderSummaryMetrics: false,
+        showRouteSpeedTooltip: true,
+        ghostSession: ghostSession,
         onClose: () => Navigator.of(context).maybePop(),
         onMore: () => _confirmDelete(context, ref, currentSession),
         onRetryHealthBackup: _canSendToHealth(currentSession)

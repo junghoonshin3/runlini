@@ -89,32 +89,46 @@ void main() {
     expect(duplicate, isEmpty);
   });
 
-  test('debounces ghost status changes', () {
+  test('does not speak ghost status changes while cues are redesigned', () {
     final coordinator = RunVoiceCueCoordinator();
-    final first = coordinator.cuesFor(
+
+    final cues = coordinator.cuesFor(
       _snapshot(
+        metrics: _metrics(distanceKm: 0.5),
         ghostFrame: _ghost(GhostRaceStatus.ahead, gapMs: 31000),
         settings: const RunSettingsState(ghostVoiceCueEnabled: true),
       ),
     );
-    final debounced = coordinator.cuesFor(
-      _snapshot(
-        now: DateTime(2026, 5, 3, 0, 0, 10),
-        ghostFrame: _ghost(GhostRaceStatus.behind, gapMs: -12000),
-        settings: const RunSettingsState(ghostVoiceCueEnabled: true),
+
+    expect(cues, isEmpty);
+  });
+
+  test('does not speak any cue during a ghost run', () {
+    final coordinator = RunVoiceCueCoordinator();
+    const frame = RunIntervalFrame(
+      step: RunIntervalStep(
+        kind: RunIntervalStepKind.work,
+        target: RunIntervalTarget.time(60000),
+        repeatIndex: 2,
+        repeatCount: 8,
       ),
+      nextStep: null,
+      remainingMs: 42000,
+      remainingM: null,
+      progress: 0.3,
     );
-    final afterDebounce = coordinator.cuesFor(
+
+    final cues = coordinator.cuesFor(
       _snapshot(
-        now: DateTime(2026, 5, 3, 0, 0, 31),
+        isGhostRun: true,
+        metrics: _metrics(distanceKm: 1.01),
+        intervalFrame: frame,
         ghostFrame: _ghost(GhostRaceStatus.behind, gapMs: -12000),
         settings: const RunSettingsState(ghostVoiceCueEnabled: true),
       ),
     );
 
-    expect(first.last.text, '앞섬 31초');
-    expect(debounced, isEmpty);
-    expect(afterDebounce.last.text, '뒤처짐 12초');
+    expect(cues, isEmpty);
   });
 }
 
@@ -125,6 +139,7 @@ RunVoiceCueSnapshot _snapshot({
   GhostRaceFrame? ghostFrame,
   RunSettingsState settings = const RunSettingsState(),
   DateTime? now,
+  bool isGhostRun = false,
 }) {
   return RunVoiceCueSnapshot(
     playbackState: playbackState ?? _playback(),
@@ -133,6 +148,7 @@ RunVoiceCueSnapshot _snapshot({
     ghostFrame: ghostFrame,
     settings: settings,
     now: now ?? DateTime(2026, 5, 3),
+    isGhostRun: isGhostRun,
   );
 }
 
@@ -166,5 +182,10 @@ GhostRaceFrame _ghost(GhostRaceStatus status, {required int gapMs}) {
     distanceGapM: 30,
     ghostMarkerPoint: const MapCoordinate(latitude: 37, longitude: 127),
     isOffRoute: status == GhostRaceStatus.offRoute,
+    routeProgress: 0.5,
+    distanceToFinishM: 500,
+    distanceFromRouteM: status == GhostRaceStatus.offRoute ? 40 : 4,
+    totalRouteDistanceM: 1000,
+    distanceToFinishPointM: 500,
   );
 }

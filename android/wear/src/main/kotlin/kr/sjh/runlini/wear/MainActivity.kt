@@ -134,6 +134,7 @@ private fun WearRunRecordingService.actions(): WearRunActions {
         onPause = ::pauseRun,
         onStop = ::stopRun,
         onResume = ::resumeRun,
+        onGhostCompletionContinue = ::continueAfterGhostCompletion,
         onSave = ::saveDraft,
         onDiscard = ::discardDraft,
         onCountdownEnabledChange = { enabled ->

@@ -2,14 +2,11 @@ package kr.sjh.runlini.wear
 
 import android.content.Context
 import android.os.Build
-import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import kotlin.math.floor
 import kotlin.math.roundToInt
-
-private const val GhostVoiceCueDebounceMs = 30_000L
 
 interface WearRunHaptics {
     fun tick()
@@ -44,17 +41,12 @@ class AndroidWearRunHaptics(context: Context) : WearRunHaptics {
 class WearRunAlertController(
     private val haptics: WearRunHaptics,
     private val speech: WearRunSpeech = NoOpWearRunSpeech,
-    private val nowMs: () -> Long = { SystemClock.elapsedRealtime() },
 ) {
     private var lastAlertedKm: Int = 0
-    private var lastSpokenGhostStatus: WearGhostStatus? = null
-    private var lastGhostSpokenAtMs: Long? = null
     private var lastIntervalStepLabel: String? = null
 
     fun reset() {
         lastAlertedKm = 0
-        lastSpokenGhostStatus = null
-        lastGhostSpokenAtMs = null
         lastIntervalStepLabel = null
     }
 
@@ -63,6 +55,7 @@ class WearRunAlertController(
         averagePaceSecPerKm: Double?,
         settings: WearRunSettings,
         elapsedMs: Long? = null,
+        isGhostRun: Boolean = false,
     ) {
         val currentKm = floor(distanceM / 1000.0).toInt()
         if (currentKm <= 0 || currentKm <= lastAlertedKm) return
@@ -70,7 +63,7 @@ class WearRunAlertController(
         if (settings.vibrationEnabled && settings.kmAlertEnabled) {
             haptics.tick()
         }
-        if (settings.voiceCueEnabled && settings.kmAlertEnabled) {
+        if (!isGhostRun && settings.voiceCueEnabled && settings.kmAlertEnabled) {
             speech.speak(
                 WearRunVoiceCueFormatter.kilometerSummary(
                     kilometer = currentKm,
@@ -87,27 +80,28 @@ class WearRunAlertController(
         settings: WearRunSettings,
         isGhostRun: Boolean,
     ) {
-        if (!isGhostRun || !settings.ghostVoiceCueEnabled) return
-        val status = frame?.status ?: return
-        if (status == WearGhostStatus.Unavailable || status == lastSpokenGhostStatus) return
-        val now = nowMs()
-        val lastSpokenAt = lastGhostSpokenAtMs
-        if (lastSpokenAt != null && now - lastSpokenAt < GhostVoiceCueDebounceMs) return
-        val cue = WearRunVoiceCueFormatter.ghostStatus(frame) ?: return
-        speech.speak(cue, settings.voiceCueVolume)
-        lastSpokenGhostStatus = status
-        lastGhostSpokenAtMs = now
+        return
     }
 
-    fun onIntervalFrame(frame: WearIntervalFrame?, settings: WearRunSettings) {
+    fun onIntervalFrame(
+        frame: WearIntervalFrame?,
+        settings: WearRunSettings,
+        isGhostRun: Boolean = false,
+    ) {
         val label = WearIntervalFormatters.stepLabel(frame?.step)
         if (frame == null || label == lastIntervalStepLabel) return
         lastIntervalStepLabel = label
         if (settings.vibrationEnabled) {
             haptics.tick()
         }
-        if (settings.voiceCueEnabled) {
+        if (!isGhostRun && settings.voiceCueEnabled) {
             speech.speak(label, settings.voiceCueVolume)
+        }
+    }
+
+    fun onGhostCompleted(settings: WearRunSettings, isGhostRun: Boolean) {
+        if (isGhostRun && settings.vibrationEnabled) {
+            haptics.tick()
         }
     }
 

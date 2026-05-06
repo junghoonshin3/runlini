@@ -22,7 +22,7 @@ class RunReviewChrome extends StatelessWidget {
           actionKey: const Key('run-detail-close-button'),
         ),
         _ChromeButton(
-          icon: Icons.more_horiz_rounded,
+          icon: Icons.delete_outline_rounded,
           onTap: onMore,
           actionKey: const Key('run-detail-more-button'),
         ),

@@ -1,5 +1,5 @@
-import 'package:latlong2/latlong.dart';
 import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
@@ -7,11 +7,11 @@ import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.da
 class FinishedRunSessionBuilder {
   const FinishedRunSessionBuilder({
     this.calorieCalculator = const RunCalorieCalculator(),
+    this.routeSegmenter = const RunRouteSegmenter(),
   });
 
-  static const Distance _distance = Distance();
-
   final RunCalorieCalculator calorieCalculator;
+  final RunRouteSegmenter routeSegmenter;
 
   RunSession build({
     required String id,
@@ -23,7 +23,7 @@ class FinishedRunSessionBuilder {
     int cadenceStepCount = 0,
     RunSessionGhostSummary? ghostSummary,
   }) {
-    final distanceM = _calculateDistanceMeters(recordedPoints);
+    final distanceM = routeSegmenter.segment(recordedPoints).distanceM;
     final safeDurationMs = durationMs < 0 ? 0 : durationMs;
     return RunSession(
       id: id,
@@ -50,24 +50,5 @@ class FinishedRunSessionBuilder {
       return null;
     }
     return stepCount / (durationMs / Duration.millisecondsPerMinute);
-  }
-
-  double _calculateDistanceMeters(List<RunPoint> recordedPoints) {
-    if (recordedPoints.length < 2) {
-      return 0;
-    }
-
-    var totalMeters = 0.0;
-    for (var index = 1; index < recordedPoints.length; index += 1) {
-      final previous = recordedPoints[index - 1];
-      final current = recordedPoints[index];
-      totalMeters += _distance.as(
-        LengthUnit.Meter,
-        LatLng(previous.latitude, previous.longitude),
-        LatLng(current.latitude, current.longitude),
-      );
-    }
-
-    return totalMeters;
   }
 }

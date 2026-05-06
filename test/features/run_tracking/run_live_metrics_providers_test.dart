@@ -140,29 +140,29 @@ void main() {
       await streamClient.emit(
         _sample(
           latitude: 0,
-          longitude: 0.0045,
-          capturedAt: startedAt.add(const Duration(minutes: 5)),
+          longitude: 0.00045,
+          capturedAt: startedAt.add(const Duration(seconds: 30)),
         ),
       );
       await streamClient.emit(
         _sample(
           latitude: 0,
-          longitude: 0.009,
-          capturedAt: startedAt.add(const Duration(minutes: 10)),
+          longitude: 0.0009,
+          capturedAt: startedAt.add(const Duration(seconds: 60)),
         ),
       );
       await _settleAsync();
-      now = startedAt.add(const Duration(minutes: 10));
+      now = startedAt.add(const Duration(seconds: 60));
       tickerController.add(1);
       await _settleAsync();
 
       final metrics = metricsSubscription.read()!;
-      expect(metrics.distanceKm, closeTo(1.0, 0.03));
-      expect(metrics.elapsedMs, 600000);
+      expect(metrics.distanceKm, closeTo(0.1, 0.01));
+      expect(metrics.elapsedMs, 60000);
       expect(metrics.averagePaceSecPerKm, isNotNull);
       expect(metrics.averagePaceSecPerKm!, closeTo(600, 20));
       expect(metrics.averageSpeedKmh, closeTo(6.0, 0.2));
-      expect(metrics.caloriesKcal, closeTo(70, 3));
+      expect(metrics.caloriesKcal, closeTo(7, 1));
       expect(metrics.isPaused, isFalse);
     },
   );
@@ -204,20 +204,27 @@ void main() {
     await streamClient.emit(
       _sample(
         latitude: 0,
-        longitude: 0.009,
-        capturedAt: startedAt.add(const Duration(minutes: 10)),
+        longitude: 0.00045,
+        capturedAt: startedAt.add(const Duration(seconds: 30)),
+      ),
+    );
+    await streamClient.emit(
+      _sample(
+        latitude: 0,
+        longitude: 0.0009,
+        capturedAt: startedAt.add(const Duration(seconds: 60)),
       ),
     );
     await _settleAsync();
 
     final distanceBeforeSpike = metricsSubscription.read()!.distanceKm;
 
-    now = startedAt.add(const Duration(minutes: 10, seconds: 1));
+    now = startedAt.add(const Duration(seconds: 61));
     await streamClient.emit(
       _sample(
         latitude: 1,
         longitude: 1,
-        capturedAt: startedAt.add(const Duration(minutes: 10, seconds: 1)),
+        capturedAt: startedAt.add(const Duration(seconds: 61)),
       ),
     );
     tickerController.add(1);
@@ -225,7 +232,7 @@ void main() {
 
     final metricsAfterSpike = metricsSubscription.read()!;
     expect(metricsAfterSpike.distanceKm, closeTo(distanceBeforeSpike, 0.001));
-    expect(metricsAfterSpike.averagePaceSecPerKm, closeTo(601, 20));
+    expect(metricsAfterSpike.averagePaceSecPerKm, closeTo(610, 20));
     expect(metricsAfterSpike.averageSpeedKmh, closeTo(6.0, 0.2));
     expect(metricsAfterSpike.isPaused, isFalse);
   });

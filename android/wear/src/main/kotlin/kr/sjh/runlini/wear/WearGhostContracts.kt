@@ -20,6 +20,11 @@ data class WearGhostFrame(
     val status: WearGhostStatus,
     val timeGapMs: Long,
     val distanceGapM: Double,
+    val routeProgress: Double = 0.0,
+    val distanceToFinishM: Double = Double.POSITIVE_INFINITY,
+    val distanceFromRouteM: Double = Double.POSITIVE_INFINITY,
+    val totalRouteDistanceM: Double = 0.0,
+    val distanceToFinishPointM: Double = Double.POSITIVE_INFINITY,
 )
 
 data class WearRunGhostSummary(

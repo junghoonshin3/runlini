@@ -49,6 +49,9 @@ void main() {
       expect(frame.distanceGapM, greaterThan(90));
       expect(frame.ghostMarkerPoint, isNotNull);
       expect(frame.ghostMarkerPoint!.longitude, closeTo(0.0036, 0.0001));
+      expect(frame.routeProgress, closeTo(0.5, 0.01));
+      expect(frame.distanceToFinishM, greaterThan(490));
+      expect(frame.totalRouteDistanceM, greaterThan(990));
     });
 
     test('marks the runner behind by time at the same route progress', () {
@@ -105,6 +108,7 @@ void main() {
       expect(frame.status, GhostRaceStatus.offRoute);
       expect(frame.isOffRoute, isTrue);
       expect(frame.ghostMarkerPoint, isNotNull);
+      expect(frame.distanceFromRouteM, greaterThan(35));
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/features/ghost_racer/service/ghost_race_completion_detector.dart';
 import 'package:runlini/features/ghost_racer/service/ghost_race_gap_service.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
@@ -9,6 +10,11 @@ import 'package:runlini/features/run_tracking/types/run_map_view_state.dart';
 final ghostRaceGapServiceProvider = Provider<GhostRaceGapService>(
   (Ref ref) => const GhostRaceGapService(),
 );
+
+final ghostRaceCompletionDetectorProvider =
+    Provider<GhostRaceCompletionDetector>(
+      (Ref ref) => const GhostRaceCompletionDetector(),
+    );
 
 final ghostRaceFrameProvider = Provider<GhostRaceFrame?>((Ref ref) {
   final playbackState = ref.watch(runPlaybackControllerProvider);

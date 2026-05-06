@@ -63,7 +63,10 @@ void main() {
         find.byKey(const Key('run-start-countdown-overlay')),
         findsNothing,
       );
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
+      expect(
+        find.byKey(const Key('live-run-dashboard-overlay')),
+        findsOneWidget,
+      );
       expect(healthRecorder.beginCalls, 0);
     },
   );
@@ -127,7 +130,14 @@ void main() {
         find.byKey(const Key('run-start-countdown-overlay')),
         findsNothing,
       );
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
+      expect(
+        find.byKey(const Key('live-run-dashboard-overlay')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('live-run-dashboard-collapsed')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('run-status-label')), findsNothing);
       expect(find.byKey(const Key('ghost-status-label')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);

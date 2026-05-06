@@ -1,19 +1,18 @@
 import 'dart:math' as math;
 
-import 'package:latlong2/latlong.dart';
 import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
-import 'package:runlini/features/run_tracking/types/run_point.dart';
 
 class LiveRunMetricsCalculator {
   const LiveRunMetricsCalculator({
     this.calorieCalculator = const RunCalorieCalculator(),
+    this.routeSegmenter = const RunRouteSegmenter(),
   });
 
-  static const Distance _distance = Distance();
-
   final RunCalorieCalculator calorieCalculator;
+  final RunRouteSegmenter routeSegmenter;
 
   LiveRunMetrics calculate({
     required RunPlaybackState playbackState,
@@ -32,9 +31,9 @@ class LiveRunMetricsCalculator {
     }
 
     final elapsedMs = math.max(0, playbackState.elapsedAt(now));
-    final distanceMeters = _calculateDistanceMeters(
-      playbackState.recordedPoints,
-    );
+    final distanceMeters = routeSegmenter
+        .segment(playbackState.recordedPoints)
+        .distanceM;
     final distanceKm = distanceMeters / 1000;
     final averagePaceSecPerKm = distanceKm <= 0 || elapsedMs <= 0
         ? null
@@ -54,24 +53,5 @@ class LiveRunMetricsCalculator {
       ),
       isPaused: playbackState.isPaused,
     );
-  }
-
-  double _calculateDistanceMeters(List<RunPoint> recordedPoints) {
-    if (recordedPoints.length < 2) {
-      return 0;
-    }
-
-    var totalMeters = 0.0;
-    for (var index = 1; index < recordedPoints.length; index += 1) {
-      final previous = recordedPoints[index - 1];
-      final current = recordedPoints[index];
-      totalMeters += _distance.as(
-        LengthUnit.Meter,
-        LatLng(previous.latitude, previous.longitude),
-        LatLng(current.latitude, current.longitude),
-      );
-    }
-
-    return totalMeters;
   }
 }

@@ -14,6 +14,8 @@
     `1s / 3m`
   - `정확`: before start or paused `2s / 3m`, actively running `1s / 1m`
   - The foreground tracking notification is only attached to active running
+  - Phone-started ghost runs require `정확`; if another preset is active, the
+    start flow stops and sends the runner to Settings > 러닝 to change it.
 - Health Connect run import/backup declarations:
   - `android.permission.health.READ_STEPS`
   - `android.permission.health.READ_HEART_RATE`

@@ -98,6 +98,7 @@ Future<void> _openDeleteDialog(WidgetTester tester) async {
     tester,
     find.byKey(const Key('run-finish-review-panel')),
   );
+  expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
   await tester.tap(find.byKey(const Key('run-detail-more-button')));
   await tester.pumpAndSettle();
 }

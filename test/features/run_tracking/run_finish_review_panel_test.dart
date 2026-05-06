@@ -31,8 +31,8 @@ void main() {
     );
 
     expect(find.byKey(const Key('detail-ghost-compare')), findsOneWidget);
-    expect(find.text('Ghost Compare'), findsOneWidget);
-    expect(find.text('You beat the ghost'), findsOneWidget);
+    expect(find.text('고스트 비교'), findsOneWidget);
+    expect(find.text('12초 빨랐어요'), findsOneWidget);
   });
 
   testWidgets('uses display units in metrics, charts, and ghost gap', (
@@ -61,7 +61,7 @@ void main() {
     expect(find.text('Avg. Pace (min/mi)'), findsOneWidget);
     expect(find.text('Avg. Speed (mph)'), findsOneWidget);
     expect(find.text('Pace (min/mi)'), findsWidgets);
-    expect(find.text('Distance Gap · 0.03 mi'), findsOneWidget);
+    expect(find.text('거리 차이'), findsOneWidget);
   });
 
   testWidgets('can move primary metrics from header into metric strip', (

@@ -60,6 +60,10 @@ data class WearRunState(
     val ghostConfigs: List<WearGhostConfig> = emptyList(),
     val isGhostRun: Boolean = false,
     val ghostFrame: WearGhostFrame? = null,
+    val ghostCompletionCandidateCount: Int = 0,
+    val ghostCompletionPrompt: Boolean = false,
+    val ghostCompletionDismissed: Boolean = false,
+    val ghostCompletionFrame: WearGhostFrame? = null,
     val intervalFrame: WearIntervalFrame? = null,
     val pauseReason: WearPauseReason? = null,
     val statusMessage: String? = null,
@@ -99,7 +103,7 @@ data class WearRunDraftPayload(
                 averageCadenceSpm = state.averageCadenceSpm,
                 ghostSummary = WearRunGhostSummary.from(
                     state.ghostConfig,
-                    state.ghostFrame,
+                    state.ghostCompletionFrame ?: state.ghostFrame,
                 ),
             )
         }

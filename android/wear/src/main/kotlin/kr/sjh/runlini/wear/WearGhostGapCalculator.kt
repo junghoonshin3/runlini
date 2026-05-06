@@ -24,14 +24,20 @@ class WearGhostGapCalculator(
         val route = GhostRouteModel.from(ghostConfig.points)
         if (route.segments.isEmpty()) {
             val distanceGapM = distanceBetween(runnerPoint, ghostConfig.points.first())
+            val isLevel = distanceGapM <= levelDistanceThresholdM
             return WearGhostFrame(
-                status = if (distanceGapM <= levelDistanceThresholdM) {
+                status = if (isLevel) {
                     WearGhostStatus.Level
                 } else {
                     WearGhostStatus.OffRoute
                 },
                 timeGapMs = 0L,
                 distanceGapM = distanceGapM,
+                routeProgress = if (isLevel) 1.0 else 0.0,
+                distanceToFinishM = if (isLevel) 0.0 else distanceGapM,
+                distanceFromRouteM = distanceGapM,
+                totalRouteDistanceM = 0.0,
+                distanceToFinishPointM = distanceGapM,
             )
         }
 
@@ -55,10 +61,18 @@ class WearGhostGapCalculator(
             status = status,
             timeGapMs = timeGapMs,
             distanceGapM = distanceGapM,
+            routeProgress = route.progressFor(projection.distanceAlongRouteM),
+            distanceToFinishM = route.distanceToFinish(projection.distanceAlongRouteM),
+            distanceFromRouteM = projection.distanceFromRouteM,
+            totalRouteDistanceM = route.totalDistanceM,
+            distanceToFinishPointM = distanceBetween(runnerPoint, ghostConfig.points.last()),
         )
     }
 
     private data class GhostRouteModel(val segments: List<GhostRouteSegment>) {
+        val totalDistanceM: Double
+            get() = segments.lastOrNull()?.endDistanceM ?: 0.0
+
         fun project(runnerPoint: WearRunPoint): RouteProjection {
             return segments
                 .map { segment -> segment.project(runnerPoint) }
@@ -83,6 +97,16 @@ class WearGhostGapCalculator(
             }
 
             return segments.last().endDistanceM
+        }
+
+        fun progressFor(distanceAlongRouteM: Double): Double {
+            val total = totalDistanceM
+            if (total <= 0.0) return 0.0
+            return (distanceAlongRouteM / total).coerceIn(0.0, 1.0)
+        }
+
+        fun distanceToFinish(distanceAlongRouteM: Double): Double {
+            return (totalDistanceM - distanceAlongRouteM).coerceAtLeast(0.0)
         }
 
         companion object {

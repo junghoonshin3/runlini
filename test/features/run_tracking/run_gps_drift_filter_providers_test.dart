@@ -121,7 +121,7 @@ void main() {
       await container.read(runPlaybackControllerProvider.notifier).start();
 
       for (var index = 1; index <= 3; index += 1) {
-        now = startedAt.add(Duration(seconds: index * 4));
+        now = startedAt.add(Duration(seconds: index * 5));
         await streamClient.emit(
           playbackSample(
             latitude: 37 + (0.00002 * index),
@@ -136,10 +136,10 @@ void main() {
       var playbackState = container.read(runPlaybackControllerProvider);
       expect(playbackState.status, RunScreenStatus.paused);
       expect(playbackState.pauseReason, RunPauseReason.auto);
-      expect(playbackState.elapsedBeforePauseMs, 8000);
+      expect(playbackState.elapsedBeforePauseMs, 15000);
       expect(playbackState.recordedPoints, hasLength(1));
 
-      now = startedAt.add(const Duration(seconds: 18));
+      now = startedAt.add(const Duration(seconds: 20));
       await streamClient.emit(
         playbackSample(
           latitude: 37.00025,
@@ -154,7 +154,7 @@ void main() {
         RunScreenStatus.paused,
       );
 
-      now = startedAt.add(const Duration(seconds: 22));
+      now = startedAt.add(const Duration(seconds: 25));
       await streamClient.emit(
         playbackSample(
           latitude: 37.00045,
@@ -169,6 +169,60 @@ void main() {
       expect(playbackState.status, RunScreenStatus.running);
       expect(playbackState.pauseReason, isNull);
       expect(playbackState.recordedPoints, hasLength(2));
+    },
+  );
+
+  test(
+    'available motion source without steps does not pause at eight seconds',
+    () async {
+      final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
+      var now = startedAt;
+      final streamClient = TrackingLocationStreamClient();
+      final motionClient = TrackingMotionEvidenceClient();
+      final container = ProviderContainer(
+        overrides: [
+          deviceLocationClientProvider.overrideWithValue(
+            TestDeviceLocationClient(),
+          ),
+          locationStreamClientProvider.overrideWithValue(streamClient),
+          runMotionEvidenceClientProvider.overrideWithValue(motionClient),
+          runSettingsRepositoryProvider.overrideWithValue(
+            TestRunSettingsRepository(
+              const RunSettingsState(autoPauseEnabled: true),
+            ),
+          ),
+          runPlaybackClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(() async {
+        await streamClient.close();
+        await motionClient.close();
+        container.dispose();
+      });
+
+      await startVisibleLiveTracking(container);
+      await streamClient.emit(
+        playbackSample(latitude: 37, longitude: 127, capturedAt: startedAt),
+      );
+      await container.read(runPlaybackControllerProvider.notifier).start();
+      await motionClient.emit(_motionEvidence(startedAt));
+
+      for (var index = 1; index <= 2; index += 1) {
+        now = startedAt.add(Duration(seconds: index * 4));
+        await streamClient.emit(
+          playbackSample(
+            latitude: 37 + (0.00002 * index),
+            longitude: 127,
+            capturedAt: now,
+            speedMps: 0,
+            horizontalAccuracyM: 8,
+          ),
+        );
+      }
+
+      final playbackState = container.read(runPlaybackControllerProvider);
+      expect(playbackState.status, RunScreenStatus.running);
+      expect(playbackState.pauseReason, isNull);
     },
   );
 
@@ -217,4 +271,12 @@ void main() {
     expect(playbackState.status, RunScreenStatus.paused);
     expect(playbackState.pauseReason, RunPauseReason.manual);
   });
+}
+
+RunMotionEvidence _motionEvidence(DateTime timestamp, {int stepDelta = 0}) {
+  return RunMotionEvidence(
+    timestamp: timestamp,
+    stepDelta: stepDelta,
+    sourceAvailability: RunMotionEvidenceSourceAvailability.available,
+  );
 }

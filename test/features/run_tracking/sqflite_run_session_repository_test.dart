@@ -47,6 +47,8 @@ void main() {
     expect(sessions.single.syncStatus, RunSessionSyncStatus.localOnly);
     expect(sessions.single.shoeId, 'shoe-1');
     expect(sessions.single.points.first.cadenceSpm, 172);
+    expect(sessions.single.points.first.horizontalAccuracyM, 6);
+    expect(sessions.single.points.first.speedAccuracyMps, 0.4);
   });
 
   test('lists session summaries without hydrating run points', () async {
@@ -77,7 +79,7 @@ void main() {
     expect(summaries.single.pointCount, 2);
   });
 
-  test('migrates old run points without cadence samples', () async {
+  test('migrates old run points without cadence or accuracy samples', () async {
     final tempDir = await Directory.systemTemp.createTemp('runlini-db-test');
     addTearDown(() => tempDir.delete(recursive: true));
     final dbPath = p.join(tempDir.path, 'runlini.db');
@@ -155,6 +157,8 @@ CREATE TABLE run_points (
 
     expect(session, isNotNull);
     expect(session!.points.single.cadenceSpm, isNull);
+    expect(session.points.single.horizontalAccuracyM, isNull);
+    expect(session.points.single.speedAccuracyMps, isNull);
   });
 
   test('updates a health synced session without creating duplicates', () async {
@@ -260,6 +264,8 @@ RunSession _session({
         longitude: 127,
         timestampRelMs: 0,
         cadenceSpm: 172,
+        horizontalAccuracyM: 6,
+        speedAccuracyMps: 0.4,
         source: RunPointSource.healthConnect,
       ),
       RunPoint(

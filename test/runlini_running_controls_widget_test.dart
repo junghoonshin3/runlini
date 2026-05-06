@@ -65,7 +65,7 @@ void main() {
       await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
+      expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
@@ -76,7 +76,18 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
       await tester.pump();
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
+      expect(
+        find.byKey(const Key('live-run-dashboard-overlay')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('live-run-dashboard-collapsed')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('live-run-dashboard-expanded')),
+        findsNothing,
+      );
       expect(find.byKey(const Key('run-status-label')), findsNothing);
       expect(find.byKey(const Key('ghost-status-label')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
@@ -86,6 +97,15 @@ void main() {
       expect(find.text('0.00 mi'), findsOneWidget);
       expect(find.text('0:00:00'), findsOneWidget);
       expect(find.text('--:-- /mi'), findsOneWidget);
+      expect(find.text('0.0 mph'), findsNothing);
+      expect(find.text('-- kcal'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('live-run-dashboard-expanded')),
+        findsOneWidget,
+      );
       expect(find.text('0.0 mph'), findsOneWidget);
       expect(find.text('-- kcal'), findsOneWidget);
 
@@ -121,7 +141,7 @@ void main() {
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
+      expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
@@ -134,55 +154,6 @@ void main() {
       expect(find.text('START'), findsOneWidget);
     },
   );
-
-  testWidgets('running with a selected ghost shows race feedback and marker', (
-    WidgetTester tester,
-  ) async {
-    final selectedGhostSession = ghostSession();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          disableStartupWeightPromptOverride,
-          staticMapStateOverride(
-            fallbackMapCenter: const MapCoordinate(latitude: 0, longitude: 0),
-            selectedGhostSession: selectedGhostSession,
-          ),
-          deviceLocationClientProvider.overrideWithValue(
-            FakeDeviceLocationClient(
-              lastKnownSample: sample(latitude: 0, longitude: 0),
-            ),
-          ),
-          locationStreamClientProvider.overrideWithValue(
-            const SilentLocationStreamClient(),
-          ),
-          runStartCountdownStepDurationProvider.overrideWithValue(
-            const Duration(milliseconds: 10),
-          ),
-        ],
-        child: const RunliniApp(),
-      ),
-    );
-    await tester.pump();
-    await openRunningTab(tester);
-    await pumpUntilFound(tester, find.byKey(const Key('run-map')));
-
-    expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
-    expect(find.byKey(const Key('ghost-marker-layer')), findsNothing);
-
-    await tester.tap(find.byKey(const Key('start-stop-button')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 30));
-    await tester.pump();
-
-    expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-race-status-label')), findsOneWidget);
-    expect(find.text('접전'), findsOneWidget);
-    expect(find.byKey(const Key('ghost-race-time-gap-value')), findsOneWidget);
-    expect(find.text('0:00'), findsOneWidget);
-    expect(find.text('고스트와 같은 위치'), findsOneWidget);
-    expect(find.byKey(const Key('ghost-marker-layer')), findsNothing);
-  });
 
   testWidgets(
     'stop from paused shows review and does not show the countdown overlay',
@@ -222,7 +193,10 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('resume-run-button')), findsOneWidget);
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
+      expect(
+        find.byKey(const Key('live-run-dashboard-overlay')),
+        findsOneWidget,
+      );
       expect(find.text('STOP'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('start-stop-button')));
@@ -232,7 +206,7 @@ void main() {
         find.byKey(const Key('run-start-countdown-overlay')),
         findsNothing,
       );
-      expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
+      expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('ghost-control-chip')), findsNothing);

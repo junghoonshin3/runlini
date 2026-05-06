@@ -1,6 +1,7 @@
 package kr.sjh.runlini.wear
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WearGhostGapCalculatorTest {
@@ -29,6 +30,9 @@ class WearGhostGapCalculatorTest {
         )
 
         assertEquals(WearGhostStatus.Ahead, frame.status)
+        assertTrue(frame.routeProgress > 0.55)
+        assertTrue(frame.distanceToFinishM > 300.0)
+        assertTrue(frame.totalRouteDistanceM > 800.0)
     }
 
     @Test
@@ -59,5 +63,6 @@ class WearGhostGapCalculatorTest {
         )
 
         assertEquals(WearGhostStatus.OffRoute, frame.status)
+        assertTrue(frame.distanceFromRouteM > 35.0)
     }
 }

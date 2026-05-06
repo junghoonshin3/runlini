@@ -69,6 +69,10 @@ class WearRunRecordingService : Service() {
         controller.stopRun()
     }
 
+    fun continueAfterGhostCompletion() {
+        controller.continueAfterGhostCompletion()
+    }
+
     fun saveDraft() {
         controller.saveDraft()
     }

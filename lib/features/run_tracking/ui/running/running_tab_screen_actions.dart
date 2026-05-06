@@ -6,23 +6,22 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     required RunPlaybackState playbackState,
   }) async {
     if (playbackState.hasActiveSession) {
-      final ghostFrame = ref.read(ghostRaceFrameProvider);
-      final selectedGhostSession = ref
-          .read(runMapStaticStateProvider)
-          .value
-          ?.selectedGhostSession;
-      await ref
-          .read(runPlaybackControllerProvider.notifier)
-          .stop(
-            ghostSummary: runSessionGhostSummaryFromFrame(
-              ghostFrame,
-              selectedGhostSession,
-            ),
-          );
+      await _stopActiveRunWithGhostSummary();
       return;
     }
 
     if (_startFlowInProgress) {
+      return;
+    }
+
+    if (!await _resolveGhostIntervalConflict(context)) {
+      return;
+    }
+    if (!context.mounted) {
+      return;
+    }
+
+    if (!await _ensureGhostRunAccuracy(context)) {
       return;
     }
 
@@ -45,6 +44,101 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     } finally {
       _startFlowInProgress = false;
     }
+  }
+
+  Future<bool> _resolveGhostIntervalConflict(BuildContext context) async {
+    if (!_hasSelectedGhostRun()) {
+      return true;
+    }
+
+    final runSettings =
+        ref.read(runSettingsControllerProvider).value ??
+        const RunSettingsState();
+    final intervalWorkout = runSettings.intervalWorkout;
+    if (!intervalWorkout.enabled) {
+      return true;
+    }
+
+    final confirmed = await confirmDisableIntervalForGhost(context);
+    if (!context.mounted || !confirmed) {
+      return false;
+    }
+    await ref
+        .read(runSettingsControllerProvider.notifier)
+        .setIntervalWorkout(intervalWorkout.copyWith(enabled: false));
+    return true;
+  }
+
+  Future<bool> _ensureGhostRunAccuracy(BuildContext context) async {
+    if (!_hasSelectedGhostRun()) {
+      return true;
+    }
+
+    final runSettings =
+        ref.read(runSettingsControllerProvider).value ??
+        const RunSettingsState();
+    if (runSettings.locationTrackingPreset ==
+        RunLocationTrackingPreset.highAccuracy) {
+      return true;
+    }
+
+    final goToSettings = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: const Key('ghost-run-accuracy-dialog'),
+          backgroundColor: AppColors.panel,
+          title: const Text('고스트런은 정확한 위치가 필요해요'),
+          content: const Text('고스트와 비교하려면 위치 업데이트를 정확으로 설정해 주세요.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              key: const Key('ghost-run-accuracy-settings-button'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('설정으로 이동'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!context.mounted) {
+      return false;
+    }
+    if (goToSettings == true) {
+      ref.read(appTabProvider.notifier).setTab(AppTab.settings);
+    }
+    return false;
+  }
+
+  bool _hasSelectedGhostRun() {
+    final ghostSettings = ref.read(ghostSettingsProvider);
+    return ref.read(runMapStaticStateProvider).value?.selectedGhostSession !=
+            null ||
+        (ghostSettings.enabled && ghostSettings.selectedSessionId != null);
+  }
+
+  Future<void> _stopActiveRunWithGhostSummary({
+    RunSessionGhostSummary? preferredGhostSummary,
+  }) async {
+    final ghostFrame = ref.read(ghostRaceFrameProvider);
+    final selectedGhostSession = ref
+        .read(runMapStaticStateProvider)
+        .value
+        ?.selectedGhostSession;
+    final completionSummary = ref
+        .read(runPlaybackControllerProvider)
+        .ghostCompletionSummary;
+    await ref
+        .read(runPlaybackControllerProvider.notifier)
+        .stop(
+          ghostSummary:
+              preferredGhostSummary ??
+              completionSummary ??
+              runSessionGhostSummaryFromFrame(ghostFrame, selectedGhostSession),
+        );
   }
 
   Future<void> _handlePauseResumePressed({

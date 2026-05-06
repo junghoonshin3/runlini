@@ -9,8 +9,6 @@ import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
-const Duration runGhostVoiceCueDebounce = Duration(seconds: 30);
-
 @immutable
 class RunVoiceCue {
   const RunVoiceCue({required this.text, required this.volume});
@@ -28,6 +26,7 @@ class RunVoiceCueSnapshot {
     required this.ghostFrame,
     required this.settings,
     required this.now,
+    this.isGhostRun = false,
   });
 
   final RunPlaybackState playbackState;
@@ -36,14 +35,13 @@ class RunVoiceCueSnapshot {
   final GhostRaceFrame? ghostFrame;
   final RunSettingsState settings;
   final DateTime now;
+  final bool isGhostRun;
 }
 
 class RunVoiceCueCoordinator {
   String? _activeSessionId;
   int _lastSpokenKm = 0;
   String? _lastIntervalStepKey;
-  GhostRaceStatus? _lastGhostStatus;
-  DateTime? _lastGhostSpokenAt;
 
   List<RunVoiceCue> cuesFor(RunVoiceCueSnapshot snapshot) {
     final playback = snapshot.playbackState;
@@ -60,6 +58,7 @@ class RunVoiceCueCoordinator {
     if (playback.status != RunScreenStatus.running ||
         metrics == null ||
         metrics.isPaused ||
+        snapshot.isGhostRun ||
         !snapshot.settings.voiceCueEnabled) {
       return const <RunVoiceCue>[];
     }
@@ -79,7 +78,7 @@ class RunVoiceCueCoordinator {
     if (intervalCue != null) {
       cues.add(RunVoiceCue(text: intervalCue, volume: safeVolume));
     }
-    final ghostCue = _ghostCue(snapshot);
+    final ghostCue = _ghostCue();
     if (ghostCue != null) {
       cues.add(RunVoiceCue(text: ghostCue, volume: safeVolume));
     }
@@ -90,8 +89,6 @@ class RunVoiceCueCoordinator {
     _activeSessionId = null;
     _lastSpokenKm = 0;
     _lastIntervalStepKey = null;
-    _lastGhostStatus = null;
-    _lastGhostSpokenAt = null;
   }
 
   String? _kilometerCue(LiveRunMetrics metrics, RunSettingsState settings) {
@@ -125,30 +122,8 @@ class RunVoiceCueCoordinator {
     return _intervalStepLabel(step);
   }
 
-  String? _ghostCue(RunVoiceCueSnapshot snapshot) {
-    if (!snapshot.settings.ghostVoiceCueEnabled) {
-      return null;
-    }
-    final frame = snapshot.ghostFrame;
-    final status = frame?.status;
-    if (frame == null ||
-        status == null ||
-        status == GhostRaceStatus.unavailable ||
-        status == _lastGhostStatus) {
-      return null;
-    }
-    final lastSpokenAt = _lastGhostSpokenAt;
-    if (lastSpokenAt != null &&
-        snapshot.now.difference(lastSpokenAt) < runGhostVoiceCueDebounce) {
-      return null;
-    }
-    final cue = RunVoiceCueFormatter.ghostStatus(frame);
-    if (cue == null) {
-      return null;
-    }
-    _lastGhostStatus = status;
-    _lastGhostSpokenAt = snapshot.now;
-    return cue;
+  String? _ghostCue() {
+    return null;
   }
 }
 
@@ -170,16 +145,6 @@ class RunVoiceCueFormatter {
       parts.add('시간 $elapsed');
     }
     return parts.join(', ');
-  }
-
-  static String? ghostStatus(GhostRaceFrame frame) {
-    return switch (frame.status) {
-      GhostRaceStatus.ahead => '앞섬 ${gapSpeech(frame.timeGapMs)}',
-      GhostRaceStatus.behind => '뒤처짐 ${gapSpeech(frame.timeGapMs)}',
-      GhostRaceStatus.level => '접전',
-      GhostRaceStatus.offRoute => '경로 이탈',
-      GhostRaceStatus.unavailable => null,
-    };
   }
 
   static String? paceSpeech(double? paceSecPerKm) {
@@ -215,19 +180,6 @@ class RunVoiceCueFormatter {
       parts.add('$seconds초');
     }
     return parts.join(' ');
-  }
-
-  static String gapSpeech(int gapMs) {
-    final totalSeconds = math.max(1, gapMs.abs() ~/ 1000);
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    if (minutes <= 0) {
-      return '$seconds초';
-    }
-    if (seconds == 0) {
-      return '$minutes분';
-    }
-    return '$minutes분 $seconds초';
   }
 }
 

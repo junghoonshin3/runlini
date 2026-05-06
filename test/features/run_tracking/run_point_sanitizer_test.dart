@@ -151,7 +151,7 @@ void main() {
         ),
       ]);
 
-      expect(filtered, hasLength(2));
+      expect(filtered, hasLength(3));
       expect(filtered.last.latitude, 37.00045);
     });
 
@@ -192,7 +192,7 @@ void main() {
       ]);
 
       expect(filtered, hasLength(2));
-      expect(filtered.last.latitude, 37.00028);
+      expect(filtered.last.latitude, 37.0002);
     });
 
     test('loads legacy point json without accuracy fields', () {

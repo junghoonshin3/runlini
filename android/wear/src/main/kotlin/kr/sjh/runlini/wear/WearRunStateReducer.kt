@@ -48,6 +48,10 @@ class WearRunStateReducer {
             ghostConfig = ghostConfig,
             isGhostRun = ghostConfig != null,
             ghostFrame = null,
+            ghostCompletionCandidateCount = 0,
+            ghostCompletionPrompt = false,
+            ghostCompletionDismissed = false,
+            ghostCompletionFrame = null,
             intervalFrame = null,
             pauseReason = null,
             statusMessage = null,
@@ -212,6 +216,36 @@ class WearRunStateReducer {
         return state.copy(ghostFrame = frame)
     }
 
+    fun applyGhostCompletionDecision(
+        state: WearRunState,
+        decision: WearGhostCompletionDecision,
+        frame: WearGhostFrame?,
+    ): WearRunState {
+        if (
+            !state.isGhostRun ||
+            state.ghostCompletionPrompt ||
+            state.ghostCompletionDismissed
+        ) {
+            return state
+        }
+        if (decision.isComplete && frame != null) {
+            return state.copy(
+                ghostCompletionCandidateCount = decision.candidateCount,
+                ghostCompletionPrompt = true,
+                ghostCompletionFrame = frame,
+            )
+        }
+        return state.copy(ghostCompletionCandidateCount = decision.candidateCount)
+    }
+
+    fun continueAfterGhostCompletion(state: WearRunState): WearRunState {
+        if (!state.isActive) return state
+        return state.copy(
+            ghostCompletionPrompt = false,
+            ghostCompletionDismissed = true,
+        )
+    }
+
     private fun elapsedAt(state: WearRunState, realtimeMs: Long): Long {
         val started = state.activeSegmentStartedRealtimeMs ?: return state.elapsedMs
         return state.elapsedBeforeActiveSegmentMs + (realtimeMs - started).coerceAtLeast(0)
@@ -222,6 +256,7 @@ class WearRunStateReducer {
         elapsedMs: Long,
         distanceM: Double,
     ): WearIntervalFrame? {
+        if (state.isGhostRun) return null
         return WearIntervalWorkoutCalculator().calculate(
             workout = state.settings.intervalWorkout,
             elapsedMs = elapsedMs,

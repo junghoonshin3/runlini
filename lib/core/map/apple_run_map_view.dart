@@ -1,6 +1,7 @@
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amap;
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/map/apple_map_coordinate_adapter.dart';
 import 'package:runlini/core/map/apple_run_marker_icons.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
@@ -13,6 +14,7 @@ class AppleRunMapView extends StatefulWidget {
     this.ghostMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
+    required this.currentRunnerPolylineSegments,
     required this.ghostPolylinePoints,
     required this.ghostPolylineSegments,
     required this.recenterTick,
@@ -23,6 +25,7 @@ class AppleRunMapView extends StatefulWidget {
   final MapCoordinate? ghostMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
+  final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
   final int recenterTick;
@@ -123,19 +126,43 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
             zIndex: 3,
           ),
       },
-      polylines: <amap.Polyline>{
-        ..._ghostPolylines(),
-        if (widget.currentRunnerPolylinePoints.isNotEmpty)
-          amap.Polyline(
-            polylineId: amap.PolylineId('runner-polyline'),
-            points: widget.currentRunnerPolylinePoints
-                .map((MapCoordinate point) => point.toAppleLatLng())
-                .toList(growable: false),
-            color: AppColors.voltGreen,
-            width: 6,
-            zIndex: 2,
-          ),
-      },
+      polylines: <amap.Polyline>{..._ghostPolylines(), ..._runnerPolylines()},
+    );
+  }
+
+  Set<amap.Polyline> _runnerPolylines() {
+    final segments = widget.currentRunnerPolylineSegments.isEmpty
+        ? <MapPolylineSegment>[
+            if (widget.currentRunnerPolylinePoints.length >= 2)
+              MapPolylineSegment(
+                points: widget.currentRunnerPolylinePoints,
+                color: AppColors.voltGreen,
+              ),
+          ]
+        : widget.currentRunnerPolylineSegments;
+    return <amap.Polyline>{
+      for (var index = 0; index < segments.length; index += 1)
+        _runnerPolyline(
+          id: 'runner-polyline-$index',
+          points: segments[index].points,
+          color: segments[index].color,
+        ),
+    };
+  }
+
+  amap.Polyline _runnerPolyline({
+    required String id,
+    required List<MapCoordinate> points,
+    required Color color,
+  }) {
+    return amap.Polyline(
+      polylineId: amap.PolylineId(id),
+      points: points
+          .map((MapCoordinate point) => point.toAppleLatLng())
+          .toList(growable: false),
+      color: color,
+      width: 6,
+      zIndex: 2,
     );
   }
 
@@ -196,7 +223,7 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
         return;
       }
 
-      final bounds = _boundsFor(widget.ghostPolylinePoints);
+      final bounds = appleBoundsFor(widget.ghostPolylinePoints);
       final hasSinglePointBounds =
           bounds.southwest.latitude == bounds.northeast.latitude &&
           bounds.southwest.longitude == bounds.northeast.longitude;
@@ -217,33 +244,6 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
     });
   }
 
-  amap.LatLngBounds _boundsFor(List<MapCoordinate> points) {
-    var south = points.first.latitude;
-    var north = points.first.latitude;
-    var west = points.first.longitude;
-    var east = points.first.longitude;
-
-    for (final point in points.skip(1)) {
-      if (point.latitude < south) {
-        south = point.latitude;
-      }
-      if (point.latitude > north) {
-        north = point.latitude;
-      }
-      if (point.longitude < west) {
-        west = point.longitude;
-      }
-      if (point.longitude > east) {
-        east = point.longitude;
-      }
-    }
-
-    return amap.LatLngBounds(
-      southwest: amap.LatLng(south, west),
-      northeast: amap.LatLng(north, east),
-    );
-  }
-
   Future<void> _loadGhostMarkerIcon(double devicePixelRatio) async {
     final amap.BitmapDescriptor icon = await AppleRunMarkerIcons.ghost(
       devicePixelRatio: devicePixelRatio,
@@ -256,11 +256,5 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
       _ghostMarkerIcon = icon;
       _ghostMarkerDevicePixelRatio = devicePixelRatio;
     });
-  }
-}
-
-extension on MapCoordinate {
-  amap.LatLng toAppleLatLng() {
-    return amap.LatLng(latitude, longitude);
   }
 }

@@ -1,9 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/service/run_session_detail_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
 void main() {
+  const lenientRouteSegmenter = RunRouteSegmenter(
+    longGapMs: 1000 * 1000,
+    maxBridgeSpeedMps: 50,
+  );
+
   test('builds split, pace, speed, elevation, and heart-rate detail data', () {
     final session = RunSession(
       id: 'detail-session',
@@ -50,7 +56,9 @@ void main() {
       ],
     );
 
-    final detail = const RunSessionDetailCalculator().calculate(session);
+    final detail = const RunSessionDetailCalculator(
+      routeSegmenter: lenientRouteSegmenter,
+    ).calculate(session);
 
     expect(detail.averageSpeedKmh, closeTo(10, 0.1));
     expect(detail.averageCadenceSpm, 171.6);
@@ -105,10 +113,9 @@ void main() {
       ],
     );
 
-    final detail = const RunSessionDetailCalculator().calculate(
-      session,
-      splitDistanceM: 1609.344,
-    );
+    final detail = const RunSessionDetailCalculator(
+      routeSegmenter: lenientRouteSegmenter,
+    ).calculate(session, splitDistanceM: 1609.344);
 
     expect(detail.splits.first.distanceM, closeTo(1609.344, 0.1));
     expect(detail.splits.first.paceSecPerKm, greaterThan(0));
@@ -133,7 +140,9 @@ void main() {
       ],
     );
 
-    final detail = const RunSessionDetailCalculator().calculate(session);
+    final detail = const RunSessionDetailCalculator(
+      routeSegmenter: lenientRouteSegmenter,
+    ).calculate(session);
 
     expect(detail.averageCadenceSpm, 170);
     expect(detail.cadenceSamplesSpm, isEmpty);
@@ -165,7 +174,9 @@ void main() {
       ],
     );
 
-    final detail = const RunSessionDetailCalculator().calculate(session);
+    final detail = const RunSessionDetailCalculator(
+      routeSegmenter: lenientRouteSegmenter,
+    ).calculate(session);
 
     expect(detail.paceSamplesSecPerKm, hasLength(1));
     expect(detail.paceSamplesSecPerKm.single.value, 600);
@@ -197,10 +208,53 @@ void main() {
       ],
     );
 
-    final detail = const RunSessionDetailCalculator().calculate(session);
+    final detail = const RunSessionDetailCalculator(
+      routeSegmenter: lenientRouteSegmenter,
+    ).calculate(session);
 
     expect(detail.paceSamplesSecPerKm, hasLength(1));
     expect(detail.paceSamplesSecPerKm.single.value, closeTo(600, 20));
+  });
+
+  test('excludes long GPS bridge distance from detail metrics', () {
+    final session = RunSession(
+      id: 'bridge-detail-session',
+      startedAt: DateTime.utc(2026, 4, 21, 6),
+      endedAt: DateTime.utc(2026, 4, 21, 6, 3),
+      distanceM: 1200,
+      durationMs: 180000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 37,
+          longitude: 127,
+          timestampRelMs: 0,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 37,
+          longitude: 127.001,
+          timestampRelMs: 30000,
+          source: RunPointSource.deviceGps,
+        ),
+        RunPoint(
+          latitude: 37.009,
+          longitude: 127.001,
+          timestampRelMs: 153000,
+          paceSecPerKm: 123,
+          speedMps: 8.5,
+          source: RunPointSource.deviceGps,
+        ),
+      ],
+    );
+
+    final detail = const RunSessionDetailCalculator().calculate(session);
+
+    expect(detail.distanceKm, closeTo(0.089, 0.006));
+    expect(detail.paceSamplesSecPerKm.map((sample) => sample.value), [
+      isNot(closeTo(123, 0.1)),
+    ]);
+    expect(detail.splits.single.distanceM, closeTo(89, 6));
   });
 
   test('ignores impossible elevation sentinel values', () {

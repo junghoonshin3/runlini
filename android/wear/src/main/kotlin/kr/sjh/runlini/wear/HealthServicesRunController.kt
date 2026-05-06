@@ -57,6 +57,8 @@ class HealthServicesRunController(
             speech = AndroidWearRunSpeech(context),
         ),
     private val ghostGapCalculator: WearGhostGapCalculator = WearGhostGapCalculator(),
+    private val ghostCompletionDetector: WearGhostCompletionDetector =
+        WearGhostCompletionDetector(),
     private val debugGpsInjectionMerger: WearDebugGpsInjectionMerger =
         WearDebugGpsInjectionMerger(),
     private val autoPauseDetector: WearAutoPauseDetector = WearAutoPauseDetector(),
@@ -328,6 +330,13 @@ class HealthServicesRunController(
         }
     }
 
+    fun continueAfterGhostCompletion() {
+        setState(
+            reducer.continueAfterGhostCompletion(_state.value),
+            forceCheckpoint = true,
+        )
+    }
+
     fun saveDraft() {
         scope.launch {
             countdownJob?.cancel()
@@ -499,6 +508,7 @@ class HealthServicesRunController(
 
     private fun withCurrentIntervalFrame(state: WearRunState): WearRunState {
         if (!state.isActive) return state.copy(intervalFrame = null)
+        if (state.isGhostRun) return state.copy(intervalFrame = null)
         return state.copy(
             intervalFrame = WearIntervalWorkoutCalculator().calculate(
                 workout = state.settings.intervalWorkout,
@@ -608,6 +618,7 @@ class HealthServicesRunController(
             averagePaceSecPerKm = state.averagePaceSecPerKm,
             settings = state.settings,
             elapsedMs = state.elapsedMs,
+            isGhostRun = state.isGhostRun,
         )
         alertController.onGhostFrame(
             frame = state.ghostFrame,
@@ -617,6 +628,7 @@ class HealthServicesRunController(
         alertController.onIntervalFrame(
             frame = state.intervalFrame,
             settings = state.settings,
+            isGhostRun = state.isGhostRun,
         )
     }
 
@@ -625,14 +637,26 @@ class HealthServicesRunController(
         if (!state.isGhostRun || config == null || state.points.isEmpty()) {
             return state
         }
-        return reducer.applyGhostFrame(
-            state,
-            ghostGapCalculator.calculate(
-                runnerPoint = state.points.last(),
-                ghostConfig = config,
-                runnerElapsedMs = state.elapsedMs,
-            ),
+        val frame = ghostGapCalculator.calculate(
+            runnerPoint = state.points.last(),
+            ghostConfig = config,
+            runnerElapsedMs = state.elapsedMs,
         )
+        val framed = reducer.applyGhostFrame(state, frame)
+        val decision = ghostCompletionDetector.evaluate(
+            frame = frame,
+            runnerDistanceM = state.distanceM,
+            previousCandidateCount = state.ghostCompletionCandidateCount,
+        )
+        val completed = reducer.applyGhostCompletionDecision(
+            framed,
+            decision,
+            frame,
+        )
+        if (!state.ghostCompletionPrompt && completed.ghostCompletionPrompt) {
+            alertController.onGhostCompleted(completed.settings, completed.isGhostRun)
+        }
+        return completed
     }
 
     private fun stopTicker() {

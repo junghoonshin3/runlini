@@ -5,7 +5,10 @@ import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_settings_state.dart';
 import 'package:runlini/features/ghost_racer/ui/ghost_session_picker_sheet.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 class RunGhostControlChip extends ConsumerWidget {
   const RunGhostControlChip({super.key});
@@ -73,6 +76,20 @@ class RunGhostControlChip extends ConsumerWidget {
     );
     if (!context.mounted || selectedSummary == null) {
       return;
+    }
+
+    final runSettings =
+        ref.read(runSettingsControllerProvider).value ??
+        const RunSettingsState();
+    final intervalWorkout = runSettings.intervalWorkout;
+    if (intervalWorkout.enabled) {
+      final confirmed = await confirmDisableIntervalForGhost(context);
+      if (!context.mounted || !confirmed) {
+        return;
+      }
+      await ref
+          .read(runSettingsControllerProvider.notifier)
+          .setIntervalWorkout(intervalWorkout.copyWith(enabled: false));
     }
 
     ref.read(ghostSettingsProvider.notifier).selectSession(selectedSummary);
