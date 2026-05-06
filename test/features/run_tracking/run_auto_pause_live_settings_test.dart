@@ -37,7 +37,7 @@ void main() {
 
     expect(container.read(runPlaybackControllerProvider).isAutoPaused, isTrue);
 
-    now = startedAt.add(const Duration(seconds: 14));
+    now = startedAt.add(const Duration(seconds: 16));
     await container
         .read(runSettingsControllerProvider.notifier)
         .setAutoPauseEnabled(false);
@@ -161,7 +161,7 @@ Future<void> _emitStationaryWindow(
   required void Function(DateTime) updateNow,
 }) async {
   for (var index = 1; index <= 3; index += 1) {
-    final sampleTime = startedAt.add(Duration(seconds: index * 4));
+    final sampleTime = startedAt.add(Duration(seconds: index * 5));
     updateNow(sampleTime);
     await streamClient.emit(
       playbackSample(

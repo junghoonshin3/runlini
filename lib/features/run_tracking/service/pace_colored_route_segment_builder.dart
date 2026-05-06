@@ -19,18 +19,49 @@ class PaceColoredRouteSegmentBuilder {
   final double rollingWindowM;
 
   List<MapPolylineSegment> buildGhostSegments(RunSession session) {
-    if (session.points.length < 2 || chunkDistanceM <= 0) {
+    if (session.points.length < 2) {
       return const <MapPolylineSegment>[];
     }
 
-    final route = _DistanceTimedRoute.fromPoints(session.points);
-    if (route.totalDistanceM <= 0) {
+    return buildRouteSegments(<List<RunPoint>>[
+      session.points,
+    ], fallbackBaselinePaceSecPerKm: _averagePaceSecPerKm(session));
+  }
+
+  List<MapPolylineSegment> buildRouteSegments(
+    List<List<RunPoint>> routeSegments, {
+    double fallbackBaselinePaceSecPerKm = 0,
+  }) {
+    if (routeSegments.isEmpty || chunkDistanceM <= 0) {
+      return const <MapPolylineSegment>[];
+    }
+
+    final routes = routeSegments
+        .where((points) => points.length >= 2)
+        .map(_DistanceTimedRoute.fromPoints)
+        .where((route) => route.totalDistanceM > 0)
+        .toList(growable: false);
+    if (routes.isEmpty) {
       return const <MapPolylineSegment>[];
     }
 
     final baselinePaceSecPerKm =
-        _median(route.validSegmentPacesSecPerKm) ??
-        _averagePaceSecPerKm(session);
+        _median(
+          routes
+              .expand((route) => route.validSegmentPacesSecPerKm)
+              .toList(growable: false),
+        ) ??
+        fallbackBaselinePaceSecPerKm;
+    return <MapPolylineSegment>[
+      for (final route in routes)
+        ..._buildSegmentsForRoute(route, baselinePaceSecPerKm),
+    ];
+  }
+
+  List<MapPolylineSegment> _buildSegmentsForRoute(
+    _DistanceTimedRoute route,
+    double baselinePaceSecPerKm,
+  ) {
     final segments = <MapPolylineSegment>[];
     for (
       var startM = 0.0;

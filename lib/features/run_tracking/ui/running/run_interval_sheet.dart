@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -8,6 +9,7 @@ import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet_butt
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet_components.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet_simple_components.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_interval_target_card.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 Future<void> showRunIntervalSheet(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
@@ -59,9 +61,12 @@ class RunIntervalSheet extends ConsumerWidget {
                   sliver: SliverToBoxAdapter(
                     child: RunIntervalSheetHeader(
                       workout: workout,
-                      onEnabledChanged: (enabled) {
-                        controller.setIntervalWorkout(
-                          workout.copyWith(enabled: enabled),
+                      onEnabledChanged: (enabled) async {
+                        await _setIntervalEnabled(
+                          context,
+                          ref,
+                          workout,
+                          enabled,
                         );
                       },
                     ),
@@ -139,6 +144,33 @@ class RunIntervalSheet extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _setIntervalEnabled(
+    BuildContext context,
+    WidgetRef ref,
+    RunIntervalWorkout workout,
+    bool enabled,
+  ) async {
+    if (!enabled) {
+      await ref
+          .read(runSettingsControllerProvider.notifier)
+          .setIntervalWorkout(workout.copyWith(enabled: false));
+      return;
+    }
+
+    final ghostSettings = ref.read(ghostSettingsProvider);
+    if (ghostSettings.enabled && ghostSettings.selectedSessionId != null) {
+      final confirmed = await confirmDisableGhostForInterval(context);
+      if (!context.mounted || !confirmed) {
+        return;
+      }
+      ref.read(ghostSettingsProvider.notifier).disable();
+    }
+
+    await ref
+        .read(runSettingsControllerProvider.notifier)
+        .setIntervalWorkout(workout.copyWith(enabled: true));
   }
 }
 

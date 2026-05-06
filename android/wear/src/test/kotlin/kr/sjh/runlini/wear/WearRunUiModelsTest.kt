@@ -93,6 +93,29 @@ class WearRunUiModelsTest {
     }
 
     @Test
+    fun pageModelHidesIntervalPageForGhostRuns() {
+        val pages = WearActiveRunPageModel.pagesFor(
+            WearRunState(
+                isGhostRun = true,
+                ghostConfig = ghostConfig(),
+                settings = WearRunSettings(
+                    intervalWorkout = WearIntervalWorkout(enabled = true),
+                ),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                WearActiveRunPage.Controls,
+                WearActiveRunPage.Core,
+                WearActiveRunPage.Ghost,
+                WearActiveRunPage.Details,
+            ),
+            pages,
+        )
+    }
+
+    @Test
     fun pageModelStartsActivePagerOnCorePage() {
         val pages = WearActiveRunPageModel.pagesFor(WearRunState())
 

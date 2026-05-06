@@ -11,7 +11,7 @@ class RunPointSanitizer {
     this.minMovementM = 3,
     this.stationarySpeedMps = 0.7,
     this.resumeSpeedMps = 1.2,
-    this.stationaryWindowMs = 8 * 1000,
+    this.stationaryWindowMs = 15 * 1000,
     this.stationaryClusterRadiusM = 15,
     this.resumeConfirmationCount = 2,
   });

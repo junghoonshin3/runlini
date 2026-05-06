@@ -2,10 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/performance/startup_trace.dart';
+import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
+import 'package:runlini/features/dashboard/types/app_tab.dart';
+import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
 import 'package:runlini/features/run_tracking/state/run_ghost_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
@@ -15,17 +20,19 @@ import 'package:runlini/features/run_tracking/state/run_start_countdown_provider
 import 'package:runlini/features/run_tracking/state/run_voice_cue_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
+import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_finish_review_panel.dart';
-import 'package:runlini/features/run_tracking/ui/running/live_run_interval_panel.dart';
-import 'package:runlini/features/run_tracking/ui/running/live_run_metrics_panel.dart';
+import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_overlay.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_control_buttons.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_ghost_completion_overlay.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_ghost_control_chip.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_map_panel.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_save_feedback.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_session_ghost_summary_mapper.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 part 'running_tab_screen_actions.dart';
 
@@ -94,8 +101,10 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
         const RunSettingsState();
     final pendingFinishedSession = playbackState.pendingFinishedSession;
     final isReviewing = playbackState.isReviewing;
+    final ghostCompletionSummary = playbackState.ghostCompletionSummary;
 
     _listenForRunVoiceCues();
+    _listenForGhostCompletion(context);
 
     return SafeArea(
       bottom: false,
@@ -106,27 +115,21 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
               playbackState.hasActiveSession &&
               liveRunMetrics != null)
             Positioned(
-              top: 16,
+              top: 12,
               left: 16,
               right: 16,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (intervalFrame != null) ...[
-                    LiveRunIntervalPanel(
-                      frame: intervalFrame,
-                      onAdvance: ref
-                          .read(runPlaybackControllerProvider.notifier)
-                          .advanceInterval,
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  LiveRunMetricsPanel(
-                    metrics: liveRunMetrics,
-                    displaySettings: displaySettings,
-                    ghostRace: ghostRaceFrame,
-                  ),
-                ],
+              child: LiveRunDashboardOverlay(
+                key: ValueKey(
+                  'live-dashboard-${playbackState.activeSessionId}',
+                ),
+                sessionId: playbackState.activeSessionId,
+                metrics: liveRunMetrics,
+                displaySettings: displaySettings,
+                ghostRace: ghostRaceFrame,
+                intervalFrame: intervalFrame,
+                onAdvanceInterval: ref
+                    .read(runPlaybackControllerProvider.notifier)
+                    .advanceInterval,
               ),
             ),
           if (mapControlsReady && !isReviewing) ...[
@@ -194,6 +197,23 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 },
               ),
             ),
+          if (playbackState.ghostCompletionPromptPending &&
+              ghostCompletionSummary != null &&
+              !isReviewing)
+            Positioned.fill(
+              child: RunGhostCompletionOverlay(
+                onContinue: () {
+                  ref
+                      .read(runPlaybackControllerProvider.notifier)
+                      .continueAfterGhostCompletion();
+                },
+                onStop: () async {
+                  await _stopActiveRunWithGhostSummary(
+                    preferredGhostSummary: ghostCompletionSummary,
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
@@ -214,5 +234,45 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     for (final cue in cues) {
       await client.speak(cue.text, volume: cue.volume);
     }
+  }
+
+  void _listenForGhostCompletion(BuildContext context) {
+    ref.listen(ghostRaceFrameProvider, (previous, next) {
+      final frame = next;
+      if (frame == null) {
+        return;
+      }
+      final playbackState = ref.read(runPlaybackControllerProvider);
+      final selectedGhostSession = ref
+          .read(runMapStaticStateProvider)
+          .value
+          ?.selectedGhostSession;
+      final liveMetrics = ref.read(liveRunMetricsProvider);
+      if (!playbackState.hasActiveSession ||
+          selectedGhostSession == null ||
+          liveMetrics == null) {
+        return;
+      }
+      final decision = ref
+          .read(ghostRaceCompletionDetectorProvider)
+          .evaluate(
+            frame: frame,
+            runnerDistanceM: liveMetrics.distanceKm * 1000,
+            previousCandidateCount: playbackState.ghostCompletionCandidateCount,
+          );
+      if (decision.isComplete &&
+          !playbackState.ghostCompletionPromptPending &&
+          !playbackState.ghostCompletionPromptDismissed) {
+        unawaited(HapticFeedback.mediumImpact());
+      }
+      ref
+          .read(runPlaybackControllerProvider.notifier)
+          .updateGhostCompletion(
+            candidateCount: decision.candidateCount,
+            completedSummary: decision.isComplete
+                ? runSessionGhostSummaryFromFrame(frame, selectedGhostSession)
+                : null,
+          );
+    });
   }
 }

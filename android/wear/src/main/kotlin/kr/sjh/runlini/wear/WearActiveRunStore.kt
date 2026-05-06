@@ -80,6 +80,10 @@ object WearActiveRunJsonMapper {
             .put("isGhostRun", state.isGhostRun)
             .put("ghostConfig", state.ghostConfig?.let(::ghostConfigToJson))
             .put("ghostFrame", state.ghostFrame?.let(::ghostFrameToJson))
+            .put("ghostCompletionCandidateCount", state.ghostCompletionCandidateCount)
+            .put("ghostCompletionPrompt", state.ghostCompletionPrompt)
+            .put("ghostCompletionDismissed", state.ghostCompletionDismissed)
+            .put("ghostCompletionFrame", state.ghostCompletionFrame?.let(::ghostFrameToJson))
             .put("statusMessage", state.statusMessage)
             .put("errorMessage", state.errorMessage)
             .put("points", JSONArray(state.points.map(::pointToJson)))
@@ -146,6 +150,18 @@ object WearActiveRunJsonMapper {
             ghostConfig = ghostConfig,
             isGhostRun = isGhostRun && ghostConfig != null,
             ghostFrame = objectJson.optionalObject("ghostFrame")?.let(::ghostFrameFromJson),
+            ghostCompletionCandidateCount = objectJson.optInt(
+                "ghostCompletionCandidateCount",
+                0,
+            ),
+            ghostCompletionPrompt = objectJson.optBoolean("ghostCompletionPrompt", false),
+            ghostCompletionDismissed = objectJson.optBoolean(
+                "ghostCompletionDismissed",
+                false,
+            ),
+            ghostCompletionFrame = objectJson
+                .optionalObject("ghostCompletionFrame")
+                ?.let(::ghostFrameFromJson),
             statusMessage = objectJson.optionalString("statusMessage"),
             errorMessage = objectJson.optionalString("errorMessage"),
         )
@@ -198,6 +214,11 @@ object WearActiveRunJsonMapper {
             .put("status", frame.status.name)
             .put("timeGapMs", frame.timeGapMs)
             .put("distanceGapM", frame.distanceGapM)
+            .put("routeProgress", finiteDoubleOrNull(frame.routeProgress))
+            .put("distanceToFinishM", finiteDoubleOrNull(frame.distanceToFinishM))
+            .put("distanceFromRouteM", finiteDoubleOrNull(frame.distanceFromRouteM))
+            .put("totalRouteDistanceM", finiteDoubleOrNull(frame.totalRouteDistanceM))
+            .put("distanceToFinishPointM", finiteDoubleOrNull(frame.distanceToFinishPointM))
     }
 
     private fun ghostFrameFromJson(frameJson: JSONObject): WearGhostFrame {
@@ -207,6 +228,14 @@ object WearActiveRunJsonMapper {
             }.getOrDefault(WearGhostStatus.Unavailable),
             timeGapMs = frameJson.optLong("timeGapMs", 0L),
             distanceGapM = frameJson.optionalDouble("distanceGapM") ?: 0.0,
+            routeProgress = frameJson.optionalDouble("routeProgress") ?: 0.0,
+            distanceToFinishM = frameJson.optionalDouble("distanceToFinishM")
+                ?: Double.POSITIVE_INFINITY,
+            distanceFromRouteM = frameJson.optionalDouble("distanceFromRouteM")
+                ?: Double.POSITIVE_INFINITY,
+            totalRouteDistanceM = frameJson.optionalDouble("totalRouteDistanceM") ?: 0.0,
+            distanceToFinishPointM = frameJson.optionalDouble("distanceToFinishPointM")
+                ?: Double.POSITIVE_INFINITY,
         )
     }
 

@@ -7,6 +7,7 @@ import 'package:runlini/core/map/fake_run_map_surface.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/features/run_tracking/service/pace_colored_route_segment_builder.dart';
 import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_maps.dart';
@@ -21,15 +22,8 @@ class RunDetailRoutePreview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final route = const RunRouteSegmenter().segment(points);
-    final routeSegments = route.segments
-        .where((segment) => segment.length >= 2)
-        .map(
-          (segment) => MapPolylineSegment(
-            points: mapCoordinatesFromRunPoints(segment),
-            color: AppColors.voltGreen,
-          ),
-        )
-        .toList(growable: false);
+    final routeSegments = const PaceColoredRouteSegmentBuilder()
+        .buildRouteSegments(route.segments);
     final routePoints = routeSegments
         .expand((segment) => segment.points)
         .toList(growable: false);

@@ -36,14 +36,18 @@ class GhostRaceGapService {
     );
     if (route.segments.isEmpty) {
       final distanceGapM = _distanceBetween(runnerPoint, ghostPoint);
+      final isLevel = distanceGapM <= levelDistanceThresholdM;
       return GhostRaceFrame(
-        status: distanceGapM <= levelDistanceThresholdM
-            ? GhostRaceStatus.level
-            : GhostRaceStatus.offRoute,
+        status: isLevel ? GhostRaceStatus.level : GhostRaceStatus.offRoute,
         timeGapMs: 0,
         distanceGapM: distanceGapM,
         ghostMarkerPoint: ghostPoint.toMapCoordinate(),
         isOffRoute: distanceGapM >= offRouteThresholdM,
+        routeProgress: isLevel ? 1 : 0,
+        distanceToFinishM: isLevel ? 0 : distanceGapM,
+        distanceFromRouteM: distanceGapM,
+        totalRouteDistanceM: 0,
+        distanceToFinishPointM: distanceGapM,
       );
     }
 
@@ -62,6 +66,14 @@ class GhostRaceGapService {
           : distanceGapM,
       ghostMarkerPoint: ghostPoint.toMapCoordinate(),
       isOffRoute: isOffRoute,
+      routeProgress: route.progressFor(projection.distanceAlongRouteM),
+      distanceToFinishM: route.distanceToFinish(projection.distanceAlongRouteM),
+      distanceFromRouteM: projection.distanceFromRouteM,
+      totalRouteDistanceM: route.totalDistanceM,
+      distanceToFinishPointM: _distanceBetween(
+        runnerPoint,
+        ghostSession.points.last,
+      ),
     );
   }
 
@@ -93,6 +105,9 @@ class _GhostRouteModel {
   const _GhostRouteModel({required this.segments});
 
   final List<_GhostRouteSegment> segments;
+
+  double get totalDistanceM =>
+      segments.isEmpty ? 0 : segments.last.endDistanceM;
 
   factory _GhostRouteModel.from(List<RunPoint> points) {
     final segments = <_GhostRouteSegment>[];
@@ -155,6 +170,18 @@ class _GhostRouteModel {
     }
 
     return segments.last.endDistanceM;
+  }
+
+  double progressFor(double distanceAlongRouteM) {
+    final total = totalDistanceM;
+    if (total <= 0) {
+      return 0;
+    }
+    return (distanceAlongRouteM / total).clamp(0.0, 1.0).toDouble();
+  }
+
+  double distanceToFinish(double distanceAlongRouteM) {
+    return (totalDistanceM - distanceAlongRouteM).clamp(0.0, double.infinity);
   }
 }
 

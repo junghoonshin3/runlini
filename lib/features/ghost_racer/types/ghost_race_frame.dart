@@ -9,6 +9,11 @@ class GhostRaceFrame {
     required this.distanceGapM,
     required this.ghostMarkerPoint,
     required this.isOffRoute,
+    required this.routeProgress,
+    required this.distanceToFinishM,
+    required this.distanceFromRouteM,
+    required this.totalRouteDistanceM,
+    required this.distanceToFinishPointM,
   });
 
   const GhostRaceFrame.unavailable()
@@ -18,6 +23,11 @@ class GhostRaceFrame {
         distanceGapM: 0,
         ghostMarkerPoint: null,
         isOffRoute: false,
+        routeProgress: 0,
+        distanceToFinishM: double.infinity,
+        distanceFromRouteM: double.infinity,
+        totalRouteDistanceM: 0,
+        distanceToFinishPointM: double.infinity,
       );
 
   final GhostRaceStatus status;
@@ -25,4 +35,9 @@ class GhostRaceFrame {
   final double distanceGapM;
   final MapCoordinate? ghostMarkerPoint;
   final bool isOffRoute;
+  final double routeProgress;
+  final double distanceToFinishM;
+  final double distanceFromRouteM;
+  final double totalRouteDistanceM;
+  final double distanceToFinishPointM;
 }

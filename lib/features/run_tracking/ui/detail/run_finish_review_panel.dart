@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/service/run_session_detail_calculator.dart';
+import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_charts_section.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_ghost_comparison.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_preview.dart';
+import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_speed_tooltip.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_shoe_section.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_summary_sections.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_sync_status_section.dart';
@@ -29,6 +31,8 @@ class RunFinishReviewPanel extends StatelessWidget {
     this.shoeImagePath,
     this.includePrimaryMetrics = true,
     this.showHeaderSummaryMetrics = true,
+    this.showRouteSpeedTooltip = false,
+    this.ghostSession,
   });
 
   final RunSession session;
@@ -44,6 +48,8 @@ class RunFinishReviewPanel extends StatelessWidget {
   final String? shoeImagePath;
   final bool includePrimaryMetrics;
   final bool showHeaderSummaryMetrics;
+  final bool showRouteSpeedTooltip;
+  final RunSession? ghostSession;
 
   @override
   Widget build(BuildContext context) {
@@ -87,12 +93,20 @@ class RunFinishReviewPanel extends StatelessWidget {
                       if (session.ghostSummary != null) ...[
                         const SizedBox(height: 14),
                         RunDetailGhostComparison(
+                          session: session,
                           summary: session.ghostSummary!,
+                          ghostSession: ghostSession,
                           displaySettings: displaySettings,
                         ),
                       ],
                       const SizedBox(height: 28),
-                      const _SectionTitle('Route'),
+                      _RouteSectionTitle(
+                        showSpeedTooltip:
+                            showRouteSpeedTooltip &&
+                            !privacySettings.hideRouteMap,
+                        points: session.points,
+                        displaySettings: displaySettings,
+                      ),
                       const SizedBox(height: 12),
                       if (privacySettings.hideRouteMap)
                         const _HiddenRoutePanel()
@@ -224,6 +238,35 @@ class _SectionTitle extends StatelessWidget {
         fontSize: 22,
         fontWeight: FontWeight.w900,
       ),
+    );
+  }
+}
+
+class _RouteSectionTitle extends StatelessWidget {
+  const _RouteSectionTitle({
+    required this.showSpeedTooltip,
+    required this.points,
+    required this.displaySettings,
+  });
+
+  final bool showSpeedTooltip;
+  final List<RunPoint> points;
+  final RunDisplaySettings displaySettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _SectionTitle('Route'),
+        if (showSpeedTooltip) ...[
+          const SizedBox(width: 4),
+          RunDetailRouteSpeedInfoButton(
+            points: points,
+            displaySettings: displaySettings,
+          ),
+        ],
+      ],
     );
   }
 }

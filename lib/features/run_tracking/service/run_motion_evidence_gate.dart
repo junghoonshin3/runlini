@@ -2,8 +2,8 @@ import 'package:runlini/core/motion/run_motion_evidence_client.dart';
 
 class RunMotionEvidenceGate {
   const RunMotionEvidenceGate({
-    this.recentWindow = const Duration(seconds: 4),
-    this.requiredStepDelta = 2,
+    this.recentWindow = const Duration(seconds: 12),
+    this.requiredStepDelta = 1,
     this.minCadenceSpm = 40,
   });
 
@@ -42,6 +42,34 @@ class RunMotionEvidenceGate {
       }
     }
     return stepDelta >= requiredStepDelta;
+  }
+
+  int recentStepDelta(
+    List<RunMotionEvidence> evidence, {
+    required DateTime at,
+  }) {
+    if (!shouldUseMotion(evidence)) {
+      return 0;
+    }
+    var stepDelta = 0;
+    for (final item in evidence) {
+      if (!item.isAvailable) {
+        continue;
+      }
+      final delta = at.difference(item.timestamp);
+      if (delta < -const Duration(seconds: 1) || delta > recentWindow) {
+        continue;
+      }
+      stepDelta += item.stepDelta;
+    }
+    return stepDelta;
+  }
+
+  String availabilityLabel(List<RunMotionEvidence> evidence) {
+    if (evidence.isEmpty) {
+      return 'empty';
+    }
+    return evidence.last.sourceAvailability.name;
   }
 
   bool allowsMovementAt(

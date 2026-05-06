@@ -34,7 +34,7 @@ void main() {
 
     expect(healthRecorder.prepareCalls, 0);
     expect(healthRecorder.beginCalls, 0);
-    expect(find.byKey(const Key('live-run-metrics-panel')), findsOneWidget);
+    expect(find.byKey(const Key('live-run-dashboard-overlay')), findsOneWidget);
   });
 }
 

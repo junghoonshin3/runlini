@@ -49,7 +49,7 @@ void main() {
     expect(find.text('START'), findsNothing);
     expect(find.byKey(const Key('run-status-label')), findsNothing);
     expect(find.byKey(const Key('ghost-status-label')), findsNothing);
-    expect(find.byKey(const Key('live-run-metrics-panel')), findsNothing);
+    expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
     expect(find.byKey(const Key('pause-run-button')), findsNothing);
     expect(find.byKey(const Key('resume-run-button')), findsNothing);
     expect(deviceLocationClient.lastKnownFetchCount, 0);

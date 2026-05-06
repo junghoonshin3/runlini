@@ -1,6 +1,10 @@
 package kr.sjh.runlini.wear
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WearRunStateReducerTest {
@@ -160,6 +164,79 @@ class WearRunStateReducerTest {
 
         assertEquals(true, state.isGhostRun)
         assertEquals("ghost-1", state.ghostConfig?.id)
+    }
+
+    @Test
+    fun ghostRunDoesNotCreateIntervalFrame() {
+        val reducer = WearRunStateReducer()
+        val started = reducer.start(
+            WearRunState(
+                settings = WearRunSettings(
+                    intervalWorkout = WearIntervalWorkout(enabled = true),
+                ),
+            ),
+            epochMs = 1_000L,
+            realtimeMs = 10L,
+            ghostConfig = ghostConfig(),
+        )
+        val ticked = reducer.tick(started, realtimeMs = 70_010L)
+        val updated = reducer.applyMetrics(
+            ticked,
+            WearMetricSample(distanceM = 300.0),
+            realtimeMs = 70_020L,
+        )
+
+        assertNull(ticked.intervalFrame)
+        assertNull(updated.intervalFrame)
+    }
+
+    @Test
+    fun normalRunKeepsIntervalFrameWhenEnabled() {
+        val reducer = WearRunStateReducer()
+        val started = reducer.start(
+            WearRunState(
+                settings = WearRunSettings(
+                    intervalWorkout = WearIntervalWorkout(enabled = true),
+                ),
+            ),
+            epochMs = 1_000L,
+            realtimeMs = 10L,
+        )
+        val ticked = reducer.tick(started, realtimeMs = 70_010L)
+
+        assertNotNull(ticked.intervalFrame)
+    }
+
+    @Test
+    fun ghostCompletionDecisionCreatesPromptAndContinueSuppressesIt() {
+        val reducer = WearRunStateReducer()
+        val started = reducer.start(
+            WearRunState(),
+            epochMs = 1_000L,
+            realtimeMs = 10L,
+            ghostConfig = ghostConfig(),
+        )
+        val frame = WearGhostFrame(
+            status = WearGhostStatus.Ahead,
+            timeGapMs = 10_000L,
+            distanceGapM = 20.0,
+        )
+        val prompted = reducer.applyGhostCompletionDecision(
+            started,
+            WearGhostCompletionDecision(
+                isCandidate = true,
+                candidateCount = 2,
+                isComplete = true,
+            ),
+            frame,
+        )
+
+        assertTrue(prompted.ghostCompletionPrompt)
+        assertEquals(frame, prompted.ghostCompletionFrame)
+
+        val continued = reducer.continueAfterGhostCompletion(prompted)
+        assertFalse(continued.ghostCompletionPrompt)
+        assertTrue(continued.ghostCompletionDismissed)
     }
 
     private fun ghostConfig(): WearGhostConfig {

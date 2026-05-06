@@ -19,7 +19,7 @@ internal object WearActiveRunPageModel {
         return buildList {
             add(WearActiveRunPage.Controls)
             add(WearActiveRunPage.Core)
-            if (state.settings.intervalWorkout.enabled) {
+            if (!state.isGhostRun && state.settings.intervalWorkout.enabled) {
                 add(WearActiveRunPage.Interval)
             }
             if (state.isGhostRun) {

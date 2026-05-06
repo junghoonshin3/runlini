@@ -15,12 +15,19 @@ internal fun WearRunScreen(
         WearRunPhase.CountingDown -> WearCountdownScreen(state = state)
         WearRunPhase.Running,
         WearRunPhase.Paused,
-        -> WearActiveRunPager(
-            state = state,
-            onPause = actions.onPause,
-            onResume = actions.onResume,
-            onStop = actions.onStop,
-        )
+        -> if (state.ghostCompletionPrompt) {
+            WearGhostCompletionScreen(
+                onStop = actions.onStop,
+                onContinue = actions.onGhostCompletionContinue,
+            )
+        } else {
+            WearActiveRunPager(
+                state = state,
+                onPause = actions.onPause,
+                onResume = actions.onResume,
+                onStop = actions.onStop,
+            )
+        }
         WearRunPhase.Reviewing -> WearFinishReviewScreen(
             state = state,
             onSave = actions.onSave,
@@ -36,6 +43,7 @@ internal data class WearRunActions(
     val onPause: () -> Unit,
     val onStop: () -> Unit,
     val onResume: () -> Unit,
+    val onGhostCompletionContinue: () -> Unit,
     val onSave: () -> Unit,
     val onDiscard: () -> Unit,
     val onCountdownEnabledChange: (Boolean) -> Unit,
@@ -55,6 +63,7 @@ internal data class WearRunActions(
             onPause = {},
             onStop = {},
             onResume = {},
+            onGhostCompletionContinue = {},
             onSave = {},
             onDiscard = {},
             onCountdownEnabledChange = {},

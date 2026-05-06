@@ -8,6 +8,7 @@ import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
+import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
@@ -73,6 +74,40 @@ void main() {
     );
     expect(find.text('Nike Pegasus'), findsOneWidget);
   });
+
+  testWidgets('loads original ghost session for detail comparison', (
+    tester,
+  ) async {
+    final session = _runSession(
+      points: const [],
+      ghostSummary: const RunSessionGhostSummary(
+        result: RunSessionGhostResult.behind,
+        timeGapMs: -47000,
+        distanceGapM: 0,
+        ghostSessionId: 'ghost-a',
+        ghostLabel: 'Health Connect · kr.sjh.runlini',
+      ),
+    );
+    final repository = FakeRunSessionRepository([
+      session,
+      _runSession(
+        id: 'ghost-a',
+        durationMs: 600000,
+        distanceM: 1000,
+        points: const [],
+      ),
+    ]);
+    await _pumpDetail(tester, session: session, sessionRepository: repository);
+
+    await tester.ensureVisible(find.byKey(const Key('detail-ghost-compare')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('고스트 비교'), findsOneWidget);
+    expect(find.text('47초 늦었어요'), findsOneWidget);
+    await pumpUntilFound(tester, find.text('코스 시간'));
+    expect(find.text('코스 시간'), findsOneWidget);
+    expect(find.text('평균 페이스'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpDetail(
@@ -104,15 +139,22 @@ Future<void> _pumpDetail(
   );
 }
 
-RunSession _runSession({List<RunPoint>? points}) {
+RunSession _runSession({
+  String id = 'run-a',
+  int durationMs = 30 * 60 * 1000,
+  double distanceM = 5000,
+  List<RunPoint>? points,
+  RunSessionGhostSummary? ghostSummary,
+}) {
   final startedAt = DateTime(2026, 4, 26, 7);
   return RunSession(
-    id: 'run-a',
+    id: id,
     startedAt: startedAt,
-    endedAt: startedAt.add(const Duration(minutes: 30)),
-    distanceM: 5000,
-    durationMs: 30 * 60 * 1000,
+    endedAt: startedAt.add(Duration(milliseconds: durationMs)),
+    distanceM: distanceM,
+    durationMs: durationMs,
     sourceSummary: 'app',
+    ghostSummary: ghostSummary,
     points: points ?? _points,
   );
 }

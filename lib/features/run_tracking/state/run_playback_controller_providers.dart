@@ -230,6 +230,40 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     );
   }
 
+  void updateGhostCompletion({
+    required int candidateCount,
+    RunSessionGhostSummary? completedSummary,
+  }) {
+    if (!state.hasActiveSession) {
+      return;
+    }
+    if (state.ghostCompletionPromptDismissed ||
+        state.ghostCompletionPromptPending) {
+      return;
+    }
+    if (completedSummary != null) {
+      state = state.copyWith(
+        ghostCompletionCandidateCount: candidateCount,
+        ghostCompletionPromptPending: true,
+        ghostCompletionSummary: completedSummary,
+      );
+      return;
+    }
+    if (candidateCount != state.ghostCompletionCandidateCount) {
+      state = state.copyWith(ghostCompletionCandidateCount: candidateCount);
+    }
+  }
+
+  void continueAfterGhostCompletion() {
+    if (!state.hasActiveSession) {
+      return;
+    }
+    state = state.copyWith(
+      ghostCompletionPromptPending: false,
+      ghostCompletionPromptDismissed: true,
+    );
+  }
+
   void _applyAutoPauseSetting(bool enabled) {
     if (!state.hasActiveSession || state.autoPauseEnabled == enabled) {
       return;
