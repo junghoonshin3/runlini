@@ -11,6 +11,15 @@
 - Live GPS and accepted route points are separate: the map blue dot may follow
   the latest GPS fix, but distance, pace, calories, route polyline, and ghost
   comparison only use accepted recorded points.
+- Recorded route points are also split into verified segments before distance,
+  charts, and map polylines are calculated. A bridge is rejected when adjacent
+  points imply an excessive speed, have invalid time order, or combine a
+  `>30s` GPS gap with a `>100m` jump for live phone/watch GPS sources. The
+  point after the gap may start a new segment, but Runlini does not draw or
+  count the unknown bridge.
+- New run points persist horizontal accuracy and speed accuracy so later detail
+  screens and export paths can diagnose and filter poor GPS samples. Older
+  records keep null accuracy fields and fall back to timestamp/distance rules.
 - Stationary drift is filtered from recorded points with horizontal accuracy,
   speed, speed accuracy, minimum movement, max-speed, and acceleration gates.
 - When the platform provides motion evidence, stationary-lock recovery also

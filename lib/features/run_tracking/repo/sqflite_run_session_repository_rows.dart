@@ -46,6 +46,8 @@ Map<String, Object?> _pointRow(String sessionId, int index, RunPoint point) {
     'elevation_m': point.elevationM,
     'heart_rate_bpm': point.heartRateBpm,
     'cadence_spm': point.cadenceSpm,
+    'horizontal_accuracy_m': point.horizontalAccuracyM,
+    'speed_accuracy_mps': point.speedAccuracyMps,
     'source': point.source.name,
   };
 }
@@ -60,6 +62,8 @@ RunPoint _pointFromRow(Map<String, Object?> row) {
     elevationM: _nullableDouble(row['elevation_m']),
     heartRateBpm: _nullableInt(row['heart_rate_bpm']),
     cadenceSpm: _nullableDouble(row['cadence_spm']),
+    horizontalAccuracyM: _nullableDouble(row['horizontal_accuracy_m']),
+    speedAccuracyMps: _nullableDouble(row['speed_accuracy_mps']),
     source: RunPointSource.values.byName(row['source']! as String),
   );
 }

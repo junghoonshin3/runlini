@@ -27,6 +27,8 @@ class RunMapPanel extends ConsumerWidget {
         runnerMarkerPoint: mapViewState.runnerMarkerPoint,
         ghostMarkerPoint: mapViewState.ghostMarkerPoint,
         currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
+        currentRunnerPolylineSegments:
+            mapViewState.currentRunnerPolylineSegments,
         ghostPolylinePoints: mapViewState.ghostPolylinePoints,
         ghostPolylineSegments: mapViewState.ghostPolylineSegments,
       );
@@ -39,6 +41,8 @@ class RunMapPanel extends ConsumerWidget {
         ghostMarkerPoint: mapViewState.ghostMarkerPoint,
         recenterTargetPoint: mapViewState.recenterTargetPoint,
         currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
+        currentRunnerPolylineSegments:
+            mapViewState.currentRunnerPolylineSegments,
         ghostPolylinePoints: mapViewState.ghostPolylinePoints,
         ghostPolylineSegments: mapViewState.ghostPolylineSegments,
         recenterTick: recenterTick,
@@ -58,6 +62,8 @@ class RunMapPanel extends ConsumerWidget {
           ghostMarkerPoint: mapViewState.ghostMarkerPoint,
           recenterTargetPoint: mapViewState.recenterTargetPoint,
           currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
+          currentRunnerPolylineSegments:
+              mapViewState.currentRunnerPolylineSegments,
           ghostPolylinePoints: mapViewState.ghostPolylinePoints,
           ghostPolylineSegments: mapViewState.ghostPolylineSegments,
           recenterTick: recenterTick,

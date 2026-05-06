@@ -11,7 +11,7 @@ class RunliniDatabase {
        _databaseName = databaseName,
        _databasePath = databasePath;
 
-  static const int version = 7;
+  static const int version = 8;
 
   final DatabaseFactory _databaseFactory;
   final String _databaseName;
@@ -80,6 +80,8 @@ CREATE TABLE run_points (
   elevation_m REAL,
   heart_rate_bpm INTEGER,
   cadence_spm REAL,
+  horizontal_accuracy_m REAL,
+  speed_accuracy_mps REAL,
   source TEXT NOT NULL,
   PRIMARY KEY (session_id, sequence_index),
   FOREIGN KEY (session_id) REFERENCES run_sessions(id) ON DELETE CASCADE
@@ -123,6 +125,10 @@ CREATE TABLE run_points (
     }
     if (oldVersion < 7) {
       await _addColumnIfMissing(db, 'run_points', 'cadence_spm REAL');
+    }
+    if (oldVersion < 8) {
+      await _addColumnIfMissing(db, 'run_points', 'horizontal_accuracy_m REAL');
+      await _addColumnIfMissing(db, 'run_points', 'speed_accuracy_mps REAL');
     }
   }
 

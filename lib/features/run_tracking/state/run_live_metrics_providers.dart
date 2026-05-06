@@ -5,7 +5,9 @@ import 'package:runlini/features/run_tracking/state/run_settings_providers.dart'
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 
 final liveRunMetricsCalculatorProvider = Provider<LiveRunMetricsCalculator>(
-  (Ref ref) => const LiveRunMetricsCalculator(),
+  (Ref ref) => LiveRunMetricsCalculator(
+    routeSegmenter: ref.watch(runRouteSegmenterProvider),
+  ),
 );
 
 final liveRunMetricsTickerIntervalProvider = Provider<Duration>(

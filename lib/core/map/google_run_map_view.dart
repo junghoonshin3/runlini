@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/map/google_map_coordinate_adapter.dart';
 import 'package:runlini/core/map/google_run_marker_icons.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
@@ -13,6 +14,7 @@ class GoogleRunMapView extends StatefulWidget {
     this.ghostMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
+    required this.currentRunnerPolylineSegments,
     required this.ghostPolylinePoints,
     required this.ghostPolylineSegments,
     required this.recenterTick,
@@ -23,6 +25,7 @@ class GoogleRunMapView extends StatefulWidget {
   final MapCoordinate? ghostMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
+  final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
   final int recenterTick;
@@ -120,19 +123,7 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: false,
-      polylines: <gmap.Polyline>{
-        ..._ghostPolylines(),
-        if (widget.currentRunnerPolylinePoints.isNotEmpty)
-          gmap.Polyline(
-            polylineId: const gmap.PolylineId('runner-polyline'),
-            points: widget.currentRunnerPolylinePoints
-                .map((MapCoordinate point) => point.toGoogleLatLng())
-                .toList(growable: false),
-            color: AppColors.voltGreen,
-            width: 6,
-            zIndex: 2,
-          ),
-      },
+      polylines: <gmap.Polyline>{..._ghostPolylines(), ..._runnerPolylines()},
       markers: <gmap.Marker>{
         if (widget.ghostMarkerPoint != null && _ghostMarkerIcon != null)
           gmap.Marker(
@@ -151,6 +142,42 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
             zIndexInt: 3,
           ),
       },
+    );
+  }
+
+  Set<gmap.Polyline> _runnerPolylines() {
+    final segments = widget.currentRunnerPolylineSegments.isEmpty
+        ? <MapPolylineSegment>[
+            if (widget.currentRunnerPolylinePoints.length >= 2)
+              MapPolylineSegment(
+                points: widget.currentRunnerPolylinePoints,
+                color: AppColors.voltGreen,
+              ),
+          ]
+        : widget.currentRunnerPolylineSegments;
+    return <gmap.Polyline>{
+      for (var index = 0; index < segments.length; index += 1)
+        _runnerPolyline(
+          id: 'runner-polyline-$index',
+          points: segments[index].points,
+          color: segments[index].color,
+        ),
+    };
+  }
+
+  gmap.Polyline _runnerPolyline({
+    required String id,
+    required List<MapCoordinate> points,
+    required Color color,
+  }) {
+    return gmap.Polyline(
+      polylineId: gmap.PolylineId(id),
+      points: points
+          .map((MapCoordinate point) => point.toGoogleLatLng())
+          .toList(growable: false),
+      color: color,
+      width: 6,
+      zIndex: 2,
     );
   }
 
@@ -212,7 +239,7 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
         return;
       }
 
-      final bounds = _boundsFor(widget.ghostPolylinePoints);
+      final bounds = googleBoundsFor(widget.ghostPolylinePoints);
       final hasSinglePointBounds =
           bounds.southwest.latitude == bounds.northeast.latitude &&
           bounds.southwest.longitude == bounds.northeast.longitude;
@@ -231,33 +258,6 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
         gmap.CameraUpdate.newLatLngBounds(bounds, 64),
       );
     });
-  }
-
-  gmap.LatLngBounds _boundsFor(List<MapCoordinate> points) {
-    var south = points.first.latitude;
-    var north = points.first.latitude;
-    var west = points.first.longitude;
-    var east = points.first.longitude;
-
-    for (final point in points.skip(1)) {
-      if (point.latitude < south) {
-        south = point.latitude;
-      }
-      if (point.latitude > north) {
-        north = point.latitude;
-      }
-      if (point.longitude < west) {
-        west = point.longitude;
-      }
-      if (point.longitude > east) {
-        east = point.longitude;
-      }
-    }
-
-    return gmap.LatLngBounds(
-      southwest: gmap.LatLng(south, west),
-      northeast: gmap.LatLng(north, east),
-    );
   }
 
   Future<void> _loadRunnerMarkerIcon(double devicePixelRatio) async {
@@ -286,11 +286,5 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       _ghostMarkerIcon = icon;
       _ghostMarkerDevicePixelRatio = devicePixelRatio;
     });
-  }
-}
-
-extension on MapCoordinate {
-  gmap.LatLng toGoogleLatLng() {
-    return gmap.LatLng(latitude, longitude);
   }
 }

@@ -8,6 +8,7 @@ class RunMapViewState {
     this.runnerMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
+    this.currentRunnerPolylineSegments = const <MapPolylineSegment>[],
     required this.ghostPolylinePoints,
     this.ghostPolylineSegments = const <MapPolylineSegment>[],
     this.ghostMarkerPoint,
@@ -18,6 +19,7 @@ class RunMapViewState {
   final MapCoordinate? runnerMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
+  final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
   final MapCoordinate? ghostMarkerPoint;
@@ -28,6 +30,7 @@ class RunMapViewState {
     MapCoordinate? runnerMarkerPoint,
     MapCoordinate? recenterTargetPoint,
     List<MapCoordinate>? currentRunnerPolylinePoints,
+    List<MapPolylineSegment>? currentRunnerPolylineSegments,
     List<MapCoordinate>? ghostPolylinePoints,
     List<MapPolylineSegment>? ghostPolylineSegments,
     MapCoordinate? ghostMarkerPoint,
@@ -40,6 +43,8 @@ class RunMapViewState {
       recenterTargetPoint: recenterTargetPoint ?? this.recenterTargetPoint,
       currentRunnerPolylinePoints:
           currentRunnerPolylinePoints ?? this.currentRunnerPolylinePoints,
+      currentRunnerPolylineSegments:
+          currentRunnerPolylineSegments ?? this.currentRunnerPolylineSegments,
       ghostPolylinePoints: ghostPolylinePoints ?? this.ghostPolylinePoints,
       ghostPolylineSegments:
           ghostPolylineSegments ?? this.ghostPolylineSegments,

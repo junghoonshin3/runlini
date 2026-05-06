@@ -12,6 +12,7 @@ class FakeRunMapSurface extends StatelessWidget {
     this.runnerMarkerPoint,
     this.ghostMarkerPoint,
     required this.currentRunnerPolylinePoints,
+    this.currentRunnerPolylineSegments = const <MapPolylineSegment>[],
     required this.ghostPolylinePoints,
     required this.ghostPolylineSegments,
   });
@@ -20,6 +21,7 @@ class FakeRunMapSurface extends StatelessWidget {
   final MapCoordinate? runnerMarkerPoint;
   final MapCoordinate? ghostMarkerPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
+  final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
 
@@ -40,6 +42,9 @@ class FakeRunMapSurface extends StatelessWidget {
         (MapPolylineSegment segment) => segment.points,
       ),
       ...currentRunnerPolylinePoints,
+      ...currentRunnerPolylineSegments.expand(
+        (MapPolylineSegment segment) => segment.points,
+      ),
     ];
 
     return ColoredBox(
@@ -81,17 +86,24 @@ class FakeRunMapSurface extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (currentRunnerPolylinePoints.isNotEmpty)
+              if (_runnerSegments().isNotEmpty)
                 Positioned.fill(
                   child: KeyedSubtree(
                     key: const Key('runner-polyline-layer'),
-                    child: CustomPaint(
-                      painter: _PolylinePainter(
-                        points: currentRunnerPolylinePoints,
-                        allPoints: allPoints,
-                        color: AppColors.voltGreen,
-                        strokeWidth: 6,
-                      ),
+                    child: Stack(
+                      children: [
+                        for (final segment in _runnerSegments())
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _PolylinePainter(
+                                points: segment.points,
+                                allPoints: allPoints,
+                                color: segment.color,
+                                strokeWidth: 6,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -174,6 +186,21 @@ class FakeRunMapSurface extends StatelessWidget {
         },
       ),
     );
+  }
+
+  List<MapPolylineSegment> _runnerSegments() {
+    if (currentRunnerPolylineSegments.isNotEmpty) {
+      return currentRunnerPolylineSegments;
+    }
+    if (currentRunnerPolylinePoints.length < 2) {
+      return const <MapPolylineSegment>[];
+    }
+    return <MapPolylineSegment>[
+      MapPolylineSegment(
+        points: currentRunnerPolylinePoints,
+        color: AppColors.voltGreen,
+      ),
+    ];
   }
 
   List<MapPolylineSegment> _ghostSegments() {

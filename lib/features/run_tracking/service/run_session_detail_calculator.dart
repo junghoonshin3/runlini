@@ -1,20 +1,28 @@
-import 'package:latlong2/latlong.dart';
 import 'package:runlini/core/location/run_pace_sample_sanitizer.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_detail.dart';
 
 class RunSessionDetailCalculator {
-  const RunSessionDetailCalculator();
+  const RunSessionDetailCalculator({
+    this.routeSegmenter = const RunRouteSegmenter(),
+  });
 
-  static const Distance _distance = Distance();
   static const _paceSanitizer = RunPaceSampleSanitizer();
+
+  final RunRouteSegmenter routeSegmenter;
 
   RunSessionDetail calculate(
     RunSession session, {
     double splitDistanceM = 1000,
   }) {
-    final distanceKm = session.distanceM / 1000;
+    final route = routeSegmenter.segment(session.points);
+    final routeDistanceM = session.points.length < 2
+        ? session.distanceM
+        : route.distanceM;
+    final metricPoints = route.metricPoints;
+    final distanceKm = routeDistanceM / 1000;
     final safeSplitDistanceM = splitDistanceM.isFinite && splitDistanceM > 0
         ? splitDistanceM
         : 1000.0;
@@ -31,9 +39,9 @@ class RunSessionDetailCalculator {
           : '${session.caloriesKcal!.round()} kcal',
       averageHeartRateBpm: _averageHeartRate(session.points),
       elevationGainM: _elevationGain(session.points),
-      splits: _splits(session.points, splitDistanceM: safeSplitDistanceM),
-      paceSamplesSecPerKm: _paceSamples(session.points),
-      speedSamplesKmh: _speedSamples(session.points),
+      splits: _splits(route, splitDistanceM: safeSplitDistanceM),
+      paceSamplesSecPerKm: _paceSamples(metricPoints, route.transitions),
+      speedSamplesKmh: _speedSamples(metricPoints, route.transitions),
       elevationSamplesM: session.points
           .where((point) => _isUsableElevation(point.elevationM))
           .map(
@@ -111,13 +119,17 @@ class RunSessionDetailCalculator {
         cadenceSpm <= 260;
   }
 
-  List<RunMetricSample> _speedSamples(List<RunPoint> points) {
+  List<RunMetricSample> _speedSamples(
+    List<RunPoint> points,
+    List<RunRouteTransition> transitions,
+  ) {
     final direct = points
         .where(
           (point) =>
               point.speedMps != null &&
               point.speedMps!.isFinite &&
-              point.speedMps! > 0,
+              point.speedMps! > 0 &&
+              point.speedMps! <= routeSegmenter.maxBridgeSpeedMps,
         )
         .map(
           (point) => RunMetricSample(
@@ -129,32 +141,33 @@ class RunSessionDetailCalculator {
     if (direct.isNotEmpty) {
       return direct;
     }
-    if (points.length < 2) {
+    if (transitions.isEmpty) {
       return const <RunMetricSample>[];
     }
 
     final samples = <RunMetricSample>[];
-    for (var index = 1; index < points.length; index += 1) {
-      final previous = points[index - 1];
-      final current = points[index];
-      final elapsedMs = current.timestampRelMs - previous.timestampRelMs;
-      if (elapsedMs <= 0) {
-        continue;
-      }
-      final meters = _metersBetween(previous, current);
+    for (final transition in transitions) {
       samples.add(
         RunMetricSample(
-          elapsedMs: current.timestampRelMs,
-          value: (meters / (elapsedMs / 1000)) * 3.6,
+          elapsedMs: transition.current.timestampRelMs,
+          value: (transition.distanceM / (transition.elapsedMs / 1000)) * 3.6,
         ),
       );
     }
     return samples;
   }
 
-  List<RunMetricSample> _paceSamples(List<RunPoint> points) {
+  List<RunMetricSample> _paceSamples(
+    List<RunPoint> points,
+    List<RunRouteTransition> transitions,
+  ) {
     final direct = points
-        .where((point) => _paceSanitizer.isRenderablePace(point.paceSecPerKm))
+        .where(
+          (point) =>
+              _paceSanitizer.isRenderablePace(point.paceSecPerKm) &&
+              (point.speedMps == null ||
+                  point.speedMps! <= routeSegmenter.maxBridgeSpeedMps),
+        )
         .map(
           (point) => RunMetricSample(
             elapsedMs: point.timestampRelMs,
@@ -165,39 +178,37 @@ class RunSessionDetailCalculator {
     if (direct.isNotEmpty) {
       return direct;
     }
-    if (points.length < 2) {
+    if (transitions.isEmpty) {
       return const <RunMetricSample>[];
     }
 
     final samples = <RunMetricSample>[];
-    for (var index = 1; index < points.length; index += 1) {
-      final previous = points[index - 1];
-      final current = points[index];
-      final elapsedMs = current.timestampRelMs - previous.timestampRelMs;
-      final meters = _metersBetween(previous, current);
-      if (elapsedMs <= 0 || meters <= 0) {
-        continue;
-      }
-      final pace = (elapsedMs / 1000) / (meters / 1000);
+    for (final transition in transitions) {
+      final pace =
+          (transition.elapsedMs / 1000) / (transition.distanceM / 1000);
       if (!_paceSanitizer.isRenderablePace(pace)) {
         continue;
       }
       samples.add(
-        RunMetricSample(elapsedMs: current.timestampRelMs, value: pace),
+        RunMetricSample(
+          elapsedMs: transition.current.timestampRelMs,
+          value: pace,
+        ),
       );
     }
     return samples;
   }
 
   List<RunSplitDetail> _splits(
-    List<RunPoint> points, {
+    RunRouteSegments route, {
     required double splitDistanceM,
   }) {
-    if (points.length < 2) {
+    final transitions = route.transitions;
+    if (transitions.isEmpty) {
       return const <RunSplitDetail>[];
     }
 
-    final cumulativeMeters = _cumulativeMeters(points);
+    final cumulativeMeters = _cumulativeMeters(transitions);
     final totalMeters = cumulativeMeters.last;
     if (totalMeters <= 0) {
       return const <RunSplitDetail>[];
@@ -213,7 +224,7 @@ class RunSessionDetailCalculator {
         totalMeters,
       );
       final boundaryMs = _elapsedAtDistance(
-        points: points,
+        transitions: transitions,
         cumulativeMeters: cumulativeMeters,
         targetM: nextBoundaryM.toDouble(),
       );
@@ -237,18 +248,16 @@ class RunSessionDetailCalculator {
     return splits;
   }
 
-  List<double> _cumulativeMeters(List<RunPoint> points) {
+  List<double> _cumulativeMeters(List<RunRouteTransition> transitions) {
     final values = <double>[0];
-    for (var index = 1; index < points.length; index += 1) {
-      values.add(
-        values.last + _metersBetween(points[index - 1], points[index]),
-      );
+    for (final transition in transitions) {
+      values.add(values.last + transition.distanceM);
     }
     return values;
   }
 
   int _elapsedAtDistance({
-    required List<RunPoint> points,
+    required List<RunRouteTransition> transitions,
     required List<double> cumulativeMeters,
     required double targetM,
   }) {
@@ -262,18 +271,11 @@ class RunSessionDetailCalculator {
           : ((targetM - cumulativeMeters[index - 1]) / segmentM)
                 .clamp(0.0, 1.0)
                 .toDouble();
-      final startMs = points[index - 1].timestampRelMs;
-      final endMs = points[index].timestampRelMs;
+      final transition = transitions[index - 1];
+      final startMs = transition.previous.timestampRelMs;
+      final endMs = transition.current.timestampRelMs;
       return startMs + ((endMs - startMs) * ratio).round();
     }
-    return points.last.timestampRelMs;
-  }
-
-  double _metersBetween(RunPoint previous, RunPoint current) {
-    return _distance.as(
-      LengthUnit.Meter,
-      LatLng(previous.latitude, previous.longitude),
-      LatLng(current.latitude, current.longitude),
-    );
+    return transitions.last.current.timestampRelMs;
   }
 }

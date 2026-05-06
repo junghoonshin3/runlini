@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/core/map/map_polyline_segment.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
@@ -77,11 +79,31 @@ final currentRunnerPolylinePointsProvider = Provider<List<MapCoordinate>>((
   return mapCoordinatesFromRunPoints(playbackState.recordedPoints);
 });
 
+final currentRunnerPolylineSegmentsProvider =
+    Provider<List<MapPolylineSegment>>((Ref ref) {
+      final playbackState = ref.watch(runPlaybackControllerProvider);
+      final route = ref
+          .watch(runRouteSegmenterProvider)
+          .segment(playbackState.recordedPoints);
+      return route.segments
+          .where((segment) => segment.length >= 2)
+          .map(
+            (segment) => MapPolylineSegment(
+              points: mapCoordinatesFromRunPoints(segment),
+              color: AppColors.voltGreen,
+            ),
+          )
+          .toList(growable: false);
+    });
+
 final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final staticState = ref.watch(runMapStaticStateProvider).value;
 
   final currentRunnerPolylinePoints = ref.watch(
     currentRunnerPolylinePointsProvider,
+  );
+  final currentRunnerPolylineSegments = ref.watch(
+    currentRunnerPolylineSegmentsProvider,
   );
   final liveLocationPoint = ref.watch(liveLocationProvider)?.toMapCoordinate();
   final ghostPolylinePoints =
@@ -97,6 +119,7 @@ final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
     runnerMarkerPoint: liveLocationPoint,
     recenterTargetPoint: liveLocationPoint,
     currentRunnerPolylinePoints: currentRunnerPolylinePoints,
+    currentRunnerPolylineSegments: currentRunnerPolylineSegments,
     ghostPolylinePoints: ghostPolylinePoints,
     ghostPolylineSegments: staticState?.ghostPolylineSegments ?? const [],
     selectedGhostSession: staticState?.selectedGhostSession,
