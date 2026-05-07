@@ -7,6 +7,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+fun hasGoogleServicesConfig(): Boolean =
+    listOf(
+        "google-services.json",
+        "src/debug/google-services.json",
+        "src/profile/google-services.json",
+        "src/release/google-services.json",
+    ).any { path -> file(path).exists() }
+
+if (hasGoogleServicesConfig()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 val localProperties = Properties().apply {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
