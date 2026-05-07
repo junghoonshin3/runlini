@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/core/voice/run_voice_cue_client.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_voice_cue_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 import 'helpers/fake_run_settings_repository.dart';
@@ -44,11 +46,14 @@ void main() {
   testWidgets('ghost run starts and shows race feedback with high accuracy', (
     WidgetTester tester,
   ) async {
+    final voiceClient = _FakeRunVoiceCueClient();
     await _pumpGhostRunApp(
       tester,
       settings: const RunSettingsState(
         locationTrackingPreset: RunLocationTrackingPreset.highAccuracy,
+        ghostVoiceCueEnabled: true,
       ),
+      voiceClient: voiceClient,
     );
 
     expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
@@ -63,9 +68,10 @@ void main() {
     );
     expect(find.byKey(const Key('ghost-run-accuracy-dialog')), findsNothing);
 
-    await tester.pump(const Duration(milliseconds: 30));
+    await tester.pump(const Duration(milliseconds: 40));
     await tester.pump();
 
+    expect(voiceClient.spoken, contains('고스트런 시작'));
     expect(find.byKey(const Key('live-run-dashboard-overlay')), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
 
@@ -85,6 +91,7 @@ void main() {
 Future<void> _pumpGhostRunApp(
   WidgetTester tester, {
   required RunSettingsState settings,
+  RunVoiceCueClient? voiceClient,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -108,6 +115,8 @@ Future<void> _pumpGhostRunApp(
         runStartCountdownStepDurationProvider.overrideWithValue(
           const Duration(milliseconds: 10),
         ),
+        if (voiceClient != null)
+          runVoiceCueClientProvider.overrideWithValue(voiceClient),
       ],
       child: const RunliniApp(),
     ),
@@ -115,4 +124,16 @@ Future<void> _pumpGhostRunApp(
   await tester.pump();
   await openRunningTab(tester);
   await pumpUntilFound(tester, find.byKey(const Key('run-map')));
+}
+
+class _FakeRunVoiceCueClient implements RunVoiceCueClient {
+  final spoken = <String>[];
+
+  @override
+  Future<void> speak(String text, {required double volume}) async {
+    spoken.add(text);
+  }
+
+  @override
+  Future<void> stop() async {}
 }

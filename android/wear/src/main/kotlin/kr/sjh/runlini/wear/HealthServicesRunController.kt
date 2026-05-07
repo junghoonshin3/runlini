@@ -275,6 +275,7 @@ class HealthServicesRunController(
             try {
                 exerciseClient.setUpdateCallback(callback)
                 exerciseClient.startExercise(buildExerciseConfig())
+                alertController.onRunStarted(_state.value.settings, ghostConfig != null)
             } catch (error: Throwable) {
                 stopTicker()
                 runCatching { exerciseClient.clearUpdateCallback(callback) }
@@ -619,6 +620,7 @@ class HealthServicesRunController(
             settings = state.settings,
             elapsedMs = state.elapsedMs,
             isGhostRun = state.isGhostRun,
+            ghostFrame = state.ghostFrame,
         )
         alertController.onGhostFrame(
             frame = state.ghostFrame,
@@ -654,7 +656,11 @@ class HealthServicesRunController(
             frame,
         )
         if (!state.ghostCompletionPrompt && completed.ghostCompletionPrompt) {
-            alertController.onGhostCompleted(completed.settings, completed.isGhostRun)
+            alertController.onGhostCompleted(
+                completed.settings,
+                completed.isGhostRun,
+                completed.ghostCompletionFrame ?: frame,
+            )
         }
         return completed
     }

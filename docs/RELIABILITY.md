@@ -46,4 +46,12 @@
 - Auto pause settings apply to the current run immediately. Turning the setting
   off while Runlini is auto-paused resumes elapsed time from that moment, but
   the GPS drift filter remains active.
+- Ghost-run finish prompts are evaluated only while the run is actively
+  running. Manual pause defers completion prompts until the runner resumes and
+  a fresh frame confirms the finish; completion haptics and voice cues are
+  best-effort and must never crash the app.
+- Ghost-run completion keeps a conservative minimum-distance gate: reaching the
+  finish coordinate is not enough unless accepted runner distance is at least
+  90% of the ghost route. Debug/profile builds log near-finish blocked reasons
+  so field tests can distinguish GPS undercount from UI failures.
 - Real-device field testing is required before trusting gap feedback.

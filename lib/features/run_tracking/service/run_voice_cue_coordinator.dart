@@ -1,10 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
+import 'package:runlini/features/run_tracking/service/run_voice_cue_formatter.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
-import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -39,9 +37,18 @@ class RunVoiceCueSnapshot {
 }
 
 class RunVoiceCueCoordinator {
+  static const Duration _offRouteStableDuration = Duration(seconds: 10);
+  static const Duration _crossingStableDuration = Duration(seconds: 15);
+
   String? _activeSessionId;
   int _lastSpokenKm = 0;
   String? _lastIntervalStepKey;
+  GhostRaceStatus? _ghostCandidateStatus;
+  DateTime? _ghostCandidateSince;
+  GhostRaceStatus? _lastStableRaceStatus;
+  bool _offRouteCueSpoken = false;
+  bool _returnCueSpoken = false;
+  String? _ghostCompletionCueSessionId;
 
   List<RunVoiceCue> cuesFor(RunVoiceCueSnapshot snapshot) {
     final playback = snapshot.playbackState;
@@ -58,7 +65,6 @@ class RunVoiceCueCoordinator {
     if (playback.status != RunScreenStatus.running ||
         metrics == null ||
         metrics.isPaused ||
-        snapshot.isGhostRun ||
         !snapshot.settings.voiceCueEnabled) {
       return const <RunVoiceCue>[];
     }
@@ -70,28 +76,69 @@ class RunVoiceCueCoordinator {
     );
     final safeVolume = volume.toDouble();
 
-    final kmCue = _kilometerCue(metrics, snapshot.settings);
+    final kmCue = _kilometerCue(
+      metrics,
+      snapshot.settings,
+      snapshot.isGhostRun ? snapshot.ghostFrame : null,
+    );
     if (kmCue != null) {
       cues.add(RunVoiceCue(text: kmCue, volume: safeVolume));
     }
-    final intervalCue = _intervalCue(snapshot.intervalFrame);
+    final intervalCue = snapshot.isGhostRun
+        ? null
+        : _intervalCue(snapshot.intervalFrame);
     if (intervalCue != null) {
       cues.add(RunVoiceCue(text: intervalCue, volume: safeVolume));
     }
-    final ghostCue = _ghostCue();
-    if (ghostCue != null) {
-      cues.add(RunVoiceCue(text: ghostCue, volume: safeVolume));
+    if (snapshot.isGhostRun && snapshot.settings.ghostVoiceCueEnabled) {
+      final ghostCue = _ghostEventCue(snapshot);
+      if (ghostCue != null) {
+        cues.add(RunVoiceCue(text: ghostCue, volume: safeVolume));
+      }
+      final completionCue = _ghostCompletionCue(snapshot);
+      if (completionCue != null) {
+        cues.add(RunVoiceCue(text: completionCue, volume: safeVolume));
+      }
     }
     return cues;
+  }
+
+  RunVoiceCue? ghostStartCueFor({
+    required bool isGhostRun,
+    required RunSettingsState settings,
+  }) {
+    if (!isGhostRun ||
+        !settings.voiceCueEnabled ||
+        !settings.ghostVoiceCueEnabled) {
+      return null;
+    }
+    final volume = settings.voiceCueVolume.clamp(
+      runVoiceCueVolumeMin,
+      runVoiceCueVolumeMax,
+    );
+    return RunVoiceCue(
+      text: RunVoiceCueFormatter.ghostStart(),
+      volume: volume.toDouble(),
+    );
   }
 
   void reset() {
     _activeSessionId = null;
     _lastSpokenKm = 0;
     _lastIntervalStepKey = null;
+    _ghostCandidateStatus = null;
+    _ghostCandidateSince = null;
+    _lastStableRaceStatus = null;
+    _offRouteCueSpoken = false;
+    _returnCueSpoken = false;
+    _ghostCompletionCueSessionId = null;
   }
 
-  String? _kilometerCue(LiveRunMetrics metrics, RunSettingsState settings) {
+  String? _kilometerCue(
+    LiveRunMetrics metrics,
+    RunSettingsState settings,
+    GhostRaceFrame? ghostFrame,
+  ) {
     if (!settings.kmVoiceCueEnabled) {
       return null;
     }
@@ -104,6 +151,7 @@ class RunVoiceCueCoordinator {
       kilometer: currentKm,
       averagePaceSecPerKm: metrics.averagePaceSecPerKm,
       elapsedMs: metrics.elapsedMs,
+      ghostGapMs: _ghostGapForKilometerCue(ghostFrame),
     );
   }
 
@@ -119,90 +167,84 @@ class RunVoiceCueCoordinator {
       return null;
     }
     _lastIntervalStepKey = key;
-    return _intervalStepLabel(step);
+    return RunVoiceCueFormatter.intervalStepLabel(step);
   }
 
-  String? _ghostCue() {
-    return null;
-  }
-}
-
-class RunVoiceCueFormatter {
-  const RunVoiceCueFormatter._();
-
-  static String kilometerSummary({
-    required int kilometer,
-    required double? averagePaceSecPerKm,
-    required int elapsedMs,
-  }) {
-    final parts = <String>['$kilometer킬로미터'];
-    final pace = paceSpeech(averagePaceSecPerKm);
-    if (pace != null) {
-      parts.add('평균 페이스 $pace');
-    }
-    final elapsed = elapsedSpeech(elapsedMs);
-    if (elapsed != null) {
-      parts.add('시간 $elapsed');
-    }
-    return parts.join(', ');
-  }
-
-  static String? paceSpeech(double? paceSecPerKm) {
-    final pace = paceSecPerKm?.takeIfFinitePositive();
-    if (pace == null) {
+  int? _ghostGapForKilometerCue(GhostRaceFrame? frame) {
+    if (frame == null ||
+        frame.status == GhostRaceStatus.offRoute ||
+        frame.status == GhostRaceStatus.unavailable) {
       return null;
     }
-    final totalSeconds = pace.round().clamp(1, 24 * 60 * 60).toInt();
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    if (seconds == 0) {
-      return '$minutes분';
-    }
-    return '$minutes분 $seconds초';
-  }
-
-  static String? elapsedSpeech(int elapsedMs) {
-    if (elapsedMs <= 0) {
+    if (frame.timeGapMs == 0) {
       return null;
     }
-    final totalSeconds = math.max(1, elapsedMs ~/ 1000);
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
-    final parts = <String>[];
-    if (hours > 0) {
-      parts.add('$hours시간');
-    }
-    if (minutes > 0) {
-      parts.add('$minutes분');
-    }
-    if (seconds > 0 || parts.isEmpty) {
-      parts.add('$seconds초');
-    }
-    return parts.join(' ');
+    return frame.timeGapMs;
   }
-}
 
-String _intervalStepLabel(RunIntervalStep step) {
-  final base = switch (step.kind) {
-    RunIntervalStepKind.warmup => '워밍업',
-    RunIntervalStepKind.work => '질주',
-    RunIntervalStepKind.recovery => '휴식',
-    RunIntervalStepKind.cooldown => '쿨다운',
-    RunIntervalStepKind.finished => '완료',
-  };
-  final repeatIndex = step.repeatIndex;
-  if (repeatIndex == null) {
-    return base;
-  }
-  return '$base $repeatIndex/${step.repeatCount}';
-}
-
-extension on double {
-  double? takeIfFinitePositive() {
-    if (!isFinite || this <= 0) {
+  String? _ghostEventCue(RunVoiceCueSnapshot snapshot) {
+    final frame = snapshot.ghostFrame;
+    if (frame == null || frame.status == GhostRaceStatus.unavailable) {
       return null;
     }
-    return this;
+    final status = frame.status;
+    final now = snapshot.now;
+    if (_ghostCandidateStatus != status) {
+      _ghostCandidateStatus = status;
+      _ghostCandidateSince = now;
+      return null;
+    }
+
+    final stableFor = now.difference(_ghostCandidateSince ?? now);
+    if (status == GhostRaceStatus.offRoute) {
+      if (!_offRouteCueSpoken && stableFor >= _offRouteStableDuration) {
+        _offRouteCueSpoken = true;
+        return '경로를 벗어났어요';
+      }
+      return null;
+    }
+
+    if (_offRouteCueSpoken &&
+        !_returnCueSpoken &&
+        stableFor >= _offRouteStableDuration) {
+      _returnCueSpoken = true;
+      return '경로로 돌아왔어요';
+    }
+
+    if (stableFor < _crossingStableDuration) {
+      return null;
+    }
+    if (status == GhostRaceStatus.level) {
+      _lastStableRaceStatus = status;
+      return null;
+    }
+    if (status != GhostRaceStatus.ahead && status != GhostRaceStatus.behind) {
+      return null;
+    }
+
+    final previousStableStatus = _lastStableRaceStatus;
+    _lastStableRaceStatus = status;
+    if (previousStableStatus == null || previousStableStatus == status) {
+      return null;
+    }
+    return switch (status) {
+      GhostRaceStatus.ahead => '고스트를 앞섰어요',
+      GhostRaceStatus.behind => '고스트에게 뒤처졌어요',
+      GhostRaceStatus.level ||
+      GhostRaceStatus.offRoute ||
+      GhostRaceStatus.unavailable => null,
+    };
+  }
+
+  String? _ghostCompletionCue(RunVoiceCueSnapshot snapshot) {
+    final activeSessionId = snapshot.playbackState.activeSessionId;
+    final summary = snapshot.playbackState.ghostCompletionSummary;
+    if (activeSessionId == null ||
+        summary == null ||
+        _ghostCompletionCueSessionId == activeSessionId) {
+      return null;
+    }
+    _ghostCompletionCueSessionId = activeSessionId;
+    return RunVoiceCueFormatter.ghostCompletion(summary);
   }
 }

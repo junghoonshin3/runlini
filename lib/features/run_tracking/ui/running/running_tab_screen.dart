@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
@@ -27,6 +26,7 @@ import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_over
 import 'package:runlini/features/run_tracking/ui/running/run_control_buttons.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_ghost_completion_overlay.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_ghost_completion_side_effects.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_ghost_control_chip.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_map_panel.dart';
@@ -35,6 +35,7 @@ import 'package:runlini/features/run_tracking/ui/running/run_session_ghost_summa
 import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 part 'running_tab_screen_actions.dart';
+part 'running_tab_screen_voice.dart';
 
 final bool _isFlutterTest = Platform.environment.containsKey('FLUTTER_TEST');
 
@@ -219,23 +220,6 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     );
   }
 
-  void _listenForRunVoiceCues() {
-    ref.listen(runVoiceCueSnapshotProvider, (previous, next) {
-      final cues = _voiceCueCoordinator.cuesFor(next);
-      if (cues.isEmpty) {
-        return;
-      }
-      unawaited(_speakRunVoiceCues(cues));
-    });
-  }
-
-  Future<void> _speakRunVoiceCues(List<RunVoiceCue> cues) async {
-    final client = ref.read(runVoiceCueClientProvider);
-    for (final cue in cues) {
-      await client.speak(cue.text, volume: cue.volume);
-    }
-  }
-
   void _listenForGhostCompletion(BuildContext context) {
     ref.listen(ghostRaceFrameProvider, (previous, next) {
       final frame = next;
@@ -249,21 +233,45 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
           ?.selectedGhostSession;
       final liveMetrics = ref.read(liveRunMetricsProvider);
       if (!playbackState.hasActiveSession ||
+          playbackState.status != RunScreenStatus.running ||
           selectedGhostSession == null ||
           liveMetrics == null) {
         return;
       }
+      final runnerDistanceM = liveMetrics.distanceKm * 1000;
       final decision = ref
           .read(ghostRaceCompletionDetectorProvider)
           .evaluate(
             frame: frame,
-            runnerDistanceM: liveMetrics.distanceKm * 1000,
+            runnerDistanceM: runnerDistanceM,
             previousCandidateCount: playbackState.ghostCompletionCandidateCount,
           );
       if (decision.isComplete &&
           !playbackState.ghostCompletionPromptPending &&
           !playbackState.ghostCompletionPromptDismissed) {
-        unawaited(HapticFeedback.mediumImpact());
+        debugGhostCompletionDecision(
+          playbackState: playbackState,
+          frame: frame,
+          runnerDistanceM: runnerDistanceM,
+          candidateCount: decision.candidateCount,
+          isComplete: true,
+        );
+        unawaited(emitGhostCompletionHaptic());
+      } else if (decision.isCandidate) {
+        debugGhostCompletionDecision(
+          playbackState: playbackState,
+          frame: frame,
+          runnerDistanceM: runnerDistanceM,
+          candidateCount: decision.candidateCount,
+          isComplete: false,
+        );
+      } else {
+        debugGhostCompletionBlockedDecision(
+          playbackState: playbackState,
+          frame: frame,
+          runnerDistanceM: runnerDistanceM,
+          candidateCount: decision.candidateCount,
+        );
       }
       ref
           .read(runPlaybackControllerProvider.notifier)
