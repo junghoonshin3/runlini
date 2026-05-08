@@ -75,6 +75,41 @@ void main() {
         .pendingFinishedSession;
     expect(pendingSession?.ghostSummary, summary);
   });
+
+  test(
+    'ghost completion is ignored while manually paused and works after resume',
+    () async {
+      final streamClient = TrackingLocationStreamClient();
+      final summary = _ghostSummary();
+      final container = _container(streamClient: streamClient);
+      addTearDown(() async {
+        await streamClient.close();
+        container.dispose();
+      });
+
+      await _startRun(container, streamClient);
+      await container.read(runPlaybackControllerProvider.notifier).pause();
+      container
+          .read(runPlaybackControllerProvider.notifier)
+          .updateGhostCompletion(candidateCount: 2, completedSummary: summary);
+
+      var playbackState = container.read(runPlaybackControllerProvider);
+      expect(playbackState.ghostCompletionPromptPending, isFalse);
+      expect(playbackState.ghostCompletionSummary, isNull);
+
+      await container.read(runPlaybackControllerProvider.notifier).resume();
+      container
+          .read(runPlaybackControllerProvider.notifier)
+          .updateGhostCompletion(candidateCount: 1);
+      container
+          .read(runPlaybackControllerProvider.notifier)
+          .updateGhostCompletion(candidateCount: 2, completedSummary: summary);
+
+      playbackState = container.read(runPlaybackControllerProvider);
+      expect(playbackState.ghostCompletionPromptPending, isTrue);
+      expect(playbackState.ghostCompletionSummary, summary);
+    },
+  );
 }
 
 ProviderContainer _container({

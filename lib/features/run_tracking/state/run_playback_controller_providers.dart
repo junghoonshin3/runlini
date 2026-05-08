@@ -234,7 +234,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     required int candidateCount,
     RunSessionGhostSummary? completedSummary,
   }) {
-    if (!state.hasActiveSession) {
+    if (!state.hasActiveSession || state.status != RunScreenStatus.running) {
       return;
     }
     if (state.ghostCompletionPromptDismissed ||

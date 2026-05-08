@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -39,6 +40,9 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
     } on MissingPluginException {
       return;
     } on PlatformException {
+      return;
+    } catch (error) {
+      debugPrint('Runlini voice cue skipped: $error');
       return;
     }
   }

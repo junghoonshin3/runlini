@@ -4,6 +4,20 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+fun hasGoogleServicesConfig(): Boolean =
+    listOf(
+        "google-services.json",
+        "src/debug/google-services.json",
+        "src/release/google-services.json",
+    ).any { path -> file(path).exists() }
+
+val hasFirebaseConfig = hasGoogleServicesConfig()
+
+if (hasFirebaseConfig) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 android {
     namespace = "kr.sjh.runlini.wear"
     compileSdk = 36
@@ -45,6 +59,10 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.5.6")
     implementation("androidx.wear.compose:compose-material3:1.5.6")
     implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    if (hasFirebaseConfig) {
+        implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+        implementation("com.google.firebase:firebase-crashlytics")
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")

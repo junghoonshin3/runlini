@@ -53,6 +53,25 @@ void main() {
     expect(decision.isCandidate, isFalse);
   });
 
+  test(
+    'blocks finish point proximity when runner distance is below 90 percent',
+    () {
+      final decision = detector.evaluate(
+        frame: _frame(
+          routeProgress: 0.99,
+          distanceToFinishM: 12,
+          distanceToFinishPointM: 18,
+          totalRouteDistanceM: 1481,
+        ),
+        runnerDistanceM: 704,
+        previousCandidateCount: 1,
+      );
+
+      expect(decision.isCandidate, isFalse);
+      expect(decision.isComplete, isFalse);
+    },
+  );
+
   test('accepts final point radius near the last route window', () {
     final decision = detector.evaluate(
       frame: _frame(
