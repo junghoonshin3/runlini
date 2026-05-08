@@ -18,6 +18,8 @@ class WearRunFormattersTest {
         assertEquals("172 spm", WearRunFormatters.cadence(171.6))
         assertEquals("+0:12", WearRunFormatters.ghostGap(ghostFrame(12_000L)))
         assertEquals("-1:05", WearRunFormatters.ghostGap(ghostFrame(-65_000L)))
+        assertEquals("72%", WearRunFormatters.ghostProgress(ghostFrame(12_000L)))
+        assertEquals("420 m", WearRunFormatters.ghostRemaining(ghostFrame(12_000L)))
     }
 
     @Test
@@ -28,6 +30,8 @@ class WearRunFormattersTest {
         assertEquals("--", WearRunFormatters.heartRate(null))
         assertEquals("--", WearRunFormatters.calories(null))
         assertEquals("--", WearRunFormatters.ghostGap(null))
+        assertEquals("--", WearRunFormatters.ghostProgress(null))
+        assertEquals("--", WearRunFormatters.ghostRemaining(null))
     }
 
     @Test
@@ -63,6 +67,8 @@ class WearRunFormattersTest {
             status = WearGhostStatus.Ahead,
             timeGapMs = gapMs,
             distanceGapM = 24.0,
+            routeProgress = 0.72,
+            distanceToFinishM = 420.0,
         )
     }
 }

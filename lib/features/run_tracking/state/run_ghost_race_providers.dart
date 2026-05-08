@@ -45,8 +45,14 @@ final ghostAwareRunMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final ghostRaceFrame = ref.watch(ghostRaceFrameProvider);
   final showGhostMarker =
       ref.watch(runSettingsControllerProvider).value?.showGhostMarker ?? false;
+  final showActiveGhostMarker =
+      ref.watch(runPlaybackControllerProvider).hasActiveSession &&
+      ghostRaceFrame != null;
+  final shouldShowGhostMarker = showGhostMarker || showActiveGhostMarker;
   return mapViewState.copyWith(
-    ghostMarkerPoint: showGhostMarker ? ghostRaceFrame?.ghostMarkerPoint : null,
-    clearGhostMarkerPoint: !showGhostMarker,
+    ghostMarkerPoint: shouldShowGhostMarker
+        ? ghostRaceFrame?.ghostMarkerPoint
+        : null,
+    clearGhostMarkerPoint: !shouldShowGhostMarker,
   );
 });

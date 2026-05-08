@@ -13,6 +13,7 @@ import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_scree
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_distance_progress_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_no_runs_on_date_panel.dart';
+import 'package:runlini/features/run_tracking/ui/history/history_tab_skeleton.dart';
 import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
 
 class HistoryTabScreen extends ConsumerStatefulWidget {
@@ -120,9 +121,7 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
             ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.voltGreen),
-        ),
+        loading: () => const HistoryTabSkeleton(),
         error: (Object error, StackTrace stackTrace) =>
             const Center(child: Text('기록을 불러오지 못했어요.')),
       ),

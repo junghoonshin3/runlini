@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_settings_state.dart';
 import 'package:runlini/features/ghost_racer/ui/ghost_session_picker_sheet.dart';
@@ -34,7 +35,7 @@ class RunGhostControlChip extends ConsumerWidget {
                   : ref.read(ghostSettingsProvider.notifier).disable,
             );
           },
-          loading: () => const _GhostControlChipBody.loading(),
+          loading: () => const _GhostControlChipSkeleton(),
           error: (error, stackTrace) => const _GhostControlChipBody.error(),
         ),
       ),
@@ -96,18 +97,33 @@ class RunGhostControlChip extends ConsumerWidget {
   }
 }
 
+class _GhostControlChipSkeleton extends StatelessWidget {
+  const _GhostControlChipSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('ghost-control-chip-skeleton'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.black.withValues(alpha: 0.88),
+        border: Border.all(
+          color: AppColors.chalk.withValues(alpha: 0.35),
+          width: 3,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const RunliniSkeletonText(width: 116, height: 20),
+    );
+  }
+}
+
 class _GhostControlChipBody extends StatelessWidget {
   const _GhostControlChipBody({
     required this.selectedSummary,
     required this.hasRecords,
     this.onPressed,
   }) : label = null;
-
-  const _GhostControlChipBody.loading()
-    : selectedSummary = null,
-      hasRecords = false,
-      onPressed = null,
-      label = 'Ghost Run Off';
 
   const _GhostControlChipBody.error()
     : selectedSummary = null,

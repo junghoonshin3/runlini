@@ -11,7 +11,8 @@ or keep recording a cooldown.
 - Phone ghost feedback is calculated by `GhostRaceGapService`.
 - Wear ghost feedback is calculated by `WearGhostGapCalculator`.
 - Existing stop/review flows remain the source of truth for saving.
-- Ghost-run TTS remains disabled; completion may use haptics only.
+- Ghost-run completion may use haptics and, when voice settings allow it,
+  event-gated completion TTS. Completion thresholds remain unchanged.
 
 ## Progress
 

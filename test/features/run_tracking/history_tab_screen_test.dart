@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,36 @@ import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_tab_screen.dart';
 
 void main() {
+  testWidgets('shows skeleton while history summaries load', (
+    WidgetTester tester,
+  ) async {
+    final pending = Completer<List<RunSessionSummary>>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          runSessionSummaryListProvider.overrideWith(
+            (Ref ref) => pending.future,
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: const Scaffold(body: HistoryTabScreen()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('history-tab-skeleton')), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    pending.complete(const <RunSessionSummary>[]);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('history-tab-skeleton')), findsNothing);
+    expect(find.byKey(const Key('history-list')), findsOneWidget);
+  });
+
   testWidgets('opens history on today and returns date selection to today', (
     WidgetTester tester,
   ) async {

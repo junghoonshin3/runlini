@@ -52,6 +52,7 @@ class SettingsSyncSection extends ConsumerWidget {
           SettingsSyncCard(
             title: healthLabel,
             status: _healthStatusText(syncState, connectionState, isHealthBusy),
+            statusLoading: connectionState.isLoading,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -93,6 +94,7 @@ class SettingsSyncSection extends ConsumerWidget {
                 wearSyncState.isLoading,
                 watchConnectionState.value,
               ),
+              statusLoading: watchConnectionState.isLoading,
               actionKey: const Key('settings-wear-sync-button'),
               actionLabel: wearSyncState.isLoading ? '가져오는 중...' : '워치 기록 가져오기',
               onPressed: wearSyncState.isLoading

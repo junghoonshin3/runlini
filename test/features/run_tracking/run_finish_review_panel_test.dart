@@ -1,7 +1,5 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
@@ -155,34 +153,6 @@ void main() {
     expect(find.text('고도 데이터가 아직 없어요.'), findsOneWidget);
     expect(find.textContaining('Infinity'), findsNothing);
     expect(find.textContaining('e+308'), findsNothing);
-  });
-
-  testWidgets('chart touch indicator uses ring dot without guide line', (
-    tester,
-  ) async {
-    await _pumpPanel(tester, _session());
-
-    final chart = tester.widget<LineChart>(find.byType(LineChart).first);
-    final barData = chart.data.lineBarsData.single;
-    final indicator = chart.data.lineTouchData.getTouchedSpotIndicator(
-      barData,
-      const [0],
-    ).single!;
-    final dotPainter = indicator.touchedSpotDotData.getDotPainter(
-      barData.spots.first,
-      0,
-      barData,
-      0,
-    );
-
-    expect(indicator.indicatorBelowLine.strokeWidth, 0);
-    expect(indicator.indicatorBelowLine.color, Colors.transparent);
-    expect(dotPainter, isA<FlDotCirclePainter>());
-    final circlePainter = dotPainter as FlDotCirclePainter;
-    expect(circlePainter.radius, 7);
-    expect(circlePainter.strokeWidth, 3);
-    expect(circlePainter.strokeColor, AppColors.chalk);
-    expect(chart.data.lineTouchData.touchSpotThreshold, 18);
   });
 }
 

@@ -654,7 +654,11 @@ class HealthServicesRunController(
             frame,
         )
         if (!state.ghostCompletionPrompt && completed.ghostCompletionPrompt) {
-            alertController.onGhostCompleted(completed.settings, completed.isGhostRun)
+            alertController.onGhostCompleted(
+                completed.settings,
+                completed.isGhostRun,
+                completed.ghostCompletionFrame ?: completed.ghostFrame,
+            )
         }
         return completed
     }

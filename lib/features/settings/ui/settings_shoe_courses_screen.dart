@@ -10,6 +10,7 @@ import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
+import 'package:runlini/features/settings/ui/settings_shoe_courses_skeleton.dart';
 
 class SettingsShoeCoursesScreen extends ConsumerWidget {
   const SettingsShoeCoursesScreen({super.key, required this.shoe});
@@ -56,9 +57,7 @@ class SettingsShoeCoursesScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.voltGreen),
-        ),
+        loading: () => const SettingsShoeCoursesSkeleton(),
         error: (_, _) => const Center(child: Text('기록을 불러오지 못했어요.')),
       ),
     );
