@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/types/run_session_detail.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
-import 'package:runlini/features/run_tracking/ui/detail/run_detail_line_chart.dart';
+import 'package:runlini/features/run_tracking/ui/detail/run_detail_bar_chart.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_splits_table.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 
@@ -22,7 +22,7 @@ class RunDetailChartsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        RunDetailLineChart(
+        RunDetailBarChart(
           title: 'Pace (${paceUnitLabel(displaySettings)})',
           samples: detail.paceSamplesSecPerKm,
           color: AppColors.cyan,
@@ -37,7 +37,7 @@ class RunDetailChartsSection extends StatelessWidget {
               '${formatRunPace(max, displaySettings)}',
         ),
         const SizedBox(height: 18),
-        RunDetailLineChart(
+        RunDetailBarChart(
           title: 'Speed',
           samples: detail.speedSamplesKmh,
           color: AppColors.cyan,
@@ -50,7 +50,7 @@ class RunDetailChartsSection extends StatelessWidget {
               '${formatRunSpeed(max, displaySettings)}',
         ),
         const SizedBox(height: 18),
-        RunDetailLineChart(
+        RunDetailBarChart(
           title: 'Elevation',
           samples: detail.elevationSamplesM,
           color: AppColors.voltGreen,
@@ -71,7 +71,7 @@ class RunDetailChartsSection extends StatelessWidget {
         if (privacySettings.hideHeartRate)
           const _HiddenDataPanel(label: 'Heart Rate Hidden')
         else
-          RunDetailLineChart(
+          RunDetailBarChart(
             title: 'Heart Rate',
             samples: detail.heartRateSamplesBpm,
             color: AppColors.orange,
@@ -83,7 +83,7 @@ class RunDetailChartsSection extends StatelessWidget {
                 '${min.round()}-${max.round()} bpm',
           ),
         const SizedBox(height: 18),
-        RunDetailLineChart(
+        RunDetailBarChart(
           title: 'Cadence',
           samples: detail.cadenceSamplesSpm,
           color: AppColors.amber,
