@@ -265,15 +265,15 @@ Recommended architecture:
 - Watch feedback is haptic plus large text. Wear OS V1 also plays short
   watch-local TTS cues: `1km 알림` controls 1km haptic and voice summaries
   with average pace and elapsed time, `음성 안내` is the TTS master switch,
-  and `고스트 음성` controls ghost-run start, off-route, return, crossing, and
-  completion cues. Ghost-run kilometer summaries are allowed again and may add
-  the current ghost gap. Ghost completion keeps the conservative finish policy:
-  finish proximity alone does not complete the run when accepted runner
-  distance is below 90% of the ghost route. Ghost-run interval cues stay silent
-  because ghost and interval modes are mutually exclusive for the active run.
-  Voice cue volume is adjustable on the phone and watch, then applied to Wear
-  OS TTS output. When the runner changes voice volume, the watch plays a short
-  `음량 테스트` cue. Phone-routed voice cues are a later companion feature.
+  and `고스트 음성` enables ghost-specific race events. During ghost runs,
+  kilometer summaries are allowed when `1km 알림` and `음성 안내` are on.
+  Ghost-specific speech is event based: stable route exit/return, overtake,
+  lost lead, final stretch, and completion. Level/tie state is not spoken.
+  Interval speech remains disabled during ghost runs because ghost and
+  interval modes are mutually exclusive for the active run. Voice cue volume is
+  adjustable on the phone and watch, then applied to Wear OS TTS output. When
+  the runner changes voice volume, the watch plays a short `음량 테스트` cue.
+  Phone-routed voice cues are a later companion feature.
 - Maps, history browsing, charts, shoe management, and detailed settings are
   phone-only in v1.
 

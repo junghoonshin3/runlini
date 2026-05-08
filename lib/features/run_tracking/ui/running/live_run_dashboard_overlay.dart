@@ -53,6 +53,7 @@ class _LiveRunDashboardOverlayState extends State<LiveRunDashboardOverlay> {
         : LiveRunDashboardCollapsed(
             metrics: widget.metrics,
             displaySettings: widget.displaySettings,
+            ghostRace: widget.ghostRace,
           );
 
     return AnimatedSize(

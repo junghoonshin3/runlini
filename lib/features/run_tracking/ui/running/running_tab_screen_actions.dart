@@ -32,10 +32,6 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
           .startAfterCountdown(
             onStart: ref.read(runPlaybackControllerProvider.notifier).start,
           );
-      if (result == RunTrackingToggleResult.started) {
-        _speakGhostRunStartCueIfNeeded();
-        return;
-      }
       if (!context.mounted || result != RunTrackingToggleResult.unavailable) {
         return;
       }
@@ -48,20 +44,6 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     } finally {
       _startFlowInProgress = false;
     }
-  }
-
-  void _speakGhostRunStartCueIfNeeded() {
-    final settings =
-        ref.read(runSettingsControllerProvider).value ??
-        const RunSettingsState();
-    final cue = _voiceCueCoordinator.ghostStartCueFor(
-      isGhostRun: _hasSelectedGhostRun(),
-      settings: settings,
-    );
-    if (cue == null) {
-      return;
-    }
-    unawaited(_speakRunVoiceCues(<RunVoiceCue>[cue]));
   }
 
   Future<bool> _resolveGhostIntervalConflict(BuildContext context) async {

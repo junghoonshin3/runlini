@@ -137,87 +137,84 @@ Future<void> _startVisibleLiveTracking(ProviderContainer container) async {
 }
 
 void main() {
-  test(
-    'ghost race frame keeps marker calculated but hides it by default',
-    () async {
-      final startedAt = DateTime(2026, 4, 20, 6);
-      var now = startedAt;
-      final tickerController = StreamController<int>.broadcast();
-      final streamClient = _TrackingLocationStreamClient();
-      final ghostSession = _ghostSession();
-      final settingsRepository = TestRunSettingsRepository();
-      final container = ProviderContainer(
-        overrides: [
-          deviceLocationClientProvider.overrideWithValue(
-            const _TestDeviceLocationClient(),
-          ),
-          locationStreamClientProvider.overrideWithValue(streamClient),
-          healthWorkoutRecorderProvider.overrideWithValue(
-            const _NoopHealthWorkoutRecorder(),
-          ),
-          runPlaybackClockProvider.overrideWithValue(() => now),
-          liveRunMetricsTickerProvider.overrideWith(
-            (Ref ref) => tickerController.stream,
-          ),
-          runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
-          runMapStaticStateProvider.overrideWith((Ref ref) async {
-            return RunMapStaticState(
-              fallbackMapCenter: const MapCoordinate(latitude: 0, longitude: 0),
-              ghostPolylinePoints: const <MapCoordinate>[
-                MapCoordinate(latitude: 0, longitude: 0),
-                MapCoordinate(latitude: 0, longitude: 0.009),
-              ],
-              selectedGhostSession: ghostSession,
-            );
-          }),
-        ],
-      );
-      final frameSubscription = container.listen<GhostRaceFrame?>(
-        ghostRaceFrameProvider,
-        (GhostRaceFrame? previous, GhostRaceFrame? next) {},
-      );
-      addTearDown(() async {
-        frameSubscription.close();
-        container.dispose();
-        await tickerController.close();
-        await streamClient.close();
-      });
+  test('active ghost run shows the current ghost marker on the map', () async {
+    final startedAt = DateTime(2026, 4, 20, 6);
+    var now = startedAt;
+    final tickerController = StreamController<int>.broadcast();
+    final streamClient = _TrackingLocationStreamClient();
+    final ghostSession = _ghostSession();
+    final settingsRepository = TestRunSettingsRepository();
+    final container = ProviderContainer(
+      overrides: [
+        deviceLocationClientProvider.overrideWithValue(
+          const _TestDeviceLocationClient(),
+        ),
+        locationStreamClientProvider.overrideWithValue(streamClient),
+        healthWorkoutRecorderProvider.overrideWithValue(
+          const _NoopHealthWorkoutRecorder(),
+        ),
+        runPlaybackClockProvider.overrideWithValue(() => now),
+        liveRunMetricsTickerProvider.overrideWith(
+          (Ref ref) => tickerController.stream,
+        ),
+        runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
+        runMapStaticStateProvider.overrideWith((Ref ref) async {
+          return RunMapStaticState(
+            fallbackMapCenter: const MapCoordinate(latitude: 0, longitude: 0),
+            ghostPolylinePoints: const <MapCoordinate>[
+              MapCoordinate(latitude: 0, longitude: 0),
+              MapCoordinate(latitude: 0, longitude: 0.009),
+            ],
+            selectedGhostSession: ghostSession,
+          );
+        }),
+      ],
+    );
+    final frameSubscription = container.listen<GhostRaceFrame?>(
+      ghostRaceFrameProvider,
+      (GhostRaceFrame? previous, GhostRaceFrame? next) {},
+    );
+    addTearDown(() async {
+      frameSubscription.close();
+      container.dispose();
+      await tickerController.close();
+      await streamClient.close();
+    });
 
-      await container.read(runMapStaticStateProvider.future);
-      await _startVisibleLiveTracking(container);
-      await streamClient.emit(
-        _sample(latitude: 0, longitude: 0, capturedAt: startedAt),
-      );
-      await container.read(runPlaybackControllerProvider.notifier).start();
+    await container.read(runMapStaticStateProvider.future);
+    await _startVisibleLiveTracking(container);
+    await streamClient.emit(
+      _sample(latitude: 0, longitude: 0, capturedAt: startedAt),
+    );
+    await container.read(runPlaybackControllerProvider.notifier).start();
 
-      now = startedAt.add(const Duration(minutes: 4));
-      await streamClient.emit(
-        _sample(latitude: 0, longitude: 0.0045, capturedAt: now),
-      );
-      tickerController.add(1);
-      await _settleAsync();
+    now = startedAt.add(const Duration(minutes: 4));
+    await streamClient.emit(
+      _sample(latitude: 0, longitude: 0.0045, capturedAt: now),
+    );
+    tickerController.add(1);
+    await _settleAsync();
 
-      final frame = frameSubscription.read();
-      expect(frame, isNotNull);
-      expect(frame!.status, GhostRaceStatus.ahead);
-      expect(frame.timeGapMs, greaterThan(50000));
-      expect(frame.ghostMarkerPoint, isNotNull);
+    final frame = frameSubscription.read();
+    expect(frame, isNotNull);
+    expect(frame!.status, GhostRaceStatus.ahead);
+    expect(frame.timeGapMs, greaterThan(50000));
+    expect(frame.ghostMarkerPoint, isNotNull);
 
-      final mapViewState = container.read(ghostAwareRunMapViewStateProvider);
-      expect(mapViewState.ghostMarkerPoint, isNull);
+    final mapViewState = container.read(ghostAwareRunMapViewStateProvider);
+    expect(mapViewState.ghostMarkerPoint, frame.ghostMarkerPoint);
 
-      await container.read(runSettingsControllerProvider.future);
-      await container
-          .read(runSettingsControllerProvider.notifier)
-          .setShowGhostMarker(true);
-      await _settleAsync();
+    await container.read(runSettingsControllerProvider.future);
+    await container
+        .read(runSettingsControllerProvider.notifier)
+        .setShowGhostMarker(true);
+    await _settleAsync();
 
-      final visibleMapViewState = container.read(
-        ghostAwareRunMapViewStateProvider,
-      );
-      expect(visibleMapViewState.ghostMarkerPoint, frame.ghostMarkerPoint);
-    },
-  );
+    final visibleMapViewState = container.read(
+      ghostAwareRunMapViewStateProvider,
+    );
+    expect(visibleMapViewState.ghostMarkerPoint, frame.ghostMarkerPoint);
+  });
 
   test('ghost race frame freezes while playback is paused', () async {
     final startedAt = DateTime(2026, 4, 20, 6);

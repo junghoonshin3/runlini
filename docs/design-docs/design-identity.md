@@ -15,6 +15,8 @@ Instant race clarity for runners in motion.
 - Post-run detail screens should feel like a Runlini data lab: compact headers,
   bordered metric plates, route plates, and readable line charts instead of
   reference-app-style hero distance pages.
+- Loading states should use layout-shaped skeletons on true black with a subtle
+  graphite shimmer. Keep button busy states as explicit text.
 
 ## App Icon
 

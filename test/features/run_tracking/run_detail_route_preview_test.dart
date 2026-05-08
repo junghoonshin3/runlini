@@ -7,6 +7,46 @@ import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_preview.dart';
 
 void main() {
+  testWidgets('detail route preview shows skeleton while map config loads', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: RunDetailRoutePreview(
+              points: <RunPoint>[
+                RunPoint(
+                  latitude: 0,
+                  longitude: 0,
+                  timestampRelMs: 0,
+                  source: RunPointSource.deviceGps,
+                ),
+                RunPoint(
+                  latitude: 0,
+                  longitude: 0.00005,
+                  timestampRelMs: 10000,
+                  source: RunPointSource.deviceGps,
+                ),
+                RunPoint(
+                  latitude: 0,
+                  longitude: 0.0001,
+                  timestampRelMs: 20000,
+                  source: RunPointSource.deviceGps,
+                ),
+              ],
+              debugForceLoading: true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('route-preview-skeleton')), findsOneWidget);
+    expect(find.text('지도를 준비하고 있어요.'), findsNothing);
+  });
+
   testWidgets('detail route preview renders pace-colored runner segments', (
     WidgetTester tester,
   ) async {

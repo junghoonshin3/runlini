@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/core/map/fake_run_map_surface.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
@@ -15,9 +16,18 @@ import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_maps.da
 final bool _isFlutterTest = Platform.environment.containsKey('FLUTTER_TEST');
 
 class RunDetailRoutePreview extends ConsumerWidget {
-  const RunDetailRoutePreview({super.key, required this.points});
+  const RunDetailRoutePreview({
+    super.key,
+    required this.points,
+    this.debugUseConfiguredMap = false,
+    this.debugForceLoading = false,
+  });
 
   final List<RunPoint> points;
+  @visibleForTesting
+  final bool debugUseConfiguredMap;
+  @visibleForTesting
+  final bool debugForceLoading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,6 +46,8 @@ class RunDetailRoutePreview extends ConsumerWidget {
         child: _RoutePreviewBody(
           routePoints: routePoints,
           routeSegments: routeSegments,
+          debugUseConfiguredMap: debugUseConfiguredMap,
+          debugForceLoading: debugForceLoading,
         ),
       ),
     );
@@ -46,18 +58,26 @@ class _RoutePreviewBody extends ConsumerWidget {
   const _RoutePreviewBody({
     required this.routePoints,
     required this.routeSegments,
+    required this.debugUseConfiguredMap,
+    required this.debugForceLoading,
   });
 
   final List<MapCoordinate> routePoints;
   final List<MapPolylineSegment> routeSegments;
+  final bool debugUseConfiguredMap;
+  final bool debugForceLoading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (routePoints.length < 2) {
       return const _RoutePreviewFallback(message: '경로 데이터가 부족해요.');
     }
+    if (debugForceLoading) {
+      return const _RoutePreviewSkeleton();
+    }
 
-    if (_isFlutterTest || (!Platform.isAndroid && !Platform.isIOS)) {
+    if (!debugUseConfiguredMap &&
+        (_isFlutterTest || (!Platform.isAndroid && !Platform.isIOS))) {
       return FakeRunMapSurface(
         mapCenter: centerOfRoute(routePoints),
         currentRunnerPolylinePoints: routePoints,
@@ -87,9 +107,45 @@ class _RoutePreviewBody extends ConsumerWidget {
           routeSegments: routeSegments,
         );
       },
-      loading: () => const _RoutePreviewFallback(message: '지도를 준비하고 있어요.'),
+      loading: () => const _RoutePreviewSkeleton(),
       error: (_, _) =>
           const _RoutePreviewFallback(message: '지도 설정을 확인하지 못했어요.'),
+    );
+  }
+}
+
+class _RoutePreviewSkeleton extends StatelessWidget {
+  const _RoutePreviewSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      key: Key('route-preview-skeleton'),
+      color: AppColors.panel,
+      child: Padding(
+        padding: EdgeInsets.all(18),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: RunliniSkeletonBox(height: 210, borderRadius: 8),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 170,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RunliniSkeletonText(width: 138, height: 14),
+                    SizedBox(height: 10),
+                    RunliniSkeletonText(width: 96, height: 14),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

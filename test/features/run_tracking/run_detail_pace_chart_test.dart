@@ -18,9 +18,11 @@ void main() {
 
     expect(find.textContaining('Avg 10:00 /km'), findsOneWidget);
     expect(find.textContaining('204'), findsNothing);
+    expect(find.byType(LineChart), findsNothing);
 
-    final chart = tester.widget<LineChart>(find.byType(LineChart).first);
+    final chart = tester.widget<BarChart>(find.byType(BarChart).first);
     expect(chart.data.extraLinesData.horizontalLines.single.y, 600);
+    expect(chart.data.barGroups.length, lessThanOrEqualTo(48));
   });
 
   testWidgets('shows cadence metric and chart when cadence samples exist', (
