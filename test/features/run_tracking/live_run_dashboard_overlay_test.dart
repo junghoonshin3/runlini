@@ -9,7 +9,7 @@ import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_overlay.dart';
 
 void main() {
-  testWidgets('starts collapsed with distance time and pace only', (
+  testWidgets('starts collapsed with ghost judgment when racing a ghost', (
     tester,
   ) async {
     await _pumpOverlay(tester, ghostRace: _ghostFrame());
@@ -19,8 +19,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('live-run-dashboard-expanded')), findsNothing);
+    expect(find.byKey(const Key('live-run-ghost-collapsed')), findsOneWidget);
+    expect(
+      find.byKey(const Key('live-run-ghost-status-collapsed')),
+      findsOneWidget,
+    );
     expect(find.text('1.20 km'), findsOneWidget);
-    expect(find.text('0:06:00'), findsOneWidget);
     expect(find.text('5:00 /km'), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
     expect(find.text('12.0 km/h'), findsNothing);
@@ -48,6 +52,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
+    expect(find.byKey(const Key('ghost-race-progress-value')), findsOneWidget);
+    expect(
+      find.byKey(const Key('ghost-race-remaining-distance-value')),
+      findsOneWidget,
+    );
     expect(find.text('12.0 km/h'), findsOneWidget);
     expect(find.text('84 kcal'), findsOneWidget);
 

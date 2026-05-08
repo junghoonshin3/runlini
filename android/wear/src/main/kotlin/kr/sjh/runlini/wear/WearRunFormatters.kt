@@ -75,6 +75,24 @@ internal object WearRunFormatters {
     fun ghostResult(frame: WearGhostFrame?): String {
         return "${ghostStatusLabel(frame?.status)} ${ghostGap(frame)}"
     }
+
+    fun ghostProgress(frame: WearGhostFrame?): String {
+        val progress = frame?.routeProgress
+            ?.takeIf { it.isFinite() }
+            ?: return "--"
+        return "${(progress.coerceIn(0.0, 1.0) * 100.0).roundToInt()}%"
+    }
+
+    fun ghostRemaining(frame: WearGhostFrame?): String {
+        val remaining = frame?.distanceToFinishM
+            ?.takeIf { it.isFinite() && it >= 0.0 }
+            ?: return "--"
+        return if (remaining >= 1000.0) {
+            "%.1f km".format(remaining / 1000.0)
+        } else {
+            "${remaining.roundToInt()} m"
+        }
+    }
 }
 
 internal data class WearDistanceHeroText(

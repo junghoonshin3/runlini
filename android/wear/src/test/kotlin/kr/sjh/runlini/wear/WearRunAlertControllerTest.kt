@@ -96,7 +96,7 @@ class WearRunAlertControllerTest {
     }
 
     @Test
-    fun ghostRunKilometerAlertStillVibratesButDoesNotSpeak() {
+    fun ghostRunKilometerAlertVibratesAndSpeaks() {
         val haptics = FakeWearRunHaptics()
         val speech = FakeWearRunSpeech()
         val controller = WearRunAlertController(
@@ -113,7 +113,10 @@ class WearRunAlertControllerTest {
         )
 
         assertEquals(1, haptics.ticks)
-        assertEquals(emptyList<String>(), speech.spoken)
+        assertEquals(
+            listOf("1킬로미터, 평균 페이스 5분, 시간 5분"),
+            speech.spoken,
+        )
     }
 
     @Test
@@ -190,7 +193,7 @@ class WearRunAlertControllerTest {
     }
 
     @Test
-    fun ghostVoiceIsSilentWhilePolicyIsRedesigned() {
+    fun ghostVoiceSpeaksStableOffRouteEvent() {
         val speech = FakeWearRunSpeech()
         val controller = WearRunAlertController(
             haptics = FakeWearRunHaptics(),
@@ -199,12 +202,19 @@ class WearRunAlertControllerTest {
         val settings = WearRunSettings(ghostVoiceCueEnabled = true)
 
         controller.onGhostFrame(
-            WearGhostFrame(WearGhostStatus.Behind, -15_000L, -40.0),
+            WearGhostFrame(WearGhostStatus.OffRoute, 0L, 50.0),
             settings,
             isGhostRun = true,
+            nowMs = 0L,
+        )
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.OffRoute, 0L, 50.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 10_000L,
         )
 
-        assertEquals(emptyList<String>(), speech.spoken)
+        assertEquals(listOf("경로를 벗어났어요"), speech.spoken)
     }
 
     @Test
@@ -238,7 +248,7 @@ class WearRunAlertControllerTest {
     }
 
     @Test
-    fun ghostCompletionVibratesWithoutSpeech() {
+    fun ghostCompletionVibratesAndSpeaksWhenEnabled() {
         val haptics = FakeWearRunHaptics()
         val speech = FakeWearRunSpeech()
         val controller = WearRunAlertController(
@@ -247,12 +257,17 @@ class WearRunAlertControllerTest {
         )
 
         controller.onGhostCompleted(
-            WearRunSettings(vibrationEnabled = true, voiceCueEnabled = true),
+            WearRunSettings(
+                vibrationEnabled = true,
+                voiceCueEnabled = true,
+                ghostVoiceCueEnabled = true,
+            ),
             isGhostRun = true,
+            frame = WearGhostFrame(WearGhostStatus.Ahead, 32_000L, 50.0),
         )
 
         assertEquals(1, haptics.ticks)
-        assertEquals(emptyList<String>(), speech.spoken)
+        assertEquals(listOf("고스트 코스 완료, 32초 앞서요"), speech.spoken)
     }
 
     @Test

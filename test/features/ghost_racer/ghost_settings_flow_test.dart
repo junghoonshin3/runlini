@@ -1,14 +1,40 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_ghost_control_chip.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets('ghost chip shows compact skeleton while summaries load', (
+    WidgetTester tester,
+  ) async {
+    final pending = Completer<List<RunSessionSummary>>();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          runSessionSummaryListProvider.overrideWith((ref) => pending.future),
+        ],
+        child: const MaterialApp(home: Scaffold(body: RunGhostControlChip())),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('ghost-control-chip-skeleton')),
+      findsOneWidget,
+    );
+    expect(find.text('Ghost Run Off'), findsNothing);
+  });
+
   testWidgets('selects and clears a ghost session from the running tab chip', (
     WidgetTester tester,
   ) async {

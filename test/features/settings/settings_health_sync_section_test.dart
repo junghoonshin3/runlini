@@ -12,12 +12,40 @@ import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
+import 'package:runlini/features/settings/ui/settings_sync_card.dart';
 import 'package:runlini/features/settings/ui/settings_sync_section.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets('sync status uses skeleton while connection state loads', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: const Scaffold(
+          body: SettingsSyncCard(
+            title: 'Health Connect',
+            status: '확인 중',
+            statusLoading: true,
+            actionKey: Key('settings-health-import-button'),
+            actionLabel: 'Health Connect 연결',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('settings-status-skeleton')), findsOneWidget);
+    expect(find.text('확인 중'), findsNothing);
+    expect(
+      find.byKey(const Key('settings-health-import-button')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Android Health card connects through Health Connect', (
     tester,
   ) async {

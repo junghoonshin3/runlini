@@ -89,21 +89,73 @@ void main() {
     expect(duplicate, isEmpty);
   });
 
-  test('does not speak ghost status changes while cues are redesigned', () {
+  test('does not speak ghost event cues when ghost voice is disabled', () {
     final coordinator = RunVoiceCueCoordinator();
+    final startedAt = DateTime(2026, 5, 3);
 
+    coordinator.cuesFor(
+      _snapshot(
+        metrics: _metrics(distanceKm: 0.5),
+        ghostFrame: _ghost(GhostRaceStatus.offRoute, gapMs: 0),
+        now: startedAt,
+        isGhostRun: true,
+      ),
+    );
     final cues = coordinator.cuesFor(
       _snapshot(
         metrics: _metrics(distanceKm: 0.5),
-        ghostFrame: _ghost(GhostRaceStatus.ahead, gapMs: 31000),
-        settings: const RunSettingsState(ghostVoiceCueEnabled: true),
+        ghostFrame: _ghost(GhostRaceStatus.offRoute, gapMs: 0),
+        now: startedAt.add(const Duration(seconds: 10)),
+        isGhostRun: true,
       ),
     );
 
     expect(cues, isEmpty);
   });
 
-  test('does not speak any cue during a ghost run', () {
+  test('speaks kilometer summaries during ghost runs', () {
+    final coordinator = RunVoiceCueCoordinator();
+
+    final cues = coordinator.cuesFor(
+      _snapshot(
+        isGhostRun: true,
+        metrics: _metrics(distanceKm: 1.01),
+        ghostFrame: _ghost(GhostRaceStatus.ahead, gapMs: 12000),
+      ),
+    );
+
+    expect(cues.single.text, contains('1킬로미터'));
+    expect(cues.single.text, contains('고스트보다 12초 앞서요'));
+  });
+
+  test('speaks stable ghost events when ghost voice is enabled', () {
+    final coordinator = RunVoiceCueCoordinator();
+    final startedAt = DateTime(2026, 5, 3);
+    final settings = const RunSettingsState(ghostVoiceCueEnabled: true);
+
+    coordinator.cuesFor(
+      _snapshot(
+        isGhostRun: true,
+        metrics: _metrics(distanceKm: 0.5),
+        ghostFrame: _ghost(GhostRaceStatus.offRoute, gapMs: 0),
+        settings: settings,
+        now: startedAt,
+      ),
+    );
+    final cues = coordinator.cuesFor(
+      _snapshot(
+        isGhostRun: true,
+        metrics: _metrics(distanceKm: 0.5),
+        ghostFrame: _ghost(GhostRaceStatus.offRoute, gapMs: 0),
+        settings: settings,
+        now: startedAt.add(const Duration(seconds: 10)),
+      ),
+    );
+
+    expect(cues.map((cue) => cue.text), contains('경로를 벗어났어요'));
+  });
+
+  test('does not speak interval cues during ghost runs', () {
     final coordinator = RunVoiceCueCoordinator();
     const frame = RunIntervalFrame(
       step: RunIntervalStep(
@@ -121,7 +173,7 @@ void main() {
     final cues = coordinator.cuesFor(
       _snapshot(
         isGhostRun: true,
-        metrics: _metrics(distanceKm: 1.01),
+        metrics: _metrics(distanceKm: 0.5),
         intervalFrame: frame,
         ghostFrame: _ghost(GhostRaceStatus.behind, gapMs: -12000),
         settings: const RunSettingsState(ghostVoiceCueEnabled: true),
@@ -183,9 +235,9 @@ GhostRaceFrame _ghost(GhostRaceStatus status, {required int gapMs}) {
     ghostMarkerPoint: const MapCoordinate(latitude: 37, longitude: 127),
     isOffRoute: status == GhostRaceStatus.offRoute,
     routeProgress: 0.5,
-    distanceToFinishM: 500,
+    distanceToFinishM: 600,
     distanceFromRouteM: status == GhostRaceStatus.offRoute ? 40 : 4,
     totalRouteDistanceM: 1000,
-    distanceToFinishPointM: 500,
+    distanceToFinishPointM: 600,
   );
 }

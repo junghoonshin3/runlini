@@ -23,3 +23,5 @@ temporarily silence ghost-run TTS until the cue policy is redesigned.
 - Ghost-run TTS is fully disabled for now, including kilometer, interval, and
   ghost-status speech.
 - Ghost runs and interval runs are mutually exclusive active modes for V1.
+- Superseded by `ghost-run-live-experience-v1.md`: ghost-run TTS is now
+  event-gated instead of fully silent.

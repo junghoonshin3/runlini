@@ -154,6 +154,22 @@ private fun WearGhostPage(state: WearRunState) {
             valueColor = color,
             profile = spec.profile,
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            WearCompactMetric(
+                label = "진행",
+                value = WearRunFormatters.ghostProgress(frame),
+                modifier = Modifier.weight(1f),
+            )
+            WearCompactMetric(
+                label = "남은 거리",
+                value = WearRunFormatters.ghostRemaining(frame),
+                modifier = Modifier.weight(1f),
+            )
+        }
         state.ghostConfig?.sourceSummary?.let { summary ->
             Spacer(modifier = Modifier.height(8.dp))
             Text(
