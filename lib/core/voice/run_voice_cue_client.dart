@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+const String runVoiceCueLanguage = 'ko-KR';
+const double runVoiceCueSpeechRate = 0.42;
+
 abstract class RunVoiceCueClient {
   Future<void> speak(String text, {required double volume});
 
@@ -36,7 +39,11 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
     try {
       await _configureIfNeeded();
       await _flutterTts.setVolume(volume.clamp(0, 1).toDouble());
-      await _flutterTts.speak(trimmed);
+      if (Platform.isAndroid) {
+        await _flutterTts.speak(trimmed, focus: true);
+      } else {
+        await _flutterTts.speak(trimmed);
+      }
     } on MissingPluginException {
       return;
     } on PlatformException {
@@ -62,11 +69,13 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
     if (_configured) {
       return;
     }
-    _configured = true;
     await _flutterTts.awaitSpeakCompletion(true);
-    await _flutterTts.setLanguage('ko-KR');
-    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setLanguage(runVoiceCueLanguage);
+    await _flutterTts.setSpeechRate(runVoiceCueSpeechRate);
     await _flutterTts.setPitch(1.0);
+    if (Platform.isAndroid) {
+      await _flutterTts.setAudioAttributesForNavigation();
+    }
     if (Platform.isIOS) {
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.setIosAudioCategory(
@@ -79,5 +88,6 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
         IosTextToSpeechAudioMode.voicePrompt,
       );
     }
+    _configured = true;
   }
 }
