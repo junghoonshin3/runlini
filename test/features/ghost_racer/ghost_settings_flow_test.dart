@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
@@ -199,7 +200,7 @@ void main() {
     expect(find.byKey(const Key('ghost-session-sheet')), findsNothing);
   });
 
-  testWidgets('running tab uses the left action for interval settings', (
+  testWidgets('running tab locked interval action shows future message', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -223,12 +224,10 @@ void main() {
     expect(find.byKey(const Key('settings-button')), findsNothing);
 
     await tester.tap(find.byKey(const Key('run-interval-button')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('run-interval-sheet-scroll')),
-    );
+    await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsOneWidget);
+    expect(find.text(runIntervalFeatureLockedMessage), findsOneWidget);
+    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsNothing);
     expect(find.byKey(const Key('ghost-toggle')), findsNothing);
   });
 }

@@ -97,7 +97,9 @@ extension on _RunliniHomeScreenState {
     try {
       await ref
           .read(watchIntervalConfigClientProvider)
-          .sendIntervalWorkout(settings.intervalWorkout);
+          .sendIntervalWorkout(
+            effectiveRunIntervalWorkout(settings.intervalWorkout),
+          );
     } catch (_) {
       // Wear interval config sync is best-effort and retried on foreground.
     }

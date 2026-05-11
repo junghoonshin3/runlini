@@ -55,7 +55,7 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
         ref.read(runSettingsControllerProvider).value ??
         const RunSettingsState();
     final intervalWorkout = runSettings.intervalWorkout;
-    if (!intervalWorkout.enabled) {
+    if (!isRunIntervalEnabledForRuntime(intervalWorkout)) {
       return true;
     }
 
