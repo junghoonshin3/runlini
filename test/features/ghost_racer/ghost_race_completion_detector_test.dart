@@ -39,6 +39,22 @@ void main() {
     expect(decision.candidateCount, 0);
   });
 
+  test('does not complete before ghost start is confirmed', () {
+    final decision = detector.evaluate(
+      frame: _frame(
+        routeProgress: 0.99,
+        distanceToFinishM: 8,
+        distanceToFinishPointM: 5,
+        startConfirmed: false,
+      ),
+      runnerDistanceM: 980,
+      previousCandidateCount: 1,
+    );
+
+    expect(decision.isCandidate, isFalse);
+    expect(decision.isComplete, isFalse);
+  });
+
   test('blocks loop false finish before enough runner distance', () {
     final decision = detector.evaluate(
       frame: _frame(
@@ -95,6 +111,7 @@ GhostRaceFrame _frame({
   double distanceFromRouteM = 5,
   double totalRouteDistanceM = 1000,
   double distanceToFinishPointM = 500,
+  bool startConfirmed = true,
 }) {
   return GhostRaceFrame(
     status: status,
@@ -107,5 +124,6 @@ GhostRaceFrame _frame({
     distanceFromRouteM: distanceFromRouteM,
     totalRouteDistanceM: totalRouteDistanceM,
     distanceToFinishPointM: distanceToFinishPointM,
+    startConfirmed: startConfirmed,
   );
 }

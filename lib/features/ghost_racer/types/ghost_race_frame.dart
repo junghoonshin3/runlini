@@ -1,4 +1,5 @@
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/ghost_racer/types/ghost_race_projection_source.dart';
 
 enum GhostRaceStatus { ahead, behind, level, offRoute, unavailable }
 
@@ -14,6 +15,11 @@ class GhostRaceFrame {
     required this.distanceFromRouteM,
     required this.totalRouteDistanceM,
     required this.distanceToFinishPointM,
+    this.startConfirmed = true,
+    this.startCandidateCount = 0,
+    this.startLastEvaluatedPointCount = 0,
+    this.trackedDistanceAlongRouteM,
+    this.projectionSource = GhostRaceProjectionSource.global,
   });
 
   const GhostRaceFrame.unavailable()
@@ -28,6 +34,11 @@ class GhostRaceFrame {
         distanceFromRouteM: double.infinity,
         totalRouteDistanceM: 0,
         distanceToFinishPointM: double.infinity,
+        startConfirmed: false,
+        startCandidateCount: 0,
+        startLastEvaluatedPointCount: 0,
+        trackedDistanceAlongRouteM: null,
+        projectionSource: GhostRaceProjectionSource.held,
       );
 
   final GhostRaceStatus status;
@@ -40,4 +51,9 @@ class GhostRaceFrame {
   final double distanceFromRouteM;
   final double totalRouteDistanceM;
   final double distanceToFinishPointM;
+  final bool startConfirmed;
+  final int startCandidateCount;
+  final int startLastEvaluatedPointCount;
+  final double? trackedDistanceAlongRouteM;
+  final GhostRaceProjectionSource projectionSource;
 }

@@ -41,7 +41,8 @@ class GhostRaceCompletionDetector {
     required double runnerDistanceM,
   }) {
     final totalDistance = frame.totalRouteDistanceM;
-    if (frame.status == GhostRaceStatus.unavailable ||
+    if (!frame.startConfirmed ||
+        frame.status == GhostRaceStatus.unavailable ||
         frame.isOffRoute ||
         !totalDistance.isFinite ||
         totalDistance <= 0) {

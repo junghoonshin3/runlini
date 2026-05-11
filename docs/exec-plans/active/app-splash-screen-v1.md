@@ -19,6 +19,7 @@ Add a native splash screen that matches the Runlini app icon.
 - [x] Update Android launch backgrounds to true black plus centered logo.
 - [x] Update iOS LaunchScreen to true black plus centered logo.
 - [x] Validate guardrails, analyzer, and tests.
+- [x] Add Android 12+ safe-area splash assets after emulator cropping.
 
 ## Decisions
 
@@ -27,6 +28,8 @@ Add a native splash screen that matches the Runlini app icon.
 - Keep the splash screen quiet and readable: black background, centered mark,
   no extra copy.
 - Preserve native launch behavior; do not add a Flutter-level splash route.
+- Use a smaller Android 12+ splash bitmap because the platform splash icon is
+  constrained differently from the pre-Android 12 launch background.
 
 ## Implementation Steps
 
@@ -42,9 +45,13 @@ Add a native splash screen that matches the Runlini app icon.
 - `flutter analyze` passed.
 - `flutter test` passed.
 - `./gradlew :app:assembleDebug` passed.
+- Android emulator cold start screenshot confirmed the Android 12+ splash icon
+  no longer crops the logo.
 
 ## Risks or Recovery
 
 - If a device renders the splash logo too large, regenerate the splash assets
   at a smaller base size.
 - If Android 12 system splash differs, add a values-v31 theme follow-up.
+- Android 12+ now uses `splash_logo_v31`; regenerate those assets smaller if a
+  device still crops the logo.

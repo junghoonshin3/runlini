@@ -28,7 +28,7 @@ class RunVoiceCueFormatter {
     if (ghostGap != null) {
       parts.add(ghostGap);
     }
-    return parts.join(', ');
+    return parts.join('. ');
   }
 
   static String intervalStepLabel(RunIntervalStep step) {
@@ -86,16 +86,27 @@ class RunVoiceCueFormatter {
       return null;
     }
     final gap = _gapSpeech(gapMs);
-    return gapMs > 0 ? '고스트보다 $gap 앞서요' : '고스트보다 $gap 뒤처져요';
+    return gapMs > 0 ? '고스트보다 $gap 앞서고 있어요' : '고스트보다 $gap 뒤처지고 있어요';
   }
 
   static String ghostCompletion(RunSessionGhostSummary summary) {
-    final gapMs = summary.timeGapMs;
-    if (gapMs == 0 || summary.result == RunSessionGhostResult.level) {
-      return '고스트 코스 완료, 거의 같아요';
+    if (summary.result == RunSessionGhostResult.level) {
+      return '고스트 코스 완료. 거의 같아요';
+    }
+    return ghostCompletionFromGap(summary.timeGapMs);
+  }
+
+  static String ghostCompletionFromGap(int? gapMs) {
+    if (gapMs == null) {
+      return '고스트 코스 완료';
+    }
+    if (gapMs == 0) {
+      return '고스트 코스 완료. 거의 같아요';
     }
     final gap = _gapSpeech(gapMs);
-    return gapMs > 0 ? '고스트 코스 완료, $gap 빨랐어요' : '고스트 코스 완료, $gap 늦었어요';
+    return gapMs > 0
+        ? '고스트 코스 완료. 고스트보다 $gap 빨랐어요'
+        : '고스트 코스 완료. 고스트보다 $gap 늦었어요';
   }
 
   static String _gapSpeech(int gapMs) {

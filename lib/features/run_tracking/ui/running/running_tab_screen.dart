@@ -9,11 +9,13 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/performance/startup_trace.dart';
+import 'package:runlini/core/voice/run_voice_cue_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
+import 'package:runlini/features/run_tracking/service/run_voice_cue_dispatcher.dart';
 import 'package:runlini/features/run_tracking/state/run_ghost_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
@@ -50,11 +52,27 @@ class RunningTabScreen extends ConsumerStatefulWidget {
 
 class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
   final RunVoiceCueCoordinator _voiceCueCoordinator = RunVoiceCueCoordinator();
+  final RunVoiceCueDispatcher _voiceCueDispatcher = RunVoiceCueDispatcher();
+  late final RunVoiceCueClient _voiceCueClient;
+  ProviderSubscription<RunVoiceCueSnapshot>? _voiceCueSubscription;
+  ProviderSubscription<GhostRaceFrame?>? _ghostCompletionSubscription;
+  String? _ghostCompletionSessionId;
+  int _ghostCompletionCandidateCount = 0;
+  bool _ghostCompletionWriteQueued = false;
   bool _startFlowInProgress = false;
 
   @override
   void initState() {
     super.initState();
+    _voiceCueClient = ref.read(runVoiceCueClientProvider);
+    _voiceCueSubscription = ref.listenManual<RunVoiceCueSnapshot>(
+      runVoiceCueSnapshotProvider,
+      (previous, next) => _handleRunVoiceCueSnapshot(next),
+    );
+    _ghostCompletionSubscription = ref.listenManual<GhostRaceFrame?>(
+      ghostRaceFrameProvider,
+      (previous, next) => _handleGhostCompletionFrame(next),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
         return;
@@ -90,6 +108,15 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
   }
 
   @override
+  void dispose() {
+    _voiceCueSubscription?.close();
+    _ghostCompletionSubscription?.close();
+    unawaited(_voiceCueDispatcher.stop(_voiceCueClient));
+    _voiceCueCoordinator.reset();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mapViewState = ref.watch(ghostAwareRunMapViewStateProvider);
     final playbackState = ref.watch(runPlaybackControllerProvider);
@@ -102,12 +129,12 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final settings =
         ref.watch(runSettingsControllerProvider).value ??
         const RunSettingsState();
+    final intervalWorkout = effectiveRunIntervalWorkout(
+      settings.intervalWorkout,
+    );
     final pendingFinishedSession = playbackState.pendingFinishedSession;
     final isReviewing = playbackState.isReviewing;
     final ghostCompletionSummary = playbackState.ghostCompletionSummary;
-
-    _listenForRunVoiceCues();
-    _listenForGhostCompletion(context);
 
     return SafeArea(
       bottom: false,
@@ -151,8 +178,8 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                         },
                       )
                     : RunIntervalButton(
-                        workout: settings.intervalWorkout,
-                        onPressed: () => showRunIntervalSheet(context, ref),
+                        workout: intervalWorkout,
+                        onPressed: () => _handleIntervalButtonPressed(context),
                       ),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
@@ -222,25 +249,35 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     );
   }
 
-  void _listenForRunVoiceCues() {
-    ref.listen(runVoiceCueSnapshotProvider, (previous, next) {
-      final cues = _voiceCueCoordinator.cuesFor(next);
-      if (cues.isEmpty) {
-        return;
+  void _handleRunVoiceCueSnapshot(RunVoiceCueSnapshot snapshot) {
+    final cues = _voiceCueCoordinator.cuesFor(snapshot);
+    if (cues.isEmpty) {
+      if (_shouldStopVoiceCuePlayback(snapshot)) {
+        unawaited(_voiceCueDispatcher.stop(_voiceCueClient));
       }
-      unawaited(_speakRunVoiceCues(cues));
-    });
+      return;
+    }
+    _voiceCueDispatcher.enqueue(cues, _voiceCueClient);
   }
 
-  Future<void> _speakRunVoiceCues(List<RunVoiceCue> cues) async {
-    final client = ref.read(runVoiceCueClientProvider);
-    try {
-      for (final cue in cues) {
-        await client.speak(cue.text, volume: cue.volume);
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Runlini voice cue failed: $error');
-      debugPrint('$stackTrace');
+  bool _shouldStopVoiceCuePlayback(RunVoiceCueSnapshot snapshot) {
+    final metrics = snapshot.metrics;
+    return !snapshot.playbackState.hasActiveSession ||
+        snapshot.playbackState.status != RunScreenStatus.running ||
+        metrics == null ||
+        metrics.isPaused ||
+        !snapshot.settings.voiceCueEnabled;
+  }
+
+  void _handleIntervalButtonPressed(BuildContext context) {
+    if (!runIntervalFeatureLocked) {
+      showRunIntervalSheet(context, ref);
+      return;
     }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text(runIntervalFeatureLockedMessage)),
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_settings_state.dart';
 import 'package:runlini/features/ghost_racer/ui/ghost_session_picker_sheet.dart';
+import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
@@ -83,7 +84,7 @@ class RunGhostControlChip extends ConsumerWidget {
         ref.read(runSettingsControllerProvider).value ??
         const RunSettingsState();
     final intervalWorkout = runSettings.intervalWorkout;
-    if (intervalWorkout.enabled) {
+    if (isRunIntervalEnabledForRuntime(intervalWorkout)) {
       final confirmed = await confirmDisableIntervalForGhost(context);
       if (!context.mounted || !confirmed) {
         return;

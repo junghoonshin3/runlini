@@ -120,6 +120,7 @@ object WearActiveRunJsonMapper {
         }
         val isGhostRun = objectJson.optBoolean("isGhostRun", storedGhostConfig != null)
         val ghostConfig = if (isGhostRun) storedGhostConfig else fallbackGhostConfig
+        val ghostFrame = objectJson.optionalObject("ghostFrame")?.let(::ghostFrameFromJson)
 
         return WearRunState(
             phase = phase,
@@ -149,7 +150,12 @@ object WearActiveRunJsonMapper {
             pendingDraftCount = pendingDraftCount,
             ghostConfig = ghostConfig,
             isGhostRun = isGhostRun && ghostConfig != null,
-            ghostFrame = objectJson.optionalObject("ghostFrame")?.let(::ghostFrameFromJson),
+            ghostFrame = ghostFrame,
+            ghostStartConfirmed = ghostFrame?.startConfirmed ?: false,
+            ghostStartCandidateCount = ghostFrame?.startCandidateCount ?: 0,
+            ghostStartLastEvaluatedPointCount =
+                ghostFrame?.startLastEvaluatedPointCount ?: 0,
+            ghostTrackedDistanceAlongRouteM = ghostFrame?.trackedDistanceAlongRouteM,
             ghostCompletionCandidateCount = objectJson.optInt(
                 "ghostCompletionCandidateCount",
                 0,
@@ -219,6 +225,11 @@ object WearActiveRunJsonMapper {
             .put("distanceFromRouteM", finiteDoubleOrNull(frame.distanceFromRouteM))
             .put("totalRouteDistanceM", finiteDoubleOrNull(frame.totalRouteDistanceM))
             .put("distanceToFinishPointM", finiteDoubleOrNull(frame.distanceToFinishPointM))
+            .put("startConfirmed", frame.startConfirmed)
+            .put("startCandidateCount", frame.startCandidateCount)
+            .put("startLastEvaluatedPointCount", frame.startLastEvaluatedPointCount)
+            .put("trackedDistanceAlongRouteM", finiteDoubleOrNull(frame.trackedDistanceAlongRouteM))
+            .put("projectionSource", frame.projectionSource.name)
     }
 
     private fun ghostFrameFromJson(frameJson: JSONObject): WearGhostFrame {
@@ -236,6 +247,13 @@ object WearActiveRunJsonMapper {
             totalRouteDistanceM = frameJson.optionalDouble("totalRouteDistanceM") ?: 0.0,
             distanceToFinishPointM = frameJson.optionalDouble("distanceToFinishPointM")
                 ?: Double.POSITIVE_INFINITY,
+            startConfirmed = frameJson.optBoolean("startConfirmed", true),
+            startCandidateCount = frameJson.optInt("startCandidateCount", 0),
+            startLastEvaluatedPointCount = frameJson.optInt("startLastEvaluatedPointCount", 0),
+            trackedDistanceAlongRouteM = frameJson.optionalDouble("trackedDistanceAlongRouteM"),
+            projectionSource = runCatching {
+                WearGhostProjectionSource.valueOf(frameJson.optString("projectionSource", "Global"))
+            }.getOrDefault(WearGhostProjectionSource.Global),
         )
     }
 

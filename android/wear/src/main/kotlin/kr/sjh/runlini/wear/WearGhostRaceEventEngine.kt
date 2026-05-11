@@ -43,7 +43,12 @@ class WearGhostRaceEventEngine(
             reset()
             this.sessionId = sessionId
         }
-        if (!isRunning || frame == null || frame.status == WearGhostStatus.Unavailable) {
+        if (
+            !isRunning ||
+            frame == null ||
+            !frame.startConfirmed ||
+            frame.status == WearGhostStatus.Unavailable
+        ) {
             return emptyList()
         }
 

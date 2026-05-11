@@ -110,5 +110,124 @@ void main() {
       expect(frame.ghostMarkerPoint, isNotNull);
       expect(frame.distanceFromRouteM, greaterThan(35));
     });
+
+    test('tracks loop route progress near the previous route distance', () {
+      final loopSession = RunSession(
+        id: 'loop',
+        startedAt: DateTime.utc(2026, 4, 19, 6),
+        distanceM: 444,
+        durationMs: 240000,
+        sourceSummary: 'loop',
+        points: const [
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 0,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0.001,
+            timestampRelMs: 60000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0.001,
+            timestampRelMs: 120000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0,
+            timestampRelMs: 180000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 240000,
+            source: RunPointSource.simulated,
+          ),
+        ],
+      );
+
+      const runnerNearFinish = RunPoint(
+        latitude: 0.00008,
+        longitude: 0,
+        timestampRelMs: 220000,
+        source: RunPointSource.simulated,
+      );
+      final frame = service.calculate(
+        runnerPoint: runnerNearFinish,
+        ghostSession: loopSession,
+        runnerElapsedMs: 220000,
+        startConfirmed: true,
+        runnerDistanceM: 360,
+      );
+
+      expect(frame.trackedDistanceAlongRouteM, greaterThan(330));
+      expect(frame.routeProgress, greaterThan(0.7));
+    });
+
+    test('anchors loop projection near start before start is confirmed', () {
+      final loopSession = RunSession(
+        id: 'loop',
+        startedAt: DateTime.utc(2026, 4, 19, 6),
+        distanceM: 444,
+        durationMs: 240000,
+        sourceSummary: 'loop',
+        points: const [
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 0,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0.001,
+            timestampRelMs: 60000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0.001,
+            timestampRelMs: 120000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0,
+            timestampRelMs: 180000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 240000,
+            source: RunPointSource.simulated,
+          ),
+        ],
+      );
+
+      const runnerAtSharedStartFinish = RunPoint(
+        latitude: 0,
+        longitude: 0,
+        timestampRelMs: 0,
+        source: RunPointSource.simulated,
+      );
+      final frame = service.calculate(
+        runnerPoint: runnerAtSharedStartFinish,
+        ghostSession: loopSession,
+        runnerElapsedMs: 0,
+        startConfirmed: false,
+        runnerDistanceM: 0,
+      );
+
+      expect(frame.startConfirmed, isFalse);
+      expect(frame.routeProgress, lessThan(0.05));
+      expect(frame.distanceToFinishM, greaterThan(400));
+    });
   });
 }

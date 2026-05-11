@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
@@ -14,7 +15,7 @@ import '../../helpers/fake_run_settings_repository.dart';
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
-  testWidgets('opens from the running tab without closing the app shell', (
+  testWidgets('locked running tab button shows a future availability message', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(390, 680);
@@ -57,15 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('run-map')), findsOneWidget);
-    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsOneWidget);
-
-    await _bringSheetTargetIntoView(
-      tester,
-      find.byKey(const Key('run-interval-done-button')),
-    );
-    await tester.tap(find.byKey(const Key('run-interval-done-button')));
-    await tester.pumpAndSettle();
-
+    expect(find.text(runIntervalFeatureLockedMessage), findsOneWidget);
     expect(find.byKey(const Key('run-interval-sheet-scroll')), findsNothing);
   });
 

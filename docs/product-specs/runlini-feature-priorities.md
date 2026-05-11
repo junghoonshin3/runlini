@@ -80,6 +80,7 @@ Runlini should feel like a running app that answers one question instantly:
 - Pre-start ghost selection chip above `START`
 - Selected ghost route preview before the run starts
 - Gradient-style pace-colored ghost route segments based on the selected run's baseline pace
+- Start and finish flags on the selected ghost route, combined when endpoints are within 10m
 - Live ahead/behind gap in seconds
 - Live ghost distance gap and off-route feedback while running
 - Optional current-time ghost marker on the running map, off by default

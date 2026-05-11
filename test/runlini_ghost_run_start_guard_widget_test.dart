@@ -74,10 +74,13 @@ void main() {
 
     expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-status-label')), findsOneWidget);
-    expect(find.text('접전'), findsOneWidget);
+    expect(find.byKey(const Key('ghost-start-pending-badge')), findsOneWidget);
+    expect(find.text('확인 중'), findsOneWidget);
     expect(find.byKey(const Key('ghost-race-time-gap-value')), findsOneWidget);
-    expect(find.text('0:00'), findsOneWidget);
-    expect(find.text('고스트와 같은 위치'), findsOneWidget);
+    expect(
+      find.byKey(const Key('ghost-race-distance-gap-value')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('ghost-marker-layer')), findsOneWidget);
   });
 }

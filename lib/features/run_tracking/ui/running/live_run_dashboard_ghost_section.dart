@@ -14,6 +14,7 @@ class LiveRunDashboardGhostCollapsed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final startPending = !frame.startConfirmed;
     final color = ghostDashboardColor(frame.status);
     return Row(
       key: const Key('live-run-ghost-collapsed'),
@@ -25,15 +26,25 @@ class LiveRunDashboardGhostCollapsed extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                formatGhostRaceStatus(frame.status),
-                key: const Key('live-run-ghost-status-collapsed'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      formatGhostRaceStatus(frame.status),
+                      key: const Key('live-run-ghost-status-collapsed'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  if (startPending) ...[
+                    const SizedBox(width: 6),
+                    const _GhostStartPendingBadge(),
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(
@@ -68,6 +79,7 @@ class LiveRunDashboardGhostExpanded extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final startPending = !frame.startConfirmed;
     final color = ghostDashboardColor(frame.status);
     return Column(
       key: const Key('ghost-race-panel'),
@@ -81,13 +93,21 @@ class LiveRunDashboardGhostExpanded extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    formatGhostRaceStatus(frame.status),
-                    key: const Key('ghost-race-status-label'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          formatGhostRaceStatus(frame.status),
+                          key: const Key('ghost-race-status-label'),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                      if (startPending) const _GhostStartPendingBadge(),
+                    ],
                   ),
                   const SizedBox(height: 3),
                   Text(
@@ -159,4 +179,29 @@ Color ghostDashboardColor(GhostRaceStatus status) {
     GhostRaceStatus.offRoute => AppColors.orange,
     GhostRaceStatus.unavailable => AppColors.muted,
   };
+}
+
+class _GhostStartPendingBadge extends StatelessWidget {
+  const _GhostStartPendingBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('ghost-start-pending-badge'),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.cyan.withValues(alpha: 0.12),
+        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '확인 중',
+        maxLines: 1,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: AppColors.cyan,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
 }

@@ -159,6 +159,48 @@ void main() {
     expect(duplicate, isEmpty);
   });
 
+  test('ghost state events are suppressed before start is confirmed', () {
+    final engine = GhostRaceEventEngine();
+    final start = DateTime(2026, 5, 8, 7);
+
+    engine.eventsFor(
+      sessionId: 'run-a',
+      frame: _frame(GhostRaceStatus.offRoute, startConfirmed: false),
+      isRunning: true,
+      now: start,
+    );
+
+    final emitted = engine.eventsFor(
+      sessionId: 'run-a',
+      frame: _frame(GhostRaceStatus.offRoute, startConfirmed: false),
+      isRunning: true,
+      now: start.add(const Duration(seconds: 10)),
+    );
+
+    expect(emitted, isEmpty);
+  });
+
+  test('completion is suppressed before start is confirmed', () {
+    final engine = GhostRaceEventEngine();
+
+    final emitted = engine.eventsFor(
+      sessionId: 'run-a',
+      frame: _frame(
+        GhostRaceStatus.ahead,
+        distanceToFinishM: 20,
+        startConfirmed: false,
+      ),
+      isRunning: true,
+      now: DateTime(2026, 5, 8, 7),
+      completionPending: true,
+    );
+
+    expect(
+      emitted.map((event) => event.type),
+      isNot(contains(GhostRaceEventType.completed)),
+    );
+  });
+
   test('events are suppressed when not running', () {
     final engine = GhostRaceEventEngine();
 
@@ -178,6 +220,7 @@ GhostRaceFrame _frame(
   GhostRaceStatus status, {
   int gapMs = 12000,
   double distanceToFinishM = 600,
+  bool startConfirmed = true,
 }) {
   return GhostRaceFrame(
     status: status,
@@ -190,5 +233,6 @@ GhostRaceFrame _frame(
     distanceFromRouteM: status == GhostRaceStatus.offRoute ? 50 : 4,
     totalRouteDistanceM: 1200,
     distanceToFinishPointM: distanceToFinishM,
+    startConfirmed: startConfirmed,
   );
 }

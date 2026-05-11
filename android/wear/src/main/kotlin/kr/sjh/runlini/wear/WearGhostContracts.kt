@@ -5,6 +5,8 @@ import org.json.JSONObject
 
 enum class WearGhostStatus { Unavailable, Ahead, Behind, Level, OffRoute }
 
+enum class WearGhostProjectionSource { Global, Tracked, Held }
+
 data class WearGhostConfig(
     val id: String,
     val durationMs: Long,
@@ -25,6 +27,11 @@ data class WearGhostFrame(
     val distanceFromRouteM: Double = Double.POSITIVE_INFINITY,
     val totalRouteDistanceM: Double = 0.0,
     val distanceToFinishPointM: Double = Double.POSITIVE_INFINITY,
+    val startConfirmed: Boolean = true,
+    val startCandidateCount: Int = 0,
+    val startLastEvaluatedPointCount: Int = 0,
+    val trackedDistanceAlongRouteM: Double? = null,
+    val projectionSource: WearGhostProjectionSource = WearGhostProjectionSource.Global,
 )
 
 data class WearRunGhostSummary(

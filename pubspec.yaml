@@ -38,6 +38,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/map/
     - assets/fixtures/fake_run_session.json
     - assets/fixtures/osaka_namba_tobita_route.json
     - assets/fixtures/osaka_namba_kanzakigawa_route.json

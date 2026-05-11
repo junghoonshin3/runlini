@@ -65,4 +65,68 @@ class WearGhostGapCalculatorTest {
         assertEquals(WearGhostStatus.OffRoute, frame.status)
         assertTrue(frame.distanceFromRouteM > 35.0)
     }
+
+    @Test
+    fun confirmsStartAfterTwoForwardPointsNearRouteStart() {
+        val first = calculator.evaluateStart(
+            runnerPoints = listOf(
+                WearRunPoint(latitude = 37.0, longitude = 127.0, timestampRelMs = 0L),
+                WearRunPoint(latitude = 37.0, longitude = 127.0003, timestampRelMs = 10_000L),
+            ),
+            ghostConfig = config,
+            alreadyConfirmed = false,
+            previousCandidateCount = 0,
+            lastEvaluatedPointCount = 0,
+        )
+
+        assertEquals(false, first.isConfirmed)
+        assertEquals(1, first.candidateCount)
+
+        val second = calculator.evaluateStart(
+            runnerPoints = listOf(
+                WearRunPoint(latitude = 37.0, longitude = 127.0, timestampRelMs = 0L),
+                WearRunPoint(latitude = 37.0, longitude = 127.0003, timestampRelMs = 10_000L),
+                WearRunPoint(latitude = 37.0, longitude = 127.0006, timestampRelMs = 20_000L),
+            ),
+            ghostConfig = config,
+            alreadyConfirmed = false,
+            previousCandidateCount = first.candidateCount,
+            lastEvaluatedPointCount = first.lastEvaluatedPointCount,
+        )
+
+        assertEquals(true, second.isConfirmed)
+        assertEquals(2, second.candidateCount)
+    }
+
+    @Test
+    fun tracksLoopRouteProgressNearPreviousDistance() {
+        val loopConfig = WearGhostConfig(
+            id = "loop",
+            durationMs = 240_000L,
+            distanceM = 444.0,
+            sourceSummary = "loop",
+            points = listOf(
+                WearRunPoint(latitude = 0.0, longitude = 0.0, timestampRelMs = 0L),
+                WearRunPoint(latitude = 0.0, longitude = 0.001, timestampRelMs = 60_000L),
+                WearRunPoint(latitude = 0.001, longitude = 0.001, timestampRelMs = 120_000L),
+                WearRunPoint(latitude = 0.001, longitude = 0.0, timestampRelMs = 180_000L),
+                WearRunPoint(latitude = 0.0, longitude = 0.0, timestampRelMs = 240_000L),
+            ),
+        )
+
+        val frame = calculator.calculate(
+            runnerPoint = WearRunPoint(
+                latitude = 0.00008,
+                longitude = 0.0,
+                timestampRelMs = 220_000L,
+            ),
+            ghostConfig = loopConfig,
+            runnerElapsedMs = 220_000L,
+            startConfirmed = true,
+            previousDistanceAlongRouteM = 360.0,
+        )
+
+        assertTrue(frame.trackedDistanceAlongRouteM!! > 330.0)
+        assertTrue(frame.routeProgress > 0.7)
+    }
 }

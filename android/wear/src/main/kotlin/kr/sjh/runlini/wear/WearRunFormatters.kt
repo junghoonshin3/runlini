@@ -63,7 +63,13 @@ internal object WearRunFormatters {
         }
     }
 
+    fun ghostStatus(frame: WearGhostFrame?): String {
+        if (frame != null && !frame.startConfirmed) return "출발 확인 중"
+        return ghostStatusLabel(frame?.status)
+    }
+
     fun ghostGap(frame: WearGhostFrame?): String {
+        if (frame != null && !frame.startConfirmed) return "--"
         val gapMs = frame?.timeGapMs ?: return "--"
         val sign = if (gapMs >= 0) "+" else "-"
         val totalSeconds = (abs(gapMs) / 1000).coerceAtLeast(0L)
@@ -73,7 +79,7 @@ internal object WearRunFormatters {
     }
 
     fun ghostResult(frame: WearGhostFrame?): String {
-        return "${ghostStatusLabel(frame?.status)} ${ghostGap(frame)}"
+        return "${ghostStatus(frame)} ${ghostGap(frame)}"
     }
 
     fun ghostProgress(frame: WearGhostFrame?): String {

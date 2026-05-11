@@ -6,6 +6,7 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_map_static_state.dart';
@@ -90,6 +91,12 @@ void main() {
                   color: AppColors.voltGreen,
                 ),
               ],
+              ghostRouteEndpointMarkers: <MapRouteEndpointMarker>[
+                MapRouteEndpointMarker(
+                  coordinate: MapCoordinate(latitude: 37.2, longitude: 127.2),
+                  role: MapRouteEndpointRole.start,
+                ),
+              ],
             );
           }),
         ],
@@ -111,6 +118,7 @@ void main() {
       expect(mapViewState.currentRunnerPolylinePoints, hasLength(2));
       expect(mapViewState.ghostPolylinePoints, hasLength(2));
       expect(mapViewState.ghostPolylineSegments, hasLength(1));
+      expect(mapViewState.ghostRouteEndpointMarkers, hasLength(1));
       expect(
         mapViewState.ghostPolylineSegments.first.color,
         AppColors.voltGreen,

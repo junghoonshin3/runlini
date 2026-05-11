@@ -4,6 +4,21 @@ import 'package:runlini/features/run_tracking/service/run_interval_workout_calcu
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
+
+const runIntervalFeatureLocked = true;
+const runIntervalFeatureLockedMessage = '인터벌 기능은 추후에 제공될 예정이에요.';
+
+RunIntervalWorkout effectiveRunIntervalWorkout(RunIntervalWorkout workout) {
+  if (!runIntervalFeatureLocked) {
+    return workout;
+  }
+  return workout.copyWith(enabled: false);
+}
+
+bool isRunIntervalEnabledForRuntime(RunIntervalWorkout workout) {
+  return effectiveRunIntervalWorkout(workout).enabled;
+}
 
 final runIntervalWorkoutCalculatorProvider =
     Provider<RunIntervalWorkoutCalculator>(
@@ -13,7 +28,7 @@ final runIntervalWorkoutCalculatorProvider =
 final runIntervalFrameProvider = Provider<RunIntervalFrame?>((Ref ref) {
   final settings = ref.watch(runSettingsControllerProvider).value;
   final workout = settings?.intervalWorkout;
-  if (workout == null || !workout.enabled) {
+  if (workout == null || !isRunIntervalEnabledForRuntime(workout)) {
     return null;
   }
   final ghostSettings = ref.watch(ghostSettingsProvider);

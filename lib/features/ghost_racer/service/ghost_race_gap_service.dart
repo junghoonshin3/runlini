@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
-import 'package:latlong2/latlong.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/ghost_racer/service/ghost_route_model.dart';
 import 'package:runlini/features/ghost_racer/service/run_session_interpolator.dart';
 import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/ghost_racer/types/ghost_race_projection_source.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
@@ -12,24 +11,99 @@ class GhostRaceGapService {
     this.levelThresholdMs = 3000,
     this.levelDistanceThresholdM = 3,
     this.offRouteThresholdM = 35,
+    this.startRadiusM = 45,
+    this.startRouteWindowM = 250,
+    this.startOffRouteThresholdM = 50,
+    this.startFallbackDistanceM = 80,
+    this.startFallbackMinRouteM = 40,
+    this.startFallbackMaxRouteM = 400,
+    this.requiredStartCandidates = 2,
+    this.projectionBehindWindowM = 50,
+    this.projectionAheadWindowM = 250,
   });
 
   final int levelThresholdMs;
   final double levelDistanceThresholdM;
   final double offRouteThresholdM;
+  final double startRadiusM;
+  final double startRouteWindowM;
+  final double startOffRouteThresholdM;
+  final double startFallbackDistanceM;
+  final double startFallbackMinRouteM;
+  final double startFallbackMaxRouteM;
+  final int requiredStartCandidates;
+  final double projectionBehindWindowM;
+  final double projectionAheadWindowM;
 
-  static const Distance _distance = Distance();
+  GhostRaceStartDecision evaluateStart({
+    required List<RunPoint> runnerPoints,
+    required RunSession ghostSession,
+    double? runnerDistanceM,
+  }) {
+    if (runnerPoints.length < 2 || ghostSession.points.length < 2) {
+      return const GhostRaceStartDecision.pending(0, 0);
+    }
+
+    final route = GhostRouteModel.from(ghostSession.points);
+    if (route.segments.isEmpty) {
+      return GhostRaceStartDecision.pending(0, runnerPoints.length);
+    }
+
+    var nextCount = 0;
+    final anchorIndex = _startAnchorIndex(runnerPoints, ghostSession);
+    if (anchorIndex != null) {
+      for (
+        var index = anchorIndex + 1;
+        index < runnerPoints.length;
+        index += 1
+      ) {
+        final previousProjection = route.projectGlobal(runnerPoints[index - 1]);
+        final currentProjection = route.projectGlobal(runnerPoints[index]);
+        final progressedForward =
+            currentProjection.distanceAlongRouteM >
+            previousProjection.distanceAlongRouteM + 1;
+        final onEarlyRoute =
+            currentProjection.distanceAlongRouteM > 0 &&
+            currentProjection.distanceAlongRouteM <= startRouteWindowM &&
+            currentProjection.distanceFromRouteM <= startOffRouteThresholdM;
+        nextCount = progressedForward && onEarlyRoute ? nextCount + 1 : 0;
+        if (nextCount >= requiredStartCandidates) {
+          return GhostRaceStartDecision.confirmed(
+            nextCount,
+            runnerPoints.length,
+          );
+        }
+      }
+    }
+
+    if (_hasAcceptedDistanceFallback(
+      route: route,
+      runnerPoint: runnerPoints.last,
+      runnerDistanceM: runnerDistanceM,
+    )) {
+      return GhostRaceStartDecision.confirmed(
+        requiredStartCandidates,
+        runnerPoints.length,
+      );
+    }
+
+    return GhostRaceStartDecision.pending(nextCount, runnerPoints.length);
+  }
 
   GhostRaceFrame calculate({
     required RunPoint runnerPoint,
     required RunSession ghostSession,
     required int runnerElapsedMs,
+    bool startConfirmed = true,
+    int startCandidateCount = 0,
+    int startLastEvaluatedPointCount = 0,
+    double? runnerDistanceM,
   }) {
     if (ghostSession.points.isEmpty) {
       return const GhostRaceFrame.unavailable();
     }
 
-    final route = _GhostRouteModel.from(ghostSession.points);
+    final route = GhostRouteModel.from(ghostSession.points);
     final ghostPoint = interpolateRunPoint(
       session: ghostSession,
       elapsedMs: runnerElapsedMs,
@@ -48,10 +122,20 @@ class GhostRaceGapService {
         distanceFromRouteM: distanceGapM,
         totalRouteDistanceM: 0,
         distanceToFinishPointM: distanceGapM,
+        startConfirmed: startConfirmed,
+        startCandidateCount: startCandidateCount,
+        startLastEvaluatedPointCount: startLastEvaluatedPointCount,
+        projectionSource: GhostRaceProjectionSource.global,
       );
     }
 
-    final projection = route.project(runnerPoint);
+    final projection = route.projectTracked(
+      runnerPoint: runnerPoint,
+      anchorDistanceAlongRouteM: runnerDistanceM,
+      behindWindowM: projectionBehindWindowM,
+      aheadWindowM: projectionAheadWindowM,
+      onRouteThresholdM: offRouteThresholdM,
+    );
     final ghostDistanceAtElapsed = route.distanceAtElapsed(runnerElapsedMs);
     final timeGapMs = projection.elapsedMs - runnerElapsedMs;
     final distanceGapM =
@@ -74,6 +158,13 @@ class GhostRaceGapService {
         runnerPoint,
         ghostSession.points.last,
       ),
+      startConfirmed: startConfirmed,
+      startCandidateCount: startCandidateCount,
+      startLastEvaluatedPointCount: startLastEvaluatedPointCount,
+      trackedDistanceAlongRouteM: startConfirmed
+          ? projection.distanceAlongRouteM
+          : runnerDistanceM,
+      projectionSource: projection.source,
     );
   }
 
@@ -93,196 +184,62 @@ class GhostRaceGapService {
   }
 
   static double _distanceBetween(RunPoint left, RunPoint right) {
-    return _distance.as(
-      LengthUnit.Meter,
-      LatLng(left.latitude, left.longitude),
-      LatLng(right.latitude, right.longitude),
-    );
+    return GhostRouteModel.distanceBetween(left, right);
+  }
+
+  int? _startAnchorIndex(List<RunPoint> points, RunSession ghostSession) {
+    final routeStart = ghostSession.points.first;
+    for (var index = 0; index < points.length; index += 1) {
+      if (_distanceBetween(points[index], routeStart) <= startRadiusM) {
+        return index;
+      }
+    }
+    return null;
+  }
+
+  bool _hasAcceptedDistanceFallback({
+    required GhostRouteModel route,
+    required RunPoint runnerPoint,
+    required double? runnerDistanceM,
+  }) {
+    final distance = runnerDistanceM ?? 0;
+    if (distance < startFallbackDistanceM) {
+      return false;
+    }
+
+    final projection = route.projectGlobal(runnerPoint);
+    return projection.distanceFromRouteM <= startOffRouteThresholdM &&
+        projection.distanceAlongRouteM >= startFallbackMinRouteM &&
+        projection.distanceAlongRouteM <= startFallbackMaxRouteM;
   }
 }
 
-class _GhostRouteModel {
-  const _GhostRouteModel({required this.segments});
+class GhostRaceStartDecision {
+  const GhostRaceStartDecision({
+    required this.isConfirmed,
+    required this.candidateCount,
+    required this.lastEvaluatedPointCount,
+  });
 
-  final List<_GhostRouteSegment> segments;
-
-  double get totalDistanceM =>
-      segments.isEmpty ? 0 : segments.last.endDistanceM;
-
-  factory _GhostRouteModel.from(List<RunPoint> points) {
-    final segments = <_GhostRouteSegment>[];
-    var distanceBeforeM = 0.0;
-    for (var index = 0; index < points.length - 1; index += 1) {
-      final start = points[index];
-      final end = points[index + 1];
-      final distanceM = GhostRaceGapService._distanceBetween(start, end);
-      if (distanceM <= 0) {
-        continue;
-      }
-
-      final segment = _GhostRouteSegment(
-        start: start,
-        end: end,
-        startDistanceM: distanceBeforeM,
-        endDistanceM: distanceBeforeM + distanceM,
+  const GhostRaceStartDecision.pending(
+    int candidateCount,
+    int lastEvaluatedPointCount,
+  ) : this(
+        isConfirmed: false,
+        candidateCount: candidateCount,
+        lastEvaluatedPointCount: lastEvaluatedPointCount,
       );
-      segments.add(segment);
-      distanceBeforeM = segment.endDistanceM;
-    }
 
-    return _GhostRouteModel(segments: segments);
-  }
+  const GhostRaceStartDecision.confirmed(
+    int candidateCount,
+    int lastEvaluatedPointCount,
+  ) : this(
+        isConfirmed: true,
+        candidateCount: candidateCount,
+        lastEvaluatedPointCount: lastEvaluatedPointCount,
+      );
 
-  _RouteProjection project(RunPoint runnerPoint) {
-    _RouteProjection? bestProjection;
-    for (final segment in segments) {
-      final projection = segment.project(runnerPoint);
-      if (bestProjection == null ||
-          projection.distanceFromRouteM < bestProjection.distanceFromRouteM) {
-        bestProjection = projection;
-      }
-    }
-
-    return bestProjection!;
-  }
-
-  double distanceAtElapsed(int elapsedMs) {
-    if (elapsedMs <= segments.first.start.timestampRelMs) {
-      return segments.first.startDistanceM;
-    }
-
-    for (final segment in segments) {
-      final startMs = segment.start.timestampRelMs;
-      final endMs = segment.end.timestampRelMs;
-      if (elapsedMs > endMs) {
-        continue;
-      }
-
-      if (endMs <= startMs) {
-        return segment.startDistanceM;
-      }
-
-      final ratio = ((elapsedMs - startMs) / (endMs - startMs))
-          .clamp(0.0, 1.0)
-          .toDouble();
-      return segment.startDistanceM +
-          ((segment.endDistanceM - segment.startDistanceM) * ratio);
-    }
-
-    return segments.last.endDistanceM;
-  }
-
-  double progressFor(double distanceAlongRouteM) {
-    final total = totalDistanceM;
-    if (total <= 0) {
-      return 0;
-    }
-    return (distanceAlongRouteM / total).clamp(0.0, 1.0).toDouble();
-  }
-
-  double distanceToFinish(double distanceAlongRouteM) {
-    return (totalDistanceM - distanceAlongRouteM).clamp(0.0, double.infinity);
-  }
-}
-
-class _GhostRouteSegment {
-  const _GhostRouteSegment({
-    required this.start,
-    required this.end,
-    required this.startDistanceM,
-    required this.endDistanceM,
-  });
-
-  final RunPoint start;
-  final RunPoint end;
-  final double startDistanceM;
-  final double endDistanceM;
-
-  _RouteProjection project(RunPoint runnerPoint) {
-    final startOffset = _meterOffset(
-      originLatitude: runnerPoint.latitude,
-      originLongitude: runnerPoint.longitude,
-      latitude: start.latitude,
-      longitude: start.longitude,
-    );
-    final endOffset = _meterOffset(
-      originLatitude: runnerPoint.latitude,
-      originLongitude: runnerPoint.longitude,
-      latitude: end.latitude,
-      longitude: end.longitude,
-    );
-    final segmentVector = endOffset - startOffset;
-    final segmentLengthSquared = segmentVector.lengthSquared;
-    const runnerOffset = _MeterOffset(0, 0);
-    final rawRatio = segmentLengthSquared <= 0
-        ? 0.0
-        : ((runnerOffset - startOffset).dot(segmentVector) /
-              segmentLengthSquared);
-    final ratio = rawRatio.clamp(0.0, 1.0).toDouble();
-    final projectedOffset = startOffset + (segmentVector * ratio);
-    final elapsedMs =
-        start.timestampRelMs +
-        ((end.timestampRelMs - start.timestampRelMs) * ratio).round();
-
-    return _RouteProjection(
-      distanceFromRouteM: projectedOffset.distance,
-      distanceAlongRouteM:
-          startDistanceM + ((endDistanceM - startDistanceM) * ratio),
-      elapsedMs: elapsedMs,
-    );
-  }
-}
-
-class _RouteProjection {
-  const _RouteProjection({
-    required this.distanceFromRouteM,
-    required this.distanceAlongRouteM,
-    required this.elapsedMs,
-  });
-
-  final double distanceFromRouteM;
-  final double distanceAlongRouteM;
-  final int elapsedMs;
-}
-
-class _MeterOffset {
-  const _MeterOffset(this.dx, this.dy);
-
-  final double dx;
-  final double dy;
-
-  double get lengthSquared => (dx * dx) + (dy * dy);
-
-  double get distance => math.sqrt(lengthSquared);
-
-  _MeterOffset operator -(_MeterOffset other) {
-    return _MeterOffset(dx - other.dx, dy - other.dy);
-  }
-
-  _MeterOffset operator +(_MeterOffset other) {
-    return _MeterOffset(dx + other.dx, dy + other.dy);
-  }
-
-  _MeterOffset operator *(double value) {
-    return _MeterOffset(dx * value, dy * value);
-  }
-
-  double dot(_MeterOffset other) {
-    return (dx * other.dx) + (dy * other.dy);
-  }
-}
-
-_MeterOffset _meterOffset({
-  required double originLatitude,
-  required double originLongitude,
-  required double latitude,
-  required double longitude,
-}) {
-  final latitudeScaleM = 111320.0;
-  final longitudeScaleM =
-      latitudeScaleM * math.cos(originLatitude * math.pi / 180);
-  return _MeterOffset(
-    (longitude - originLongitude) * longitudeScaleM,
-    (latitude - originLatitude) * latitudeScaleM,
-  );
+  final bool isConfirmed;
+  final int candidateCount;
+  final int lastEvaluatedPointCount;
 }

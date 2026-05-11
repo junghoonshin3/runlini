@@ -44,11 +44,20 @@ class WearRunAlertController(
 ) {
     private var lastAlertedKm: Int = 0
     private var lastIntervalStepLabel: String? = null
+    private var speechCycleActive: Boolean = false
+    private var speechEmittedInCycle: Boolean = false
     private val ghostEventEngine = WearGhostRaceEventEngine()
+
+    fun beginAlertCycle() {
+        speechCycleActive = true
+        speechEmittedInCycle = false
+    }
 
     fun reset() {
         lastAlertedKm = 0
         lastIntervalStepLabel = null
+        speechCycleActive = false
+        speechEmittedInCycle = false
         ghostEventEngine.reset()
     }
 
@@ -58,23 +67,31 @@ class WearRunAlertController(
         settings: WearRunSettings,
         elapsedMs: Long? = null,
         isGhostRun: Boolean = false,
-    ) {
+        ghostFrame: WearGhostFrame? = null,
+    ): Boolean {
         val currentKm = floor(distanceM / 1000.0).toInt()
-        if (currentKm <= 0 || currentKm <= lastAlertedKm) return
+        if (currentKm <= 0 || currentKm <= lastAlertedKm) return false
         lastAlertedKm = currentKm
         if (settings.vibrationEnabled && settings.kmAlertEnabled) {
             haptics.tick()
         }
         if (settings.voiceCueEnabled && settings.kmAlertEnabled) {
-            speech.speak(
-                WearRunVoiceCueFormatter.kilometerSummary(
+            return speak(
+                text = WearRunVoiceCueFormatter.kilometerSummary(
                     kilometer = currentKm,
                     averagePaceSecPerKm = averagePaceSecPerKm,
                     elapsedMs = elapsedMs,
+                    ghostGapMs = if (isGhostRun && settings.ghostVoiceCueEnabled) {
+                        ghostGapMsForSpeech(ghostFrame)
+                    } else {
+                        null
+                    },
                 ),
-                settings.voiceCueVolume,
+                volume = settings.voiceCueVolume,
+                useCycleBudget = isGhostRun,
             )
         }
+        return false
     }
 
     fun onGhostFrame(
@@ -82,52 +99,97 @@ class WearRunAlertController(
         settings: WearRunSettings,
         isGhostRun: Boolean,
         nowMs: Long = System.currentTimeMillis(),
-    ) {
-        if (!isGhostRun) return
+    ): Boolean {
+        if (!isGhostRun) return false
         val events = ghostEventEngine.eventsFor(
             frame = frame,
             isRunning = true,
             nowMs = nowMs,
         )
-        if (events.isEmpty()) return
+        if (events.isEmpty()) return false
         if (settings.vibrationEnabled) {
             events.forEach { _ -> haptics.tick() }
         }
         if (settings.voiceCueEnabled && settings.ghostVoiceCueEnabled) {
-            events.mapNotNull { WearRunVoiceCueFormatter.ghostEvent(it) }
-                .forEach { speech.speak(it, settings.voiceCueVolume) }
+            val event = events.minByOrNull { ghostEventPriority(it.type) } ?: return false
+            val text = WearRunVoiceCueFormatter.ghostEvent(event) ?: return false
+            return speak(text, settings.voiceCueVolume)
         }
+        return false
     }
 
     fun onIntervalFrame(
         frame: WearIntervalFrame?,
         settings: WearRunSettings,
         isGhostRun: Boolean = false,
-    ) {
+    ): Boolean {
         val label = WearIntervalFormatters.stepLabel(frame?.step)
-        if (frame == null || label == lastIntervalStepLabel) return
+        if (frame == null || label == lastIntervalStepLabel) return false
         lastIntervalStepLabel = label
         if (settings.vibrationEnabled) {
             haptics.tick()
         }
         if (!isGhostRun && settings.voiceCueEnabled) {
             speech.speak(label, settings.voiceCueVolume)
+            return true
         }
+        return false
     }
 
     fun onGhostCompleted(
         settings: WearRunSettings,
         isGhostRun: Boolean,
         frame: WearGhostFrame? = null,
-    ) {
+    ): Boolean {
         if (isGhostRun && settings.vibrationEnabled) {
             haptics.tick()
         }
         if (isGhostRun && settings.voiceCueEnabled && settings.ghostVoiceCueEnabled) {
-            speech.speak(
+            return speak(
                 WearRunVoiceCueFormatter.ghostCompleted(frame),
                 settings.voiceCueVolume,
             )
+        }
+        return false
+    }
+
+    private fun ghostGapMsForSpeech(frame: WearGhostFrame?): Long? {
+        if (frame == null || !frame.startConfirmed || frame.status == WearGhostStatus.OffRoute) {
+            return null
+        }
+        return when (frame.status) {
+            WearGhostStatus.Ahead,
+            WearGhostStatus.Behind -> frame.timeGapMs
+            WearGhostStatus.Level,
+            WearGhostStatus.OffRoute,
+            WearGhostStatus.Unavailable -> null
+        }
+    }
+
+    private fun speak(
+        text: String,
+        volume: Float,
+        useCycleBudget: Boolean = true,
+    ): Boolean {
+        if (useCycleBudget && speechCycleActive && speechEmittedInCycle) {
+            return false
+        }
+        speech.speak(text, volume)
+        if (useCycleBudget && speechCycleActive) {
+            speechEmittedInCycle = true
+        }
+        return true
+    }
+
+    private fun ghostEventPriority(type: WearGhostRaceEventType): Int {
+        return when (type) {
+            WearGhostRaceEventType.Completed -> 0
+            WearGhostRaceEventType.OffRoute,
+            WearGhostRaceEventType.BackOnRoute -> 10
+            WearGhostRaceEventType.Overtake,
+            WearGhostRaceEventType.LostLead -> 20
+            WearGhostRaceEventType.Last200m -> 30
+            WearGhostRaceEventType.Last500m -> 31
         }
     }
 
@@ -148,6 +210,7 @@ internal object WearRunVoiceCueFormatter {
         kilometer: Int,
         averagePaceSecPerKm: Double?,
         elapsedMs: Long? = null,
+        ghostGapMs: Long? = null,
     ): String {
         val parts = mutableListOf("${kilometer}킬로미터")
         paceSpeech(averagePaceSecPerKm)?.let {
@@ -156,7 +219,10 @@ internal object WearRunVoiceCueFormatter {
         elapsedSpeech(elapsedMs)?.let {
             parts += "시간 $it"
         }
-        return parts.joinToString(", ")
+        ghostGapPhrase(ghostGapMs)?.let {
+            parts += it
+        }
+        return parts.joinToString(". ")
     }
 
     fun ghostStatus(frame: WearGhostFrame): String? {
@@ -176,10 +242,10 @@ internal object WearRunVoiceCueFormatter {
             WearGhostRaceEventType.OffRoute -> "경로를 벗어났어요"
             WearGhostRaceEventType.BackOnRoute -> "경로로 돌아왔어요"
             WearGhostRaceEventType.Overtake -> gap?.let {
-                "고스트를 추월했어요, $it"
+                "고스트를 추월했어요. 지금은 $it"
             } ?: "고스트를 추월했어요"
             WearGhostRaceEventType.LostLead -> gap?.let {
-                "고스트에게 역전당했어요, $it"
+                "고스트에게 역전당했어요. 지금은 $it"
             } ?: "고스트에게 역전당했어요"
             WearGhostRaceEventType.Last500m -> "마지막 500미터"
             WearGhostRaceEventType.Last200m -> "마지막 200미터"
@@ -188,8 +254,21 @@ internal object WearRunVoiceCueFormatter {
     }
 
     fun ghostCompleted(frame: WearGhostFrame?): String {
-        val gap = frame?.let(::ghostGapPhrase)
-        return gap?.let { "고스트 코스 완료, $it" } ?: "고스트 코스 완료"
+        val targetFrame = frame ?: return "고스트 코스 완료"
+        if (targetFrame.timeGapMs == 0L || targetFrame.status == WearGhostStatus.Level) {
+            return "고스트 코스 완료. 거의 같아요"
+        }
+        return when (targetFrame.status) {
+            WearGhostStatus.Ahead -> {
+                "고스트 코스 완료. 고스트보다 ${gapSpeech(targetFrame.timeGapMs)} 빨랐어요"
+            }
+            WearGhostStatus.Behind -> {
+                "고스트 코스 완료. 고스트보다 ${gapSpeech(targetFrame.timeGapMs)} 늦었어요"
+            }
+            WearGhostStatus.Level -> "고스트 코스 완료. 거의 같아요"
+            WearGhostStatus.OffRoute,
+            WearGhostStatus.Unavailable -> "고스트 코스 완료"
+        }
     }
 
     private fun paceSpeech(paceSecPerKm: Double?): String? {
@@ -233,12 +312,24 @@ internal object WearRunVoiceCueFormatter {
     }
 
     private fun ghostGapPhrase(frame: WearGhostFrame): String? {
-        return when (frame.status) {
-            WearGhostStatus.Ahead -> "${gapSpeech(frame.timeGapMs)} 앞서요"
-            WearGhostStatus.Behind -> "${gapSpeech(frame.timeGapMs)} 뒤처져요"
-            WearGhostStatus.Level,
-            WearGhostStatus.OffRoute,
-            WearGhostStatus.Unavailable -> null
+        return ghostGapPhrase(
+            when (frame.status) {
+                WearGhostStatus.Ahead,
+                WearGhostStatus.Behind -> frame.timeGapMs
+                WearGhostStatus.Level,
+                WearGhostStatus.OffRoute,
+                WearGhostStatus.Unavailable -> null
+            },
+        )
+    }
+
+    private fun ghostGapPhrase(gapMs: Long?): String? {
+        if (gapMs == null || gapMs == 0L) return null
+        val gap = gapSpeech(gapMs)
+        return if (gapMs > 0L) {
+            "고스트보다 $gap 앞서고 있어요"
+        } else {
+            "고스트보다 $gap 뒤처지고 있어요"
         }
     }
 }

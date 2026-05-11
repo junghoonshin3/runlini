@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
@@ -45,16 +46,19 @@ final runMapStaticStateProvider = FutureProvider<RunMapStaticState>((
     }
   }
 
+  final ghostPolylinePoints = selectedGhostSession == null
+      ? const <MapCoordinate>[]
+      : mapCoordinatesFromRunPoints(selectedGhostSession.points);
+
   return RunMapStaticState(
     fallbackMapCenter: _fallbackMapCenter(sessions),
-    ghostPolylinePoints: selectedGhostSession == null
-        ? const <MapCoordinate>[]
-        : mapCoordinatesFromRunPoints(selectedGhostSession.points),
+    ghostPolylinePoints: ghostPolylinePoints,
     ghostPolylineSegments: selectedGhostSession == null
         ? const []
         : ref
               .read(paceColoredRouteSegmentBuilderProvider)
               .buildGhostSegments(selectedGhostSession),
+    ghostRouteEndpointMarkers: mapRouteEndpointMarkersFor(ghostPolylinePoints),
     selectedGhostSession: selectedGhostSession,
   );
 });
@@ -122,6 +126,9 @@ final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
     currentRunnerPolylineSegments: currentRunnerPolylineSegments,
     ghostPolylinePoints: ghostPolylinePoints,
     ghostPolylineSegments: staticState?.ghostPolylineSegments ?? const [],
+    ghostRouteEndpointMarkers:
+        staticState?.ghostRouteEndpointMarkers ??
+        const <MapRouteEndpointMarker>[],
     selectedGhostSession: staticState?.selectedGhostSession,
   );
 });

@@ -115,10 +115,13 @@ Current Android native V1 implementation:
   `/runlini/phone/interval_config` as an `intervalJson` asset. V1 supports
   `warmup -> work/recovery repeats -> cooldown`, with time, distance, open, and
   skipped targets.
-- V1 treats ghost runs and interval runs as mutually exclusive active modes.
-  Phone users resolve the conflict with an explicit prompt. Wear ghost runs
-  silently ignore interval settings for that active run, while normal Wear runs
-  keep interval guidance.
+- Interval configuration is currently product-locked on the phone. Stored
+  interval settings are preserved, but the phone runtime and Wear sync treat the
+  interval workout as disabled until the feature is reopened.
+- When interval configuration is reopened, V1 treats ghost runs and interval
+  runs as mutually exclusive active modes. Phone users resolve the conflict with
+  an explicit prompt. Wear ghost runs silently ignore interval settings for that
+  active run, while normal Wear runs keep interval guidance.
 - During a normal active Wear interval run, the core page shows a compact
   current-step pill and the active pager includes an interval page with current
   step, remaining target, and next step.

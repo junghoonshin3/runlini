@@ -55,7 +55,7 @@ class GhostRaceEventEngine {
     if (!isRunning || frame == null) {
       return const <GhostRaceEvent>[];
     }
-    if (frame.status == GhostRaceStatus.unavailable) {
+    if (!frame.startConfirmed || frame.status == GhostRaceStatus.unavailable) {
       return const <GhostRaceEvent>[];
     }
 

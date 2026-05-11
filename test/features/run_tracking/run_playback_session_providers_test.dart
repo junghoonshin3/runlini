@@ -142,6 +142,7 @@ void main() {
         .saveFinishedRun();
 
     expect(sessionRepository.savedSessions, hasLength(1));
+    expect(sessionRepository.saveCalls, 1);
     expect(sessionRepository.savedSessions.single.caloriesKcal, isNotNull);
     expect(
       sessionRepository.savedSessions.single.syncStatus,

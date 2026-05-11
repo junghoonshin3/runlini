@@ -91,9 +91,30 @@ class WearGhostRaceEventEngineTest {
         )
     }
 
+    @Test
+    fun eventsAreSuppressedBeforeStartIsConfirmed() {
+        val engine = WearGhostRaceEventEngine()
+
+        engine.eventsFor(
+            frame = frame(WearGhostStatus.OffRoute, startConfirmed = false),
+            isRunning = true,
+            nowMs = 0L,
+        )
+
+        assertEquals(
+            emptyList<WearGhostRaceEvent>(),
+            engine.eventsFor(
+                frame = frame(WearGhostStatus.OffRoute, startConfirmed = false),
+                isRunning = true,
+                nowMs = 10_000L,
+            ),
+        )
+    }
+
     private fun frame(
         status: WearGhostStatus,
         distanceToFinishM: Double = 600.0,
+        startConfirmed: Boolean = true,
     ): WearGhostFrame {
         return WearGhostFrame(
             status = status,
@@ -104,6 +125,7 @@ class WearGhostRaceEventEngineTest {
             distanceFromRouteM = if (status == WearGhostStatus.OffRoute) 50.0 else 4.0,
             totalRouteDistanceM = 1_200.0,
             distanceToFinishPointM = distanceToFinishM,
+            startConfirmed = startConfirmed,
         )
     }
 }

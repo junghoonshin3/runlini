@@ -28,6 +28,7 @@ class WearGhostCompletionDetector(
     fun isCandidate(frame: WearGhostFrame, runnerDistanceM: Double): Boolean {
         val totalDistance = frame.totalRouteDistanceM
         if (
+            !frame.startConfirmed ||
             frame.status == WearGhostStatus.Unavailable ||
             totalDistance <= 0.0 ||
             !totalDistance.isFinite() ||

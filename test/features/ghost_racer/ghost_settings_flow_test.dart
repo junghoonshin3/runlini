@@ -5,9 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
-import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_ghost_control_chip.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
@@ -70,11 +70,14 @@ void main() {
     final handleFinder = find.byKey(const Key('ghost-session-drag-handle'));
     expect(tester.getTopLeft(handleFinder).dy, lessThan(40));
 
-    tester
-        .widget<RunSessionSummaryTile>(
-          find.byKey(const Key('ghost-session-item-fixture_han_river_push')),
-        )
-        .onTap!();
+    expect(find.byKey(const Key('ghost-route-shape-preview')), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('ghost-session-select-fixture_morning_tempo')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('ghost-session-select-fixture_morning_tempo')),
+    );
     await pumpUntilFound(tester, find.text('Ghost Run On'));
     await pumpUntilFound(tester, find.byKey(const Key('ghost-polyline-layer')));
 
@@ -199,7 +202,7 @@ void main() {
     expect(find.byKey(const Key('ghost-session-sheet')), findsNothing);
   });
 
-  testWidgets('running tab uses the left action for interval settings', (
+  testWidgets('running tab locked interval action shows future message', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -223,12 +226,10 @@ void main() {
     expect(find.byKey(const Key('settings-button')), findsNothing);
 
     await tester.tap(find.byKey(const Key('run-interval-button')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('run-interval-sheet-scroll')),
-    );
+    await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsOneWidget);
+    expect(find.text(runIntervalFeatureLockedMessage), findsOneWidget);
+    expect(find.byKey(const Key('run-interval-sheet-scroll')), findsNothing);
     expect(find.byKey(const Key('ghost-toggle')), findsNothing);
   });
 }

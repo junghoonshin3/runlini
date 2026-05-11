@@ -31,6 +31,28 @@ void main() {
     expect(find.text('84 kcal'), findsNothing);
   });
 
+  testWidgets(
+    'shows ghost comparison with a compact start confirmation badge',
+    (tester) async {
+      await _pumpOverlay(tester, ghostRace: _ghostFrame(startConfirmed: false));
+
+      expect(
+        find.byKey(const Key('ghost-start-pending-badge')),
+        findsOneWidget,
+      );
+      expect(find.text('확인 중'), findsOneWidget);
+      expect(find.text('이기는 중'), findsOneWidget);
+      expect(find.text('+0:12'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
+      expect(find.text('고스트 42m 뒤'), findsOneWidget);
+      expect(find.text('+0:12'), findsWidgets);
+    },
+  );
+
   testWidgets('toggle expands and collapses detailed run information', (
     tester,
   ) async {
@@ -141,18 +163,19 @@ LiveRunMetrics _metrics({bool isPaused = false}) {
   );
 }
 
-GhostRaceFrame _ghostFrame() {
-  return const GhostRaceFrame(
+GhostRaceFrame _ghostFrame({bool startConfirmed = true}) {
+  return GhostRaceFrame(
     status: GhostRaceStatus.ahead,
     timeGapMs: 12000,
     distanceGapM: 42,
-    ghostMarkerPoint: MapCoordinate(latitude: 0, longitude: 0),
+    ghostMarkerPoint: const MapCoordinate(latitude: 0, longitude: 0),
     isOffRoute: false,
     routeProgress: 0.5,
     distanceToFinishM: 500,
     distanceFromRouteM: 4,
     totalRouteDistanceM: 1000,
     distanceToFinishPointM: 500,
+    startConfirmed: startConfirmed,
   );
 }
 

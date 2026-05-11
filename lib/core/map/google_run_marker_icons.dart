@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
+import 'package:runlini/core/map/run_route_endpoint_icon_bytes.dart';
 
 abstract final class GoogleRunMarkerIcons {
   static const double _runnerMarkerSize = 42;
@@ -101,6 +103,40 @@ abstract final class GoogleRunMarkerIcons {
       Uint8List.view(byteData.buffer),
       width: _ghostMarkerSize,
       height: _ghostMarkerSize,
+    );
+  }
+
+  static Future<Map<MapRouteEndpointRole, gmap.BitmapDescriptor>>
+  routeEndpoints({required double devicePixelRatio}) async {
+    return <MapRouteEndpointRole, gmap.BitmapDescriptor>{
+      for (final role in MapRouteEndpointRole.values)
+        role: await routeEndpoint(
+          role: role,
+          devicePixelRatio: devicePixelRatio,
+        ),
+    };
+  }
+
+  static Future<gmap.BitmapDescriptor> routeEndpoint({
+    required MapRouteEndpointRole role,
+    required double devicePixelRatio,
+  }) async {
+    final bytes = await runRouteEndpointIconBytes(
+      role: role,
+      devicePixelRatio: devicePixelRatio,
+    );
+    if (bytes == null) {
+      return gmap.BitmapDescriptor.defaultMarkerWithHue(
+        role == MapRouteEndpointRole.start
+            ? gmap.BitmapDescriptor.hueGreen
+            : gmap.BitmapDescriptor.hueRed,
+      );
+    }
+
+    return gmap.BitmapDescriptor.bytes(
+      bytes,
+      width: routeEndpointMarkerWidth,
+      height: routeEndpointMarkerHeight,
     );
   }
 }

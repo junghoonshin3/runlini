@@ -1,5 +1,6 @@
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 
 class RunMapViewState {
@@ -11,6 +12,7 @@ class RunMapViewState {
     this.currentRunnerPolylineSegments = const <MapPolylineSegment>[],
     required this.ghostPolylinePoints,
     this.ghostPolylineSegments = const <MapPolylineSegment>[],
+    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
     this.ghostMarkerPoint,
     this.selectedGhostSession,
   });
@@ -22,6 +24,7 @@ class RunMapViewState {
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
+  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
   final MapCoordinate? ghostMarkerPoint;
   final RunSession? selectedGhostSession;
 
@@ -33,6 +36,7 @@ class RunMapViewState {
     List<MapPolylineSegment>? currentRunnerPolylineSegments,
     List<MapCoordinate>? ghostPolylinePoints,
     List<MapPolylineSegment>? ghostPolylineSegments,
+    List<MapRouteEndpointMarker>? ghostRouteEndpointMarkers,
     MapCoordinate? ghostMarkerPoint,
     bool clearGhostMarkerPoint = false,
     RunSession? selectedGhostSession,
@@ -48,6 +52,8 @@ class RunMapViewState {
       ghostPolylinePoints: ghostPolylinePoints ?? this.ghostPolylinePoints,
       ghostPolylineSegments:
           ghostPolylineSegments ?? this.ghostPolylineSegments,
+      ghostRouteEndpointMarkers:
+          ghostRouteEndpointMarkers ?? this.ghostRouteEndpointMarkers,
       ghostMarkerPoint: clearGhostMarkerPoint
           ? null
           : ghostMarkerPoint ?? this.ghostMarkerPoint,

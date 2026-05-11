@@ -37,6 +37,7 @@ internal object RunliniWearColors {
     val Border = Color(0xFF2A2A27)
     val VoltGreen = Color(0xFFB6FF00)
     val ElectricRed = Color(0xFFFF2D55)
+    val Cyan = Color(0xFF4AE2FF)
 }
 
 @Composable

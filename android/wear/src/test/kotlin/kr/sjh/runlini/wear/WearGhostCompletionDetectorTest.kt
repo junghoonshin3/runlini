@@ -44,6 +44,23 @@ class WearGhostCompletionDetectorTest {
     }
 
     @Test
+    fun blocksFinishBeforeGhostStartConfirmed() {
+        val decision = detector.evaluate(
+            frame = frame(
+                routeProgress = 0.99,
+                distanceToFinishM = 8.0,
+                distanceToFinishPointM = 5.0,
+                startConfirmed = false,
+            ),
+            runnerDistanceM = 980.0,
+            previousCandidateCount = 1,
+        )
+
+        assertFalse(decision.isCandidate)
+        assertFalse(decision.isComplete)
+    }
+
+    @Test
     fun blocksLoopFalseFinishBeforeEnoughDistance() {
         val decision = detector.evaluate(
             frame = frame(
@@ -80,6 +97,7 @@ class WearGhostCompletionDetectorTest {
         distanceFromRouteM: Double = 5.0,
         totalRouteDistanceM: Double = 1_000.0,
         distanceToFinishPointM: Double = 500.0,
+        startConfirmed: Boolean = true,
     ): WearGhostFrame {
         return WearGhostFrame(
             status = status,
@@ -90,6 +108,7 @@ class WearGhostCompletionDetectorTest {
             distanceFromRouteM = distanceFromRouteM,
             totalRouteDistanceM = totalRouteDistanceM,
             distanceToFinishPointM = distanceToFinishPointM,
+            startConfirmed = startConfirmed,
         )
     }
 }

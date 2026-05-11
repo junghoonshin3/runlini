@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
-import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/google_map_coordinate_adapter.dart';
+import 'package:runlini/core/map/google_run_map_layers.dart';
 import 'package:runlini/core/map/google_run_marker_icons.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 
 class GoogleRunMapView extends StatefulWidget {
   const GoogleRunMapView({
@@ -17,6 +18,7 @@ class GoogleRunMapView extends StatefulWidget {
     required this.currentRunnerPolylineSegments,
     required this.ghostPolylinePoints,
     required this.ghostPolylineSegments,
+    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
     required this.recenterTick,
   });
 
@@ -28,6 +30,7 @@ class GoogleRunMapView extends StatefulWidget {
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
   final List<MapCoordinate> ghostPolylinePoints;
   final List<MapPolylineSegment> ghostPolylineSegments;
+  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
   final int recenterTick;
 
   @override
@@ -40,8 +43,10 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
   gmap.GoogleMapController? _mapController;
   gmap.BitmapDescriptor? _runnerMarkerIcon;
   gmap.BitmapDescriptor? _ghostMarkerIcon;
+  Map<MapRouteEndpointRole, gmap.BitmapDescriptor>? _routeEndpointMarkerIcons;
   double? _runnerMarkerDevicePixelRatio;
   double? _ghostMarkerDevicePixelRatio;
+  double? _routeEndpointMarkerDevicePixelRatio;
 
   @override
   void didChangeDependencies() {
@@ -56,6 +61,10 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     if (_ghostMarkerIcon == null ||
         _ghostMarkerDevicePixelRatio != devicePixelRatio) {
       _loadGhostMarkerIcon(devicePixelRatio);
+    }
+    if (_routeEndpointMarkerIcons == null ||
+        _routeEndpointMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRouteEndpointMarkerIcons(devicePixelRatio);
     }
   }
 
@@ -123,8 +132,21 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: false,
-      polylines: <gmap.Polyline>{..._ghostPolylines(), ..._runnerPolylines()},
+      polylines: <gmap.Polyline>{
+        ...googleGhostPolylines(
+          points: widget.ghostPolylinePoints,
+          segments: widget.ghostPolylineSegments,
+        ),
+        ...googleRunnerPolylines(
+          points: widget.currentRunnerPolylinePoints,
+          segments: widget.currentRunnerPolylineSegments,
+        ),
+      },
       markers: <gmap.Marker>{
+        ...googleRouteEndpointMarkers(
+          markers: widget.ghostRouteEndpointMarkers,
+          icons: _routeEndpointMarkerIcons,
+        ),
         if (widget.ghostMarkerPoint != null && _ghostMarkerIcon != null)
           gmap.Marker(
             markerId: const gmap.MarkerId('ghost-marker'),
@@ -142,91 +164,6 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
             zIndexInt: 3,
           ),
       },
-    );
-  }
-
-  Set<gmap.Polyline> _runnerPolylines() {
-    final segments = widget.currentRunnerPolylineSegments.isEmpty
-        ? <MapPolylineSegment>[
-            if (widget.currentRunnerPolylinePoints.length >= 2)
-              MapPolylineSegment(
-                points: widget.currentRunnerPolylinePoints,
-                color: AppColors.voltGreen,
-              ),
-          ]
-        : widget.currentRunnerPolylineSegments;
-    return <gmap.Polyline>{
-      for (var index = 0; index < segments.length; index += 1)
-        _runnerPolyline(
-          id: 'runner-polyline-$index',
-          points: segments[index].points,
-          color: segments[index].color,
-        ),
-    };
-  }
-
-  gmap.Polyline _runnerPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return gmap.Polyline(
-      polylineId: gmap.PolylineId(id),
-      points: points
-          .map((MapCoordinate point) => point.toGoogleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 6,
-      zIndex: 2,
-    );
-  }
-
-  Set<gmap.Polyline> _ghostPolylines() {
-    if (widget.ghostPolylineSegments.isEmpty &&
-        widget.ghostPolylinePoints.isEmpty) {
-      return const <gmap.Polyline>{};
-    }
-
-    if (widget.ghostPolylineSegments.isEmpty) {
-      return <gmap.Polyline>{
-        _ghostPolyline(
-          id: 'ghost-polyline',
-          points: widget.ghostPolylinePoints,
-          color: AppColors.electricRed,
-        ),
-      };
-    }
-
-    return <gmap.Polyline>{
-      for (
-        var index = 0;
-        index < widget.ghostPolylineSegments.length;
-        index += 1
-      )
-        _ghostPolyline(
-          id: 'ghost-polyline-$index',
-          points: widget.ghostPolylineSegments[index].points,
-          color: widget.ghostPolylineSegments[index].color,
-        ),
-    };
-  }
-
-  gmap.Polyline _ghostPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return gmap.Polyline(
-      polylineId: gmap.PolylineId(id),
-      startCap: gmap.Cap.roundCap,
-      endCap: gmap.Cap.roundCap,
-      jointType: gmap.JointType.round,
-      points: points
-          .map((MapCoordinate point) => point.toGoogleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 10,
-      zIndex: 1,
     );
   }
 
@@ -285,6 +222,20 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     setState(() {
       _ghostMarkerIcon = icon;
       _ghostMarkerDevicePixelRatio = devicePixelRatio;
+    });
+  }
+
+  Future<void> _loadRouteEndpointMarkerIcons(double devicePixelRatio) async {
+    final icons = await GoogleRunMarkerIcons.routeEndpoints(
+      devicePixelRatio: devicePixelRatio,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _routeEndpointMarkerIcons = icons;
+      _routeEndpointMarkerDevicePixelRatio = devicePixelRatio;
     });
   }
 }

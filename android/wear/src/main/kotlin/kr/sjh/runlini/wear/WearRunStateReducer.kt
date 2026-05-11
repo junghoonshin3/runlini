@@ -48,6 +48,10 @@ class WearRunStateReducer {
             ghostConfig = ghostConfig,
             isGhostRun = ghostConfig != null,
             ghostFrame = null,
+            ghostStartConfirmed = false,
+            ghostStartCandidateCount = 0,
+            ghostStartLastEvaluatedPointCount = 0,
+            ghostTrackedDistanceAlongRouteM = null,
             ghostCompletionCandidateCount = 0,
             ghostCompletionPrompt = false,
             ghostCompletionDismissed = false,
@@ -213,7 +217,15 @@ class WearRunStateReducer {
 
     fun applyGhostFrame(state: WearRunState, frame: WearGhostFrame?): WearRunState {
         if (!state.isGhostRun) return state
-        return state.copy(ghostFrame = frame)
+        return state.copy(
+            ghostFrame = frame,
+            ghostStartConfirmed = frame?.startConfirmed ?: state.ghostStartConfirmed,
+            ghostStartCandidateCount = frame?.startCandidateCount ?: state.ghostStartCandidateCount,
+            ghostStartLastEvaluatedPointCount =
+                frame?.startLastEvaluatedPointCount ?: state.ghostStartLastEvaluatedPointCount,
+            ghostTrackedDistanceAlongRouteM =
+                frame?.trackedDistanceAlongRouteM ?: state.ghostTrackedDistanceAlongRouteM,
+        )
     }
 
     fun applyGhostCompletionDecision(

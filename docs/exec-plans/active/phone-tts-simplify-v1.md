@@ -29,6 +29,7 @@ abstraction that make the call path harder to understand.
 - [x] Request Android audio focus on speak and set navigation audio attributes.
 - [x] Restore Android TTS service package-visibility query.
 - [x] Run focused validation for the simplified TTS path.
+- [x] Remove the temporary phone voice test button from Settings.
 
 ## Decisions
 
@@ -57,6 +58,8 @@ abstraction that make the call path harder to understand.
 6. Remove forced voice metadata selection.
 7. Restore the manifest `TTS_SERVICE` query.
 8. Add Android audio focus and navigation audio attributes.
+9. Remove the temporary settings test button after field testing no longer needs
+   it.
 
 ## Validation
 
@@ -64,7 +67,7 @@ abstraction that make the call path harder to understand.
 - `dart run tool/guardrails.dart`
 - `flutter analyze`
 - `flutter test test/core/voice/run_voice_cue_client_test.dart`
-- `flutter test test/features/settings/settings_voice_test_button_test.dart`
+- The then-existing focused settings voice test.
 - `flutter test`
 - `./gradlew :app:assembleDebug`
 - `adb -s 5200024fee2b2571 install -r build/app/outputs/flutter-apk/app-debug.apk`
@@ -73,10 +76,14 @@ All validation commands passed on 2026-05-10. The debug APK was installed on
 the connected phone.
 
 The audio-focus follow-up validation also passed on 2026-05-10:
-`dart format`, `flutter test test/features/settings/settings_voice_test_button_test.dart`,
+`dart format`, the then-existing focused settings voice test,
 `dart run tool/guardrails.dart`, `flutter analyze`, `flutter test`, and
 `./gradlew :app:assembleDebug`. The updated debug APK was installed on the
 connected phone with `adb install -r`.
+
+The Settings test button removal validation passed on 2026-05-11:
+`flutter test test/features/settings/settings_tab_screen_test.dart`,
+`dart run tool/guardrails.dart`, `flutter analyze`, and `flutter test`.
 
 ## Risks or Recovery
 

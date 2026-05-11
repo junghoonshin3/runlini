@@ -1,12 +1,47 @@
+// 고스트 기록을 확인하고 선택하는 바텀시트 화면
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/features/ghost_racer/ui/ghost_session_picker_cards.dart';
+import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
-import 'package:runlini/features/run_tracking/ui/history/run_session_summary_tile.dart';
 
-class GhostSessionPickerSheet extends StatelessWidget {
+class GhostSessionPickerSheet extends ConsumerStatefulWidget {
   const GhostSessionPickerSheet({super.key, required this.summaries});
 
   final List<RunSessionSummary> summaries;
+
+  @override
+  ConsumerState<GhostSessionPickerSheet> createState() =>
+      _GhostSessionPickerSheetState();
+}
+
+class _GhostSessionPickerSheetState
+    extends ConsumerState<GhostSessionPickerSheet> {
+  String? _expandedSummaryId;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandedSummaryId = widget.summaries.isEmpty
+        ? null
+        : widget.summaries.first.id;
+  }
+
+  @override
+  void didUpdateWidget(covariant GhostSessionPickerSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.summaries.isEmpty) {
+      _expandedSummaryId = null;
+      return;
+    }
+    final expandedStillExists = widget.summaries.any(
+      (RunSessionSummary summary) => summary.id == _expandedSummaryId,
+    );
+    if (!expandedStillExists) {
+      _expandedSummaryId = widget.summaries.first.id;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +74,7 @@ class GhostSessionPickerSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (summaries.isEmpty)
+                if (widget.summaries.isEmpty)
                   const SliverPadding(
                     padding: EdgeInsets.fromLTRB(20, 18, 20, 20),
                     sliver: SliverFillRemaining(
@@ -58,13 +93,26 @@ class GhostSessionPickerSheet extends StatelessWidget {
                         if (index.isOdd) {
                           return const SizedBox(height: 12);
                         }
-                        final summary = summaries[index ~/ 2];
-                        return RunSessionSummaryTile(
+                        final summary = widget.summaries[index ~/ 2];
+                        final isExpanded = summary.id == _expandedSummaryId;
+                        if (isExpanded) {
+                          return ExpandedGhostSessionCard(
+                            key: Key('ghost-session-item-${summary.id}'),
+                            summary: summary,
+                            sessionAsync: ref.watch(
+                              runSessionByIdProvider(summary.id),
+                            ),
+                            onSelect: () => Navigator.of(context).pop(summary),
+                          );
+                        }
+                        return CollapsedGhostSessionCard(
                           key: Key('ghost-session-item-${summary.id}'),
                           summary: summary,
-                          onTap: () => Navigator.of(context).pop(summary),
+                          onTap: () {
+                            setState(() => _expandedSummaryId = summary.id);
+                          },
                         );
-                      }, childCount: summaries.length * 2 - 1),
+                      }, childCount: widget.summaries.length * 2 - 1),
                     ),
                   ),
               ],
@@ -104,7 +152,7 @@ class _GhostSessionSheetHeader extends StatelessWidget {
         const SizedBox(height: 18),
         Text('고스트 기록 선택', style: titleStyle),
         const SizedBox(height: 8),
-        Text('이전에 뛰었던 기록을 골라서 지도 위에 기준선으로 띄웁니다.', style: descriptionStyle),
+        Text('코스를 확인한 뒤 오늘의 기준선으로 띄웁니다.', style: descriptionStyle),
       ],
     );
   }

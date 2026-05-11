@@ -141,10 +141,15 @@ private fun WearIntervalPage(state: WearRunState) {
 @Composable
 private fun WearGhostPage(state: WearRunState) {
     val frame = state.ghostFrame
-    val color = ghostColor(frame?.status)
+    val startPending = frame != null && !frame.startConfirmed
+    val color = if (startPending) {
+        RunliniWearColors.Cyan
+    } else {
+        ghostColor(frame?.status)
+    }
     WearRunPageFrame(reservePageIndicator = true) { spec ->
         WearStatusPill(
-            label = WearRunFormatters.ghostStatusLabel(frame?.status),
+            label = WearRunFormatters.ghostStatus(frame),
             color = color,
         )
         Spacer(modifier = Modifier.height(8.dp))

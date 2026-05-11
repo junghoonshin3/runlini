@@ -1,0 +1,44 @@
+# Checklist
+
+- [x] 실행 계획과 컨텍스트 노트를 만든다.
+- [x] TTS 클라이언트가 발화 수락 여부를 반환하도록 바꾼다.
+- [x] 음성 안내 우선순위와 고스트 긴급 cue 매핑을 추가한다.
+- [x] 음성 안내 dispatcher를 추가하고 화면 호출부를 교체한다.
+- [x] fake와 테스트를 갱신한다.
+- [x] focused test를 실행한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `flutter test`를 실행한다.
+- [x] 에뮬레이터 cold start 스크린샷으로 로고 잘림이 사라졌는지 확인한다.
+
+## Android 12 스플래시 이미지 잘림 수정
+
+- [x] 기존 Android 스플래시 설정과 리소스를 확인한다.
+- [x] Android 12+ 전용 safe-area 스플래시 PNG를 생성한다.
+- [x] Android 12+ LaunchTheme이 새 스플래시 PNG를 사용하도록 바꾼다.
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Android debug build를 실행한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `flutter test`를 실행한다.
+
+## 설정 폰 음성 테스트 제거
+
+- [x] 설정 러닝 섹션에서 폰 음성 테스트 버튼을 제거한다.
+- [x] 전용 테스트 버튼 위젯과 테스트 파일을 삭제한다.
+- [x] 관련 문서와 컨텍스트 노트를 갱신한다.
+- [x] focused test를 실행한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `flutter test`를 실행한다.
+
+## 인터벌 기능 임시 잠금
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] 인터벌 잠금 상수와 런타임 비활성 처리를 추가한다.
+- [x] 러닝 탭 인터벌 버튼이 안내 문구만 띄우도록 바꾼다.
+- [x] 고스트 충돌과 워치 동기화가 잠긴 인터벌을 비활성으로 취급하도록 바꾼다.
+- [x] 테스트와 문서를 갱신한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `flutter test`를 실행한다.

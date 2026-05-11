@@ -18,9 +18,10 @@ import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.da
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 part 'run_playback_ingest_extension.dart';
+part 'run_playback_ghost_extension.dart';
 
 class RunPlaybackController extends Notifier<RunPlaybackState>
-    with RunPlaybackLiveSampleIngest {
+    with RunPlaybackLiveSampleIngest, RunPlaybackGhostTracking {
   @override
   RunPlaybackState build() {
     ref.listen(runSettingsControllerProvider, (previous, next) {
@@ -130,15 +131,6 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
         ?.defaultShoeId;
     final sessionToSave = pendingSession.copyWith(shoeId: defaultShoeId);
 
-    try {
-      await ref.read(runSessionRepositoryProvider).saveSession(sessionToSave);
-      ref.invalidate(runSessionListProvider);
-      ref.invalidate(runSessionSummaryListProvider);
-    } catch (error) {
-      debugPrint('Runlini local run save failed: $error');
-      return null;
-    }
-
     const exportResult = HealthWorkoutExportResult.skipped(
       'Health backup is available from Settings.',
     );
@@ -155,7 +147,8 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
       ref.invalidate(runSessionListProvider);
       ref.invalidate(runSessionSummaryListProvider);
     } catch (error) {
-      debugPrint('Runlini health export status save failed: $error');
+      debugPrint('Runlini local run save failed: $error');
+      return null;
     }
 
     state = const RunPlaybackState.idle();
@@ -227,40 +220,6 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
     state = state.copyWith(
       intervalManualAdvanceCount: state.intervalManualAdvanceCount + 1,
-    );
-  }
-
-  void updateGhostCompletion({
-    required int candidateCount,
-    RunSessionGhostSummary? completedSummary,
-  }) {
-    if (!state.hasActiveSession || state.status != RunScreenStatus.running) {
-      return;
-    }
-    if (state.ghostCompletionPromptDismissed ||
-        state.ghostCompletionPromptPending) {
-      return;
-    }
-    if (completedSummary != null) {
-      state = state.copyWith(
-        ghostCompletionCandidateCount: candidateCount,
-        ghostCompletionPromptPending: true,
-        ghostCompletionSummary: completedSummary,
-      );
-      return;
-    }
-    if (candidateCount != state.ghostCompletionCandidateCount) {
-      state = state.copyWith(ghostCompletionCandidateCount: candidateCount);
-    }
-  }
-
-  void continueAfterGhostCompletion() {
-    if (!state.hasActiveSession) {
-      return;
-    }
-    state = state.copyWith(
-      ghostCompletionPromptPending: false,
-      ghostCompletionPromptDismissed: true,
     );
   }
 

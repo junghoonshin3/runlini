@@ -4,7 +4,6 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/settings/ui/settings_section_panel.dart';
-import 'package:runlini/features/settings/ui/settings_voice_test_button.dart';
 
 class SettingsRunningSection extends ConsumerWidget {
   const SettingsRunningSection({super.key, required this.settings});
@@ -92,8 +91,6 @@ class SettingsRunningSection extends ConsumerWidget {
             value: settings.voiceCueVolume,
             onChanged: controller.setVoiceCueVolume,
           ),
-          const SizedBox(height: 10),
-          SettingsVoiceTestButton(volume: settings.voiceCueVolume),
         ],
       ),
     );

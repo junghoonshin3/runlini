@@ -128,6 +128,7 @@ class HealthServicesRunController(
                 sample,
                 now,
             )
+            alertController.beginAlertCycle()
             val framed = applyGhostFrame(next)
             emitRunAlerts(framed)
             setState(framed)
@@ -564,6 +565,7 @@ class HealthServicesRunController(
         if (tickerJob?.isActive == true) return
         tickerJob = scope.launch {
             while (_state.value.phase == WearRunPhase.Running) {
+                alertController.beginAlertCycle()
                 val next = applyGhostFrame(
                     reducer.tick(_state.value, nowRealtimeMs()),
                 )
@@ -605,6 +607,7 @@ class HealthServicesRunController(
                     rawMetricSample,
                 )
                 val next = reducer.applyMetrics(_state.value, metricSample, now)
+                alertController.beginAlertCycle()
                 val framed = applyGhostFrame(next)
                 emitRunAlerts(framed)
                 setState(framed)
@@ -613,17 +616,18 @@ class HealthServicesRunController(
     }
 
     private fun emitRunAlerts(state: WearRunState) {
+        alertController.onGhostFrame(
+            frame = state.ghostFrame,
+            settings = state.settings,
+            isGhostRun = state.isGhostRun,
+        )
         alertController.onDistanceChanged(
             distanceM = state.distanceM,
             averagePaceSecPerKm = state.averagePaceSecPerKm,
             settings = state.settings,
             elapsedMs = state.elapsedMs,
             isGhostRun = state.isGhostRun,
-        )
-        alertController.onGhostFrame(
-            frame = state.ghostFrame,
-            settings = state.settings,
-            isGhostRun = state.isGhostRun,
+            ghostFrame = state.ghostFrame,
         )
         alertController.onIntervalFrame(
             frame = state.intervalFrame,
@@ -637,12 +641,26 @@ class HealthServicesRunController(
         if (!state.isGhostRun || config == null || state.points.isEmpty()) {
             return state
         }
+        val startDecision = ghostGapCalculator.evaluateStart(
+            runnerPoints = state.points,
+            ghostConfig = config,
+            alreadyConfirmed = state.ghostStartConfirmed,
+            previousCandidateCount = state.ghostStartCandidateCount,
+            lastEvaluatedPointCount = state.ghostStartLastEvaluatedPointCount,
+        )
         val frame = ghostGapCalculator.calculate(
             runnerPoint = state.points.last(),
             ghostConfig = config,
             runnerElapsedMs = state.elapsedMs,
+            startConfirmed = startDecision.isConfirmed,
+            startCandidateCount = startDecision.candidateCount,
+            startLastEvaluatedPointCount = startDecision.lastEvaluatedPointCount,
+            previousDistanceAlongRouteM = state.ghostTrackedDistanceAlongRouteM,
         )
         val framed = reducer.applyGhostFrame(state, frame)
+        if (!frame.startConfirmed) {
+            return framed
+        }
         val decision = ghostCompletionDetector.evaluate(
             frame = frame,
             runnerDistanceM = state.distanceM,

@@ -20,22 +20,24 @@ class SqfliteRunSessionRepository implements RunSessionRepository {
   Future<void> saveSession(RunSession session) async {
     final db = await _database.database;
     await db.transaction((txn) async {
-      await txn.insert(
+      final batch = txn.batch();
+      batch.insert(
         'run_sessions',
         _sessionRow(session),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      await txn.delete(
+      batch.delete(
         'run_points',
         where: 'session_id = ?',
         whereArgs: <Object?>[session.id],
       );
       for (var index = 0; index < session.points.length; index += 1) {
-        await txn.insert(
+        batch.insert(
           'run_points',
           _pointRow(session.id, index, session.points[index]),
         );
       }
+      await batch.commit(noResult: true);
     });
   }
 

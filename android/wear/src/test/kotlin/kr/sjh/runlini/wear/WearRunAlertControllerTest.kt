@@ -69,8 +69,8 @@ class WearRunAlertControllerTest {
 
         assertEquals(
             listOf(
-                "1킬로미터, 평균 페이스 5분 20초, 시간 5분 20초",
-                "2킬로미터, 시간 10분 40초",
+                "1킬로미터. 평균 페이스 5분 20초. 시간 5분 20초",
+                "2킬로미터. 시간 10분 40초",
             ),
             speech.spoken,
         )
@@ -107,16 +107,41 @@ class WearRunAlertControllerTest {
         controller.onDistanceChanged(
             1_000.0,
             300.0,
-            WearRunSettings(kmAlertEnabled = true, voiceCueEnabled = true),
+            WearRunSettings(
+                kmAlertEnabled = true,
+                voiceCueEnabled = true,
+                ghostVoiceCueEnabled = true,
+            ),
             elapsedMs = 300_000L,
             isGhostRun = true,
+            ghostFrame = WearGhostFrame(WearGhostStatus.Ahead, 12_000L, 30.0),
         )
 
         assertEquals(1, haptics.ticks)
         assertEquals(
-            listOf("1킬로미터, 평균 페이스 5분, 시간 5분"),
+            listOf("1킬로미터. 평균 페이스 5분. 시간 5분. 고스트보다 12초 앞서고 있어요"),
             speech.spoken,
         )
+    }
+
+    @Test
+    fun ghostRunKilometerAlertOmitsGapWhenGhostVoiceIsOff() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+
+        controller.onDistanceChanged(
+            1_000.0,
+            300.0,
+            WearRunSettings(kmAlertEnabled = true, voiceCueEnabled = true),
+            elapsedMs = 300_000L,
+            isGhostRun = true,
+            ghostFrame = WearGhostFrame(WearGhostStatus.Ahead, 12_000L, 30.0),
+        )
+
+        assertEquals(listOf("1킬로미터. 평균 페이스 5분. 시간 5분"), speech.spoken)
     }
 
     @Test
@@ -149,7 +174,7 @@ class WearRunAlertControllerTest {
     @Test
     fun voiceCueFormatsLongElapsedTime() {
         assertEquals(
-            "12킬로미터, 평균 페이스 5분, 시간 1시간 2분 3초",
+            "12킬로미터. 평균 페이스 5분. 시간 1시간 2분 3초",
             WearRunVoiceCueFormatter.kilometerSummary(
                 kilometer = 12,
                 averagePaceSecPerKm = 300.0,
@@ -218,6 +243,113 @@ class WearRunAlertControllerTest {
     }
 
     @Test
+    fun ghostVoiceSpeaksLeadChangesWithExplicitGapContext() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+        val settings = WearRunSettings(ghostVoiceCueEnabled = true)
+
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.Behind, -30_000L, 30.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 0L,
+        )
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.Behind, -30_000L, 30.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 15_000L,
+        )
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.Ahead, 30_000L, 30.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 16_000L,
+        )
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.Ahead, 30_000L, 30.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 31_000L,
+        )
+
+        assertEquals(
+            listOf("고스트를 추월했어요. 지금은 고스트보다 30초 앞서고 있어요"),
+            speech.spoken,
+        )
+    }
+
+    @Test
+    fun ghostAlertCycleSpeaksEventBeforeKilometer() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+        val settings = WearRunSettings(
+            kmAlertEnabled = true,
+            ghostVoiceCueEnabled = true,
+        )
+
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.OffRoute, 0L, 50.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 0L,
+        )
+        controller.beginAlertCycle()
+        controller.onGhostFrame(
+            WearGhostFrame(WearGhostStatus.OffRoute, 0L, 50.0),
+            settings,
+            isGhostRun = true,
+            nowMs = 10_000L,
+        )
+        controller.onDistanceChanged(
+            1_000.0,
+            300.0,
+            settings,
+            elapsedMs = 300_000L,
+            isGhostRun = true,
+            ghostFrame = WearGhostFrame(WearGhostStatus.OffRoute, 0L, 50.0),
+        )
+
+        assertEquals(listOf("경로를 벗어났어요"), speech.spoken)
+    }
+
+    @Test
+    fun ghostAlertCycleSpeaksCompletionBeforeKilometer() {
+        val speech = FakeWearRunSpeech()
+        val controller = WearRunAlertController(
+            haptics = FakeWearRunHaptics(),
+            speech = speech,
+        )
+        val settings = WearRunSettings(
+            kmAlertEnabled = true,
+            ghostVoiceCueEnabled = true,
+        )
+
+        controller.beginAlertCycle()
+        controller.onGhostCompleted(
+            settings,
+            isGhostRun = true,
+            frame = WearGhostFrame(WearGhostStatus.Ahead, 32_000L, 50.0),
+        )
+        controller.onDistanceChanged(
+            1_000.0,
+            300.0,
+            settings,
+            elapsedMs = 300_000L,
+            isGhostRun = true,
+            ghostFrame = WearGhostFrame(WearGhostStatus.Ahead, 32_000L, 30.0),
+        )
+
+        assertEquals(listOf("고스트 코스 완료. 고스트보다 32초 빨랐어요"), speech.spoken)
+    }
+
+    @Test
     fun ghostRunIntervalStillVibratesButDoesNotSpeak() {
         val haptics = FakeWearRunHaptics()
         val speech = FakeWearRunSpeech()
@@ -267,7 +399,7 @@ class WearRunAlertControllerTest {
         )
 
         assertEquals(1, haptics.ticks)
-        assertEquals(listOf("고스트 코스 완료, 32초 앞서요"), speech.spoken)
+        assertEquals(listOf("고스트 코스 완료. 고스트보다 32초 빨랐어요"), speech.spoken)
     }
 
     @Test
