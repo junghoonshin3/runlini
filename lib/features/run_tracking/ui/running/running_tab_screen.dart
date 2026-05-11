@@ -102,6 +102,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final settings =
         ref.watch(runSettingsControllerProvider).value ??
         const RunSettingsState();
+    final intervalWorkout = effectiveRunIntervalWorkout(
+      settings.intervalWorkout,
+    );
     final pendingFinishedSession = playbackState.pendingFinishedSession;
     final isReviewing = playbackState.isReviewing;
     final ghostCompletionSummary = playbackState.ghostCompletionSummary;
@@ -151,8 +154,8 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                         },
                       )
                     : RunIntervalButton(
-                        workout: settings.intervalWorkout,
-                        onPressed: () => showRunIntervalSheet(context, ref),
+                        workout: intervalWorkout,
+                        onPressed: () => _handleIntervalButtonPressed(context),
                       ),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
@@ -242,5 +245,17 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
       debugPrint('Runlini voice cue failed: $error');
       debugPrint('$stackTrace');
     }
+  }
+
+  void _handleIntervalButtonPressed(BuildContext context) {
+    if (!runIntervalFeatureLocked) {
+      showRunIntervalSheet(context, ref);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text(runIntervalFeatureLockedMessage)),
+    );
   }
 }
