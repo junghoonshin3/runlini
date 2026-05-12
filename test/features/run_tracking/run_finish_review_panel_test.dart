@@ -2,38 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_finish_review_panel.dart';
 
 void main() {
-  testWidgets('hides ghost comparison for a normal run', (tester) async {
+  testWidgets('hides recordRace comparison for a normal run', (tester) async {
     await _pumpPanel(tester, _session());
 
-    expect(find.byKey(const Key('detail-ghost-compare')), findsNothing);
+    expect(find.byKey(const Key('detail-record-race-compare')), findsNothing);
     expect(find.byKey(const Key('detail-chart-pace')), findsOneWidget);
   });
 
-  testWidgets('shows ghost comparison for a ghost-enabled run', (tester) async {
+  testWidgets('shows recordRace comparison for a record-race-enabled run', (
+    tester,
+  ) async {
     await _pumpPanel(
       tester,
       _session(
-        ghostSummary: const RunSessionGhostSummary(
-          result: RunSessionGhostResult.ahead,
+        recordRaceSummary: const RunSessionRecordRaceSummary(
+          result: RunSessionRecordRaceResult.ahead,
           timeGapMs: 12000,
           distanceGapM: 42,
-          ghostSessionId: 'ghost-a',
-          ghostLabel: 'Morning Ghost',
+          recordRaceSessionId: 'record-race-a',
+          recordRaceLabel: 'Morning RecordRace',
         ),
       ),
     );
 
-    expect(find.byKey(const Key('detail-ghost-compare')), findsOneWidget);
-    expect(find.text('고스트 비교'), findsOneWidget);
+    expect(find.byKey(const Key('detail-record-race-compare')), findsOneWidget);
+    expect(find.text('기록 레이스 비교'), findsOneWidget);
     expect(find.text('12초 빨랐어요'), findsOneWidget);
   });
 
-  testWidgets('uses display units in metrics, charts, and ghost gap', (
+  testWidgets('uses display units in metrics, charts, and recordRace gap', (
     tester,
   ) async {
     const displaySettings = RunDisplaySettings(
@@ -44,12 +46,12 @@ void main() {
     await _pumpPanel(
       tester,
       _session(
-        ghostSummary: const RunSessionGhostSummary(
-          result: RunSessionGhostResult.ahead,
+        recordRaceSummary: const RunSessionRecordRaceSummary(
+          result: RunSessionRecordRaceResult.ahead,
           timeGapMs: 12000,
           distanceGapM: 42,
-          ghostSessionId: 'ghost-a',
-          ghostLabel: 'Morning Ghost',
+          recordRaceSessionId: 'record-race-a',
+          recordRaceLabel: 'Morning RecordRace',
         ),
       ),
       displaySettings: displaySettings,
@@ -180,7 +182,7 @@ Future<void> _pumpPanel(
   await tester.pump();
 }
 
-RunSession _session({RunSessionGhostSummary? ghostSummary}) {
+RunSession _session({RunSessionRecordRaceSummary? recordRaceSummary}) {
   return RunSession(
     id: 'panel-session',
     startedAt: DateTime.utc(2026, 4, 21, 6),
@@ -188,7 +190,7 @@ RunSession _session({RunSessionGhostSummary? ghostSummary}) {
     distanceM: 1000,
     durationMs: 600000,
     sourceSummary: 'fixture:test',
-    ghostSummary: ghostSummary,
+    recordRaceSummary: recordRaceSummary,
     points: const [
       RunPoint(
         latitude: 37.0,

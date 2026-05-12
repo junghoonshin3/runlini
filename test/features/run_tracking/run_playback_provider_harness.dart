@@ -187,6 +187,7 @@ class TestHealthWorkoutRecorder implements HealthWorkoutRecorder {
 class TestRunSessionRepository implements RunSessionRepository {
   final List<RunSession> savedSessions = <RunSession>[];
   int listCalls = 0;
+  int saveCalls = 0;
 
   @override
   Future<RunSession?> findById(String id) async {
@@ -210,6 +211,7 @@ class TestRunSessionRepository implements RunSessionRepository {
 
   @override
   Future<void> saveSession(RunSession session) async {
+    saveCalls += 1;
     savedSessions.removeWhere((existing) => existing.id == session.id);
     savedSessions.add(session);
   }

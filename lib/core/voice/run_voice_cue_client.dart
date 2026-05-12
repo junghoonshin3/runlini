@@ -8,7 +8,7 @@ const String runVoiceCueLanguage = 'ko-KR';
 const double runVoiceCueSpeechRate = 0.42;
 
 abstract class RunVoiceCueClient {
-  Future<void> speak(String text, {required double volume});
+  Future<bool> speak(String text, {required double volume});
 
   Future<void> stop();
 }
@@ -17,7 +17,7 @@ class NoOpRunVoiceCueClient implements RunVoiceCueClient {
   const NoOpRunVoiceCueClient();
 
   @override
-  Future<void> speak(String text, {required double volume}) async {}
+  Future<bool> speak(String text, {required double volume}) async => false;
 
   @override
   Future<void> stop() async {}
@@ -31,26 +31,33 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
   bool _configured = false;
 
   @override
-  Future<void> speak(String text, {required double volume}) async {
+  Future<bool> speak(String text, {required double volume}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || (!Platform.isAndroid && !Platform.isIOS)) {
-      return;
+      return false;
     }
     try {
       await _configureIfNeeded();
       await _flutterTts.setVolume(volume.clamp(0, 1).toDouble());
+      final Object? result;
       if (Platform.isAndroid) {
-        await _flutterTts.speak(trimmed, focus: true);
+        result = await _flutterTts.speak(trimmed, focus: true);
       } else {
-        await _flutterTts.speak(trimmed);
+        result = await _flutterTts.speak(trimmed);
       }
+      if (result is num && result == 0) {
+        debugPrint('Runlini voice cue dropped: $trimmed');
+        return false;
+      }
+      return true;
     } on MissingPluginException {
-      return;
-    } on PlatformException {
-      return;
+      return false;
+    } on PlatformException catch (error) {
+      debugPrint('Runlini voice cue skipped: $error');
+      return false;
     } catch (error) {
       debugPrint('Runlini voice cue skipped: $error');
-      return;
+      return false;
     }
   }
 

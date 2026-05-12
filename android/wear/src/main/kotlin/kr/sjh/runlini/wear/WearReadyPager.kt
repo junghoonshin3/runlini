@@ -31,12 +31,12 @@ internal fun WearReadyPager(
                 WearReadyPage.Ready -> WearReadyScreen(
                     state = state,
                     onStart = actions.onStart,
-                    onGhostStart = actions.onGhostStart,
+                    onRecordRaceStart = actions.onRecordRaceStart,
                     reservePageIndicator = true,
                 )
-                WearReadyPage.Ghosts -> WearGhostPickerScreen(
+                WearReadyPage.RecordRaces -> WearRecordRacePickerScreen(
                     state = state,
-                    onSelect = actions.onGhostSelect,
+                    onSelect = actions.onRecordRaceSelect,
                 )
                 WearReadyPage.Settings -> WearSettingsScreen(
                     settings = state.settings,
@@ -46,7 +46,7 @@ internal fun WearReadyPager(
                     onKmAlertEnabledChange = actions.onKmAlertEnabledChange,
                     onVoiceCueEnabledChange = actions.onVoiceCueEnabledChange,
                     onVoiceCueVolumeChange = actions.onVoiceCueVolumeChange,
-                    onGhostVoiceCueEnabledChange = actions.onGhostVoiceCueEnabledChange,
+                    onRecordRaceVoiceCueEnabledChange = actions.onRecordRaceVoiceCueEnabledChange,
                     onIntervalWorkoutChange = actions.onIntervalWorkoutChange,
                 )
             }

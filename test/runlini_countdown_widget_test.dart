@@ -139,10 +139,10 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('run-status-label')), findsNothing);
-      expect(find.byKey(const Key('ghost-status-label')), findsNothing);
+      expect(find.byKey(const Key('record-race-status-label')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
-      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       expect(find.text('STOP'), findsOneWidget);
     },
   );
@@ -179,7 +179,7 @@ void main() {
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
-      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       await tester.tapAt(tester.getCenter(find.text('기록')));
       await tester.pump();
       expect(find.byKey(const Key('history-list')), findsNothing);

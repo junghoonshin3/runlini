@@ -26,7 +26,7 @@ extension on _RunliniHomeScreenState {
             return;
           }
           await _syncWearDrafts();
-          await _syncRecentWatchGhostConfigs();
+          await _syncRecentWatchRecordRaceConfigs();
           await _syncWatchIntervalConfig();
           await _syncWatchVoiceSettings();
         });
@@ -47,7 +47,7 @@ extension on _RunliniHomeScreenState {
   void _listenForRunSessionChanges() {
     ref.listen(runSessionSummaryListProvider, (previous, next) {
       if (previous?.hasValue == true && next.hasValue) {
-        _syncRecentWatchGhostConfigs();
+        _syncRecentWatchRecordRaceConfigs();
       }
     });
   }
@@ -68,15 +68,16 @@ extension on _RunliniHomeScreenState {
       final nextVoiceEnabled = next.value?.voiceCueEnabled;
       final previousKmVoiceEnabled = previous?.value?.kmVoiceCueEnabled;
       final nextKmVoiceEnabled = next.value?.kmVoiceCueEnabled;
-      final previousGhostVoiceEnabled = previous?.value?.ghostVoiceCueEnabled;
-      final nextGhostVoiceEnabled = next.value?.ghostVoiceCueEnabled;
+      final previousRecordRaceVoiceEnabled =
+          previous?.value?.recordRaceVoiceCueEnabled;
+      final nextRecordRaceVoiceEnabled = next.value?.recordRaceVoiceCueEnabled;
       final previousAutoPauseEnabled = previous?.value?.autoPauseEnabled;
       final nextAutoPauseEnabled = next.value?.autoPauseEnabled;
       final voiceSettingsChanged =
           previousVolume != nextVolume ||
           previousVoiceEnabled != nextVoiceEnabled ||
           previousKmVoiceEnabled != nextKmVoiceEnabled ||
-          previousGhostVoiceEnabled != nextGhostVoiceEnabled ||
+          previousRecordRaceVoiceEnabled != nextRecordRaceVoiceEnabled ||
           previousAutoPauseEnabled != nextAutoPauseEnabled;
       if (nextVolume != null && voiceSettingsChanged) {
         _syncWatchVoiceSettings(
@@ -119,7 +120,7 @@ extension on _RunliniHomeScreenState {
           .sendVoiceSettings(
             voiceCueEnabled: settings.voiceCueEnabled,
             kmVoiceCueEnabled: settings.kmVoiceCueEnabled,
-            ghostVoiceCueEnabled: settings.ghostVoiceCueEnabled,
+            recordRaceVoiceCueEnabled: settings.recordRaceVoiceCueEnabled,
             autoPauseEnabled: settings.autoPauseEnabled,
             volume: settings.voiceCueVolume,
             playTestCue: playTestCue,
@@ -129,22 +130,22 @@ extension on _RunliniHomeScreenState {
     }
   }
 
-  Future<void> _syncRecentWatchGhostConfigs() async {
+  Future<void> _syncRecentWatchRecordRaceConfigs() async {
     if (!mounted) {
       return;
     }
     try {
       final selectedSessionId = ref
-          .read(ghostSettingsProvider)
+          .read(recordRaceSettingsProvider)
           .selectedSessionId;
       final sessions = await ref.read(
-        recentWatchGhostSessionsProvider(selectedSessionId).future,
+        recentWatchRecordRaceSessionsProvider(selectedSessionId).future,
       );
       if (!mounted) {
         return;
       }
       await ref
-          .read(watchGhostConfigSyncServiceProvider)
+          .read(watchRecordRaceConfigSyncServiceProvider)
           .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
     } catch (_) {
       // Wear config sync is best-effort and retried on foreground.

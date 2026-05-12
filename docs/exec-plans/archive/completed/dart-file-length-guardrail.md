@@ -16,7 +16,7 @@ that exceed the limit.
 
 - [x] Split current Dart files over 300 lines.
 - [x] Change guardrails from warning to error for over-300-line Dart files.
-- [x] Document the hard 300-line limit in `AGENTS.md`.
+- [x] Document the hard 300-line limit in project docs.
 - [x] Run formatting, guardrails, analysis, and tests.
 
 ## Decisions

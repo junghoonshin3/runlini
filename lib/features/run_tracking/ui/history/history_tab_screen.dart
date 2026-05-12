@@ -223,7 +223,7 @@ class _HistoryHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '뛰었던 기록을 한눈에 보고 다음 고스트 기준선으로 고를 수 있게 정리해둡니다.',
+          '뛰었던 기록을 한눈에 보고 다음 기록 레이스 기준선으로 고를 수 있게 정리해둡니다.',
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: AppColors.muted),

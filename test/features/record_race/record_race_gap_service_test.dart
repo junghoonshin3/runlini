@@ -1,0 +1,233 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:runlini/features/record_race/service/record_race_gap_service.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
+import 'package:runlini/features/run_tracking/types/run_point.dart';
+import 'package:runlini/features/run_tracking/types/run_session.dart';
+
+void main() {
+  group('RecordRaceGapService', () {
+    const service = RecordRaceGapService();
+    final recordRaceSession = RunSession(
+      id: 'record-race-route',
+      startedAt: DateTime.utc(2026, 4, 19, 6),
+      endedAt: DateTime.utc(2026, 4, 19, 6, 10),
+      distanceM: 1000,
+      durationMs: 600000,
+      sourceSummary: 'test',
+      points: const [
+        RunPoint(
+          latitude: 0,
+          longitude: 0,
+          timestampRelMs: 0,
+          source: RunPointSource.simulated,
+        ),
+        RunPoint(
+          latitude: 0,
+          longitude: 0.009,
+          timestampRelMs: 600000,
+          source: RunPointSource.simulated,
+        ),
+      ],
+    );
+
+    test('marks the runner ahead by time at the same route progress', () {
+      const runnerPoint = RunPoint(
+        latitude: 0,
+        longitude: 0.0045,
+        timestampRelMs: 240000,
+        source: RunPointSource.simulated,
+      );
+
+      final frame = service.calculate(
+        runnerPoint: runnerPoint,
+        recordRaceSession: recordRaceSession,
+        runnerElapsedMs: 240000,
+      );
+
+      expect(frame.status, RecordRaceStatus.ahead);
+      expect(frame.timeGapMs, closeTo(60000, 1000));
+      expect(frame.distanceGapM, greaterThan(90));
+      expect(frame.recordRaceMarkerPoint, isNotNull);
+      expect(frame.recordRaceMarkerPoint!.longitude, closeTo(0.0036, 0.0001));
+      expect(frame.routeProgress, closeTo(0.5, 0.01));
+      expect(frame.distanceToFinishM, greaterThan(490));
+      expect(frame.totalRouteDistanceM, greaterThan(990));
+    });
+
+    test('marks the runner behind by time at the same route progress', () {
+      const runnerPoint = RunPoint(
+        latitude: 0,
+        longitude: 0.0045,
+        timestampRelMs: 360000,
+        source: RunPointSource.simulated,
+      );
+
+      final frame = service.calculate(
+        runnerPoint: runnerPoint,
+        recordRaceSession: recordRaceSession,
+        runnerElapsedMs: 360000,
+      );
+
+      expect(frame.status, RecordRaceStatus.behind);
+      expect(frame.timeGapMs, closeTo(-60000, 1000));
+      expect(frame.distanceGapM, lessThan(-90));
+    });
+
+    test('treats a small time gap as level', () {
+      const runnerPoint = RunPoint(
+        latitude: 0,
+        longitude: 0.0045,
+        timestampRelMs: 302000,
+        source: RunPointSource.simulated,
+      );
+
+      final frame = service.calculate(
+        runnerPoint: runnerPoint,
+        recordRaceSession: recordRaceSession,
+        runnerElapsedMs: 302000,
+      );
+
+      expect(frame.status, RecordRaceStatus.level);
+      expect(frame.timeGapMs.abs(), lessThanOrEqualTo(3000));
+    });
+
+    test('marks the frame off route when the runner is far from the path', () {
+      const runnerPoint = RunPoint(
+        latitude: 0.001,
+        longitude: 0.0045,
+        timestampRelMs: 300000,
+        source: RunPointSource.simulated,
+      );
+
+      final frame = service.calculate(
+        runnerPoint: runnerPoint,
+        recordRaceSession: recordRaceSession,
+        runnerElapsedMs: 300000,
+      );
+
+      expect(frame.status, RecordRaceStatus.offRoute);
+      expect(frame.isOffRoute, isTrue);
+      expect(frame.recordRaceMarkerPoint, isNotNull);
+      expect(frame.distanceFromRouteM, greaterThan(35));
+    });
+
+    test('tracks loop route progress near the previous route distance', () {
+      final loopSession = RunSession(
+        id: 'loop',
+        startedAt: DateTime.utc(2026, 4, 19, 6),
+        distanceM: 444,
+        durationMs: 240000,
+        sourceSummary: 'loop',
+        points: const [
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 0,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0.001,
+            timestampRelMs: 60000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0.001,
+            timestampRelMs: 120000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0,
+            timestampRelMs: 180000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 240000,
+            source: RunPointSource.simulated,
+          ),
+        ],
+      );
+
+      const runnerNearFinish = RunPoint(
+        latitude: 0.00008,
+        longitude: 0,
+        timestampRelMs: 220000,
+        source: RunPointSource.simulated,
+      );
+      final frame = service.calculate(
+        runnerPoint: runnerNearFinish,
+        recordRaceSession: loopSession,
+        runnerElapsedMs: 220000,
+        startConfirmed: true,
+        runnerDistanceM: 360,
+      );
+
+      expect(frame.trackedDistanceAlongRouteM, greaterThan(330));
+      expect(frame.routeProgress, greaterThan(0.7));
+    });
+
+    test('anchors loop projection near start before start is confirmed', () {
+      final loopSession = RunSession(
+        id: 'loop',
+        startedAt: DateTime.utc(2026, 4, 19, 6),
+        distanceM: 444,
+        durationMs: 240000,
+        sourceSummary: 'loop',
+        points: const [
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 0,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0.001,
+            timestampRelMs: 60000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0.001,
+            timestampRelMs: 120000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0.001,
+            longitude: 0,
+            timestampRelMs: 180000,
+            source: RunPointSource.simulated,
+          ),
+          RunPoint(
+            latitude: 0,
+            longitude: 0,
+            timestampRelMs: 240000,
+            source: RunPointSource.simulated,
+          ),
+        ],
+      );
+
+      const runnerAtSharedStartFinish = RunPoint(
+        latitude: 0,
+        longitude: 0,
+        timestampRelMs: 0,
+        source: RunPointSource.simulated,
+      );
+      final frame = service.calculate(
+        runnerPoint: runnerAtSharedStartFinish,
+        recordRaceSession: loopSession,
+        runnerElapsedMs: 0,
+        startConfirmed: false,
+        runnerDistanceM: 0,
+      );
+
+      expect(frame.startConfirmed, isFalse);
+      expect(frame.routeProgress, lessThan(0.05));
+      expect(frame.distanceToFinishM, greaterThan(400));
+    });
+  });
+}

@@ -18,7 +18,7 @@ class PaceColoredRouteSegmentBuilder {
   final double chunkDistanceM;
   final double rollingWindowM;
 
-  List<MapPolylineSegment> buildGhostSegments(RunSession session) {
+  List<MapPolylineSegment> buildRecordRaceSegments(RunSession session) {
     if (session.points.length < 2) {
       return const <MapPolylineSegment>[];
     }

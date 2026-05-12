@@ -7,8 +7,8 @@ import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
@@ -50,7 +50,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _syncWearDrafts();
-      _syncRecentWatchGhostConfigs();
+      _syncRecentWatchRecordRaceConfigs();
       _syncWatchIntervalConfig();
       _syncWatchVoiceSettings();
     }

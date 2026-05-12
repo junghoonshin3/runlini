@@ -6,7 +6,7 @@ abstract class WatchVoiceSettingsClient {
   Future<void> sendVoiceSettings({
     required bool voiceCueEnabled,
     required bool kmVoiceCueEnabled,
-    required bool ghostVoiceCueEnabled,
+    required bool recordRaceVoiceCueEnabled,
     required bool autoPauseEnabled,
     required double volume,
     bool playTestCue = false,
@@ -30,7 +30,7 @@ class MethodChannelWatchVoiceSettingsClient
   Future<void> sendVoiceSettings({
     required bool voiceCueEnabled,
     required bool kmVoiceCueEnabled,
-    required bool ghostVoiceCueEnabled,
+    required bool recordRaceVoiceCueEnabled,
     required bool autoPauseEnabled,
     required double volume,
     bool playTestCue = false,
@@ -42,7 +42,7 @@ class MethodChannelWatchVoiceSettingsClient
       await _channel.invokeMethod<void>('sendVoiceSettings', <String, Object?>{
         'voiceCueEnabled': voiceCueEnabled,
         'kmVoiceCueEnabled': kmVoiceCueEnabled,
-        'ghostVoiceCueEnabled': ghostVoiceCueEnabled,
+        'recordRaceVoiceCueEnabled': recordRaceVoiceCueEnabled,
         'autoPauseEnabled': autoPauseEnabled,
         'volume': volume.clamp(0, 1).toDouble(),
         'playTestCue': playTestCue,

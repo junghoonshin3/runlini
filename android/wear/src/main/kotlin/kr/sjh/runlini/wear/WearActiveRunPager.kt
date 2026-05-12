@@ -45,7 +45,7 @@ internal fun WearActiveRunPager(
             when (pages[pageIndex]) {
                 WearActiveRunPage.Core -> WearCorePage(state)
                 WearActiveRunPage.Interval -> WearIntervalPage(state)
-                WearActiveRunPage.Ghost -> WearGhostPage(state)
+                WearActiveRunPage.RecordRace -> WearRecordRacePage(state)
                 WearActiveRunPage.Details -> WearDetailsPage(state)
                 WearActiveRunPage.Controls -> WearRunControlsPage(
                     state = state,
@@ -74,10 +74,10 @@ private fun WearCorePage(state: WearRunState) {
                 color = RunliniWearColors.VoltGreen,
             )
             Spacer(modifier = Modifier.height(8.dp))
-        } ?: state.ghostFrame?.let { frame ->
+        } ?: state.recordRaceFrame?.let { frame ->
             WearStatusPill(
-                label = WearRunFormatters.ghostResult(frame),
-                color = ghostColor(frame.status),
+                label = WearRunFormatters.recordRaceResult(frame),
+                color = recordRaceColor(frame.status),
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -139,18 +139,23 @@ private fun WearIntervalPage(state: WearRunState) {
 }
 
 @Composable
-private fun WearGhostPage(state: WearRunState) {
-    val frame = state.ghostFrame
-    val color = ghostColor(frame?.status)
+private fun WearRecordRacePage(state: WearRunState) {
+    val frame = state.recordRaceFrame
+    val startPending = frame != null && !frame.startConfirmed
+    val color = if (startPending) {
+        RunliniWearColors.Cyan
+    } else {
+        recordRaceColor(frame?.status)
+    }
     WearRunPageFrame(reservePageIndicator = true) { spec ->
         WearStatusPill(
-            label = WearRunFormatters.ghostStatusLabel(frame?.status),
+            label = WearRunFormatters.recordRaceStatus(frame),
             color = color,
         )
         Spacer(modifier = Modifier.height(8.dp))
         WearPrimaryMetric(
             label = "격차",
-            value = WearRunFormatters.ghostGap(frame),
+            value = WearRunFormatters.recordRaceGap(frame),
             valueColor = color,
             profile = spec.profile,
         )
@@ -161,16 +166,16 @@ private fun WearGhostPage(state: WearRunState) {
         ) {
             WearCompactMetric(
                 label = "진행",
-                value = WearRunFormatters.ghostProgress(frame),
+                value = WearRunFormatters.recordRaceProgress(frame),
                 modifier = Modifier.weight(1f),
             )
             WearCompactMetric(
                 label = "남은 거리",
-                value = WearRunFormatters.ghostRemaining(frame),
+                value = WearRunFormatters.recordRaceRemaining(frame),
                 modifier = Modifier.weight(1f),
             )
         }
-        state.ghostConfig?.sourceSummary?.let { summary ->
+        state.recordRaceConfig?.sourceSummary?.let { summary ->
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = summary,
@@ -292,12 +297,12 @@ private fun WearRunControlsPage(
 }
 
 @Composable
-internal fun WearGhostStatusPanel(
+internal fun WearRecordRaceStatusPanel(
     state: WearRunState,
     modifier: Modifier = Modifier,
 ) {
-    val frame = state.ghostFrame
-    val color = ghostColor(frame?.status)
+    val frame = state.recordRaceFrame
+    val color = recordRaceColor(frame?.status)
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -306,7 +311,7 @@ internal fun WearGhostStatusPanel(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = WearRunFormatters.ghostResult(frame),
+            text = WearRunFormatters.recordRaceResult(frame),
             color = color,
             fontSize = 18.sp,
             fontWeight = FontWeight.Black,

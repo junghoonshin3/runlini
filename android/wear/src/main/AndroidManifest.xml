@@ -50,10 +50,18 @@
         </service>
 
         <service
-            android:name=".PhoneGhostConfigListenerService"
+            android:name=".PhoneRecordRaceConfigListenerService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/runlini/phone/record_race_config" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/runlini/phone/record_race_configs" />
                 <data
                     android:scheme="wear"
                     android:host="*"

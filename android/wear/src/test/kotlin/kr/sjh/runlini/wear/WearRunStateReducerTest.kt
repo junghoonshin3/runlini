@@ -27,20 +27,20 @@ class WearRunStateReducerTest {
         val countdown = reducer.countdown(
             WearRunState(),
             remainingSeconds = 2,
-            ghostConfig = ghostConfig(),
+            recordRaceConfig = recordRaceConfig(),
         )
 
         val state = reducer.start(
             countdown,
             epochMs = 1_000L,
             realtimeMs = 10L,
-            ghostConfig = countdown.countdownStartGhostConfig,
+            recordRaceConfig = countdown.countdownStartRecordRaceConfig,
         )
 
         assertEquals(WearRunPhase.Running, state.phase)
         assertEquals(null, state.countdownRemainingSeconds)
-        assertEquals(null, state.countdownStartGhostConfig)
-        assertEquals(true, state.isGhostRun)
+        assertEquals(null, state.countdownStartRecordRaceConfig)
+        assertEquals(true, state.isRecordRaceRun)
     }
 
     @Test
@@ -152,22 +152,22 @@ class WearRunStateReducerTest {
     }
 
     @Test
-    fun startCanAttachGhostConfigForGhostRun() {
-        val ghostConfig = ghostConfig()
+    fun startCanAttachRecordRaceConfigForRecordRaceRun() {
+        val recordRaceConfig = recordRaceConfig()
 
         val state = WearRunStateReducer().start(
             WearRunState(),
             epochMs = 1_000L,
             realtimeMs = 10L,
-            ghostConfig = ghostConfig,
+            recordRaceConfig = recordRaceConfig,
         )
 
-        assertEquals(true, state.isGhostRun)
-        assertEquals("ghost-1", state.ghostConfig?.id)
+        assertEquals(true, state.isRecordRaceRun)
+        assertEquals("record-race-1", state.recordRaceConfig?.id)
     }
 
     @Test
-    fun ghostRunDoesNotCreateIntervalFrame() {
+    fun recordRaceRunDoesNotCreateIntervalFrame() {
         val reducer = WearRunStateReducer()
         val started = reducer.start(
             WearRunState(
@@ -177,7 +177,7 @@ class WearRunStateReducerTest {
             ),
             epochMs = 1_000L,
             realtimeMs = 10L,
-            ghostConfig = ghostConfig(),
+            recordRaceConfig = recordRaceConfig(),
         )
         val ticked = reducer.tick(started, realtimeMs = 70_010L)
         val updated = reducer.applyMetrics(
@@ -208,22 +208,22 @@ class WearRunStateReducerTest {
     }
 
     @Test
-    fun ghostCompletionDecisionCreatesPromptAndContinueSuppressesIt() {
+    fun recordRaceCompletionDecisionCreatesPromptAndContinueSuppressesIt() {
         val reducer = WearRunStateReducer()
         val started = reducer.start(
             WearRunState(),
             epochMs = 1_000L,
             realtimeMs = 10L,
-            ghostConfig = ghostConfig(),
+            recordRaceConfig = recordRaceConfig(),
         )
-        val frame = WearGhostFrame(
-            status = WearGhostStatus.Ahead,
+        val frame = WearRecordRaceFrame(
+            status = WearRecordRaceStatus.Ahead,
             timeGapMs = 10_000L,
             distanceGapM = 20.0,
         )
-        val prompted = reducer.applyGhostCompletionDecision(
+        val prompted = reducer.applyRecordRaceCompletionDecision(
             started,
-            WearGhostCompletionDecision(
+            WearRecordRaceCompletionDecision(
                 isCandidate = true,
                 candidateCount = 2,
                 isComplete = true,
@@ -231,17 +231,17 @@ class WearRunStateReducerTest {
             frame,
         )
 
-        assertTrue(prompted.ghostCompletionPrompt)
-        assertEquals(frame, prompted.ghostCompletionFrame)
+        assertTrue(prompted.recordRaceCompletionPrompt)
+        assertEquals(frame, prompted.recordRaceCompletionFrame)
 
-        val continued = reducer.continueAfterGhostCompletion(prompted)
-        assertFalse(continued.ghostCompletionPrompt)
-        assertTrue(continued.ghostCompletionDismissed)
+        val continued = reducer.continueAfterRecordRaceCompletion(prompted)
+        assertFalse(continued.recordRaceCompletionPrompt)
+        assertTrue(continued.recordRaceCompletionDismissed)
     }
 
-    private fun ghostConfig(): WearGhostConfig {
-        return WearGhostConfig(
-            id = "ghost-1",
+    private fun recordRaceConfig(): WearRecordRaceConfig {
+        return WearRecordRaceConfig(
+            id = "record-race-1",
             durationMs = 600_000L,
             distanceM = 1_000.0,
             sourceSummary = "한강 1K",

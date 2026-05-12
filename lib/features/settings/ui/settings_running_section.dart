@@ -4,7 +4,6 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/settings/ui/settings_section_panel.dart';
-import 'package:runlini/features/settings/ui/settings_voice_test_button.dart';
 
 class SettingsRunningSection extends ConsumerWidget {
   const SettingsRunningSection({super.key, required this.settings});
@@ -59,9 +58,9 @@ class SettingsRunningSection extends ConsumerWidget {
             onChanged: controller.setAutoPauseEnabled,
           ),
           const SizedBox(height: 18),
-          _GhostMarkerSwitch(
-            value: settings.showGhostMarker,
-            onChanged: controller.setShowGhostMarker,
+          _RecordRaceMarkerSwitch(
+            value: settings.showRecordRaceMarker,
+            onChanged: controller.setShowRecordRaceMarker,
           ),
           const SizedBox(height: 18),
           _VoiceCueSwitch(
@@ -81,19 +80,17 @@ class SettingsRunningSection extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
           _VoiceCueSwitch(
-            switchKey: const Key('ghost-voice-cue-enabled-switch'),
-            label: '고스트 음성',
-            hint: '고스트 상태가 바뀔 때만 짧게 알려줘요.',
-            value: settings.ghostVoiceCueEnabled,
-            onChanged: controller.setGhostVoiceCueEnabled,
+            switchKey: const Key('record-race-voice-cue-enabled-switch'),
+            label: '기록 레이스 음성',
+            hint: '기록 레이스 상태가 바뀔 때만 짧게 알려줘요.',
+            value: settings.recordRaceVoiceCueEnabled,
+            onChanged: controller.setRecordRaceVoiceCueEnabled,
           ),
           const SizedBox(height: 18),
           _VoiceVolumeSlider(
             value: settings.voiceCueVolume,
             onChanged: controller.setVoiceCueVolume,
           ),
-          const SizedBox(height: 10),
-          SettingsVoiceTestButton(volume: settings.voiceCueVolume),
         ],
       ),
     );
@@ -134,8 +131,8 @@ class _PresetButton extends StatelessWidget {
   }
 }
 
-class _GhostMarkerSwitch extends StatelessWidget {
-  const _GhostMarkerSwitch({required this.value, required this.onChanged});
+class _RecordRaceMarkerSwitch extends StatelessWidget {
+  const _RecordRaceMarkerSwitch({required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -149,15 +146,15 @@ class _GhostMarkerSwitch extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('고스트 마커 표시', style: _labelStyle),
+              Text('기록 레이스 마커 표시', style: _labelStyle),
               SizedBox(height: 4),
-              Text('고스트의 현재 위치를 지도 위에 표시해요.', style: _hintStyle),
+              Text('기록 레이스의 현재 위치를 지도 위에 표시해요.', style: _hintStyle),
             ],
           ),
         ),
         const SizedBox(width: 12),
         Switch(
-          key: const Key('show-ghost-marker-switch'),
+          key: const Key('show-record-race-marker-switch'),
           value: value,
           activeThumbColor: AppColors.voltGreen,
           onChanged: onChanged,

@@ -43,12 +43,12 @@ void main() {
     );
     expect(find.byKey(const Key('run-map')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);
-    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(find.byKey(const Key('current-location-button')), findsNothing);
     expect(find.byKey(const Key('start-stop-button')), findsNothing);
     expect(find.text('START'), findsNothing);
     expect(find.byKey(const Key('run-status-label')), findsNothing);
-    expect(find.byKey(const Key('ghost-status-label')), findsNothing);
+    expect(find.byKey(const Key('record-race-status-label')), findsNothing);
     expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
     expect(find.byKey(const Key('pause-run-button')), findsNothing);
     expect(find.byKey(const Key('resume-run-button')), findsNothing);
@@ -82,7 +82,7 @@ void main() {
 
     expect(find.byKey(const Key('run-map')), findsOneWidget);
     expect(find.byKey(const Key('run-interval-button')), findsNothing);
-    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(find.byKey(const Key('current-location-button')), findsNothing);
     expect(find.byKey(const Key('start-stop-button')), findsNothing);
     expect(find.text('START'), findsNothing);

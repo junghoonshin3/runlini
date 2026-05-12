@@ -37,10 +37,10 @@ void main() {
         countdownSeconds: 7,
         locationTrackingPreset: RunLocationTrackingPreset.highAccuracy,
         autoPauseEnabled: true,
-        showGhostMarker: true,
+        showRecordRaceMarker: true,
         voiceCueEnabled: false,
         kmVoiceCueEnabled: false,
-        ghostVoiceCueEnabled: true,
+        recordRaceVoiceCueEnabled: true,
         voiceCueVolume: 0.7,
         intervalWorkout: RunIntervalWorkout(
           enabled: true,
@@ -76,10 +76,10 @@ void main() {
       RunLocationTrackingPreset.highAccuracy,
     );
     expect(settings.autoPauseEnabled, isTrue);
-    expect(settings.showGhostMarker, isTrue);
+    expect(settings.showRecordRaceMarker, isTrue);
     expect(settings.voiceCueEnabled, isFalse);
     expect(settings.kmVoiceCueEnabled, isFalse);
-    expect(settings.ghostVoiceCueEnabled, isTrue);
+    expect(settings.recordRaceVoiceCueEnabled, isTrue);
     expect(settings.voiceCueVolume, 0.7);
     expect(settings.intervalWorkout.enabled, isTrue);
     expect(settings.intervalWorkout.work.distanceM, 400);
@@ -138,8 +138,34 @@ void main() {
     expect(settings.distanceGoals.yearlyGoalM, defaultYearlyDistanceGoalM);
     expect(settings.voiceCueEnabled, isTrue);
     expect(settings.kmVoiceCueEnabled, isTrue);
-    expect(settings.ghostVoiceCueEnabled, isFalse);
+    expect(settings.recordRaceVoiceCueEnabled, isFalse);
     expect(settings.voiceCueVolume, defaultRunVoiceCueVolume);
+  });
+
+  test('loads legacy ghost setting keys as recordRace settings', () async {
+    final tempDir = await Directory.systemTemp.createTemp('runlini-settings');
+    addTearDown(() => tempDir.delete(recursive: true));
+    final database = RunliniDatabase(
+      databaseFactory: databaseFactoryFfi,
+      databasePath: p.join(tempDir.path, 'runlini.db'),
+    );
+    addTearDown(database.close);
+    final db = await database.database;
+    await db.insert('app_settings', const <String, Object?>{
+      'key': 'show_ghost_marker',
+      'value': 'true',
+    });
+    await db.insert('app_settings', const <String, Object?>{
+      'key': 'ghost_voice_cue_enabled',
+      'value': 'true',
+    });
+
+    final settings = await SqfliteRunSettingsRepository(
+      database: database,
+    ).loadSettings();
+
+    expect(settings.showRecordRaceMarker, isTrue);
+    expect(settings.recordRaceVoiceCueEnabled, isTrue);
   });
 
   test('adds, retires, and soft-deletes running shoes', () async {

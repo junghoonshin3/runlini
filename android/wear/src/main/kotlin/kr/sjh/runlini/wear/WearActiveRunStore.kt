@@ -34,7 +34,7 @@ class WearActiveRunStore(private val persistence: ActiveRunPersistence) {
     fun restore(
         nowRealtimeMs: Long,
         pendingDraftCount: Int,
-        fallbackGhostConfig: WearGhostConfig?,
+        fallbackRecordRaceConfig: WearRecordRaceConfig?,
     ): WearRunState? {
         val json = persistence.read() ?: return null
         return runCatching {
@@ -42,7 +42,7 @@ class WearActiveRunStore(private val persistence: ActiveRunPersistence) {
                 json = json,
                 nowRealtimeMs = nowRealtimeMs,
                 pendingDraftCount = pendingDraftCount,
-                fallbackGhostConfig = fallbackGhostConfig,
+                fallbackRecordRaceConfig = fallbackRecordRaceConfig,
             )
         }.getOrElse {
             clear()
@@ -77,13 +77,13 @@ object WearActiveRunJsonMapper {
             .put("elapsedBeforeActiveSegmentMs", state.elapsedBeforeActiveSegmentMs)
             .put("activeSegmentStartedRealtimeMs", state.activeSegmentStartedRealtimeMs)
             .put("pauseReason", state.pauseReason?.name)
-            .put("isGhostRun", state.isGhostRun)
-            .put("ghostConfig", state.ghostConfig?.let(::ghostConfigToJson))
-            .put("ghostFrame", state.ghostFrame?.let(::ghostFrameToJson))
-            .put("ghostCompletionCandidateCount", state.ghostCompletionCandidateCount)
-            .put("ghostCompletionPrompt", state.ghostCompletionPrompt)
-            .put("ghostCompletionDismissed", state.ghostCompletionDismissed)
-            .put("ghostCompletionFrame", state.ghostCompletionFrame?.let(::ghostFrameToJson))
+            .put("isRecordRaceRun", state.isRecordRaceRun)
+            .put("recordRaceConfig", state.recordRaceConfig?.let(::recordRaceConfigToJson))
+            .put("recordRaceFrame", state.recordRaceFrame?.let(::recordRaceFrameToJson))
+            .put("recordRaceCompletionCandidateCount", state.recordRaceCompletionCandidateCount)
+            .put("recordRaceCompletionPrompt", state.recordRaceCompletionPrompt)
+            .put("recordRaceCompletionDismissed", state.recordRaceCompletionDismissed)
+            .put("recordRaceCompletionFrame", state.recordRaceCompletionFrame?.let(::recordRaceFrameToJson))
             .put("statusMessage", state.statusMessage)
             .put("errorMessage", state.errorMessage)
             .put("points", JSONArray(state.points.map(::pointToJson)))
@@ -94,7 +94,7 @@ object WearActiveRunJsonMapper {
         json: String,
         nowRealtimeMs: Long,
         pendingDraftCount: Int,
-        fallbackGhostConfig: WearGhostConfig?,
+        fallbackRecordRaceConfig: WearRecordRaceConfig?,
     ): WearRunState? {
         val objectJson = JSONObject(json)
         val phase = runCatching {
@@ -115,11 +115,19 @@ object WearActiveRunJsonMapper {
         } else {
             savedElapsedMs
         }
-        val storedGhostConfig = objectJson.optionalObject("ghostConfig")?.let { configJson ->
-            WearGhostConfigJsonMapper.fromJson(configJson.toString())
-        }
-        val isGhostRun = objectJson.optBoolean("isGhostRun", storedGhostConfig != null)
-        val ghostConfig = if (isGhostRun) storedGhostConfig else fallbackGhostConfig
+        val storedRecordRaceConfig =
+            (objectJson.optionalObject("recordRaceConfig") ?: objectJson.optionalObject("ghostConfig"))
+                ?.let { configJson ->
+                    WearRecordRaceConfigJsonMapper.fromJson(configJson.toString())
+                }
+        val isRecordRaceRun = objectJson.optBoolean(
+            "isRecordRaceRun",
+            objectJson.optBoolean("isGhostRun", storedRecordRaceConfig != null),
+        )
+        val recordRaceConfig = if (isRecordRaceRun) storedRecordRaceConfig else fallbackRecordRaceConfig
+        val recordRaceFrame =
+            (objectJson.optionalObject("recordRaceFrame") ?: objectJson.optionalObject("ghostFrame"))
+                ?.let(::recordRaceFrameFromJson)
 
         return WearRunState(
             phase = phase,
@@ -147,21 +155,31 @@ object WearActiveRunJsonMapper {
                 runCatching { WearPauseReason.valueOf(value) }.getOrNull()
             },
             pendingDraftCount = pendingDraftCount,
-            ghostConfig = ghostConfig,
-            isGhostRun = isGhostRun && ghostConfig != null,
-            ghostFrame = objectJson.optionalObject("ghostFrame")?.let(::ghostFrameFromJson),
-            ghostCompletionCandidateCount = objectJson.optInt(
-                "ghostCompletionCandidateCount",
-                0,
+            recordRaceConfig = recordRaceConfig,
+            isRecordRaceRun = isRecordRaceRun && recordRaceConfig != null,
+            recordRaceFrame = recordRaceFrame,
+            recordRaceStartConfirmed = recordRaceFrame?.startConfirmed ?: false,
+            recordRaceStartCandidateCount = recordRaceFrame?.startCandidateCount ?: 0,
+            recordRaceStartLastEvaluatedPointCount =
+                recordRaceFrame?.startLastEvaluatedPointCount ?: 0,
+            recordRaceTrackedDistanceAlongRouteM = recordRaceFrame?.trackedDistanceAlongRouteM,
+            recordRaceCompletionCandidateCount = objectJson.optInt(
+                "recordRaceCompletionCandidateCount",
+                objectJson.optInt("ghostCompletionCandidateCount", 0),
             ),
-            ghostCompletionPrompt = objectJson.optBoolean("ghostCompletionPrompt", false),
-            ghostCompletionDismissed = objectJson.optBoolean(
-                "ghostCompletionDismissed",
-                false,
+            recordRaceCompletionPrompt = objectJson.optBoolean(
+                "recordRaceCompletionPrompt",
+                objectJson.optBoolean("ghostCompletionPrompt", false),
             ),
-            ghostCompletionFrame = objectJson
-                .optionalObject("ghostCompletionFrame")
-                ?.let(::ghostFrameFromJson),
+            recordRaceCompletionDismissed = objectJson.optBoolean(
+                "recordRaceCompletionDismissed",
+                objectJson.optBoolean("ghostCompletionDismissed", false),
+            ),
+            recordRaceCompletionFrame = (
+                objectJson.optionalObject("recordRaceCompletionFrame")
+                    ?: objectJson.optionalObject("ghostCompletionFrame")
+                )
+                ?.let(::recordRaceFrameFromJson),
             statusMessage = objectJson.optionalString("statusMessage"),
             errorMessage = objectJson.optionalString("errorMessage"),
         )
@@ -200,7 +218,7 @@ object WearActiveRunJsonMapper {
         }
     }
 
-    private fun ghostConfigToJson(config: WearGhostConfig): JSONObject {
+    private fun recordRaceConfigToJson(config: WearRecordRaceConfig): JSONObject {
         return JSONObject()
             .put("id", config.id)
             .put("durationMs", config.durationMs)
@@ -209,7 +227,7 @@ object WearActiveRunJsonMapper {
             .put("points", JSONArray(config.points.map(::pointToJson)))
     }
 
-    private fun ghostFrameToJson(frame: WearGhostFrame): JSONObject {
+    private fun recordRaceFrameToJson(frame: WearRecordRaceFrame): JSONObject {
         return JSONObject()
             .put("status", frame.status.name)
             .put("timeGapMs", frame.timeGapMs)
@@ -219,13 +237,18 @@ object WearActiveRunJsonMapper {
             .put("distanceFromRouteM", finiteDoubleOrNull(frame.distanceFromRouteM))
             .put("totalRouteDistanceM", finiteDoubleOrNull(frame.totalRouteDistanceM))
             .put("distanceToFinishPointM", finiteDoubleOrNull(frame.distanceToFinishPointM))
+            .put("startConfirmed", frame.startConfirmed)
+            .put("startCandidateCount", frame.startCandidateCount)
+            .put("startLastEvaluatedPointCount", frame.startLastEvaluatedPointCount)
+            .put("trackedDistanceAlongRouteM", finiteDoubleOrNull(frame.trackedDistanceAlongRouteM))
+            .put("projectionSource", frame.projectionSource.name)
     }
 
-    private fun ghostFrameFromJson(frameJson: JSONObject): WearGhostFrame {
-        return WearGhostFrame(
+    private fun recordRaceFrameFromJson(frameJson: JSONObject): WearRecordRaceFrame {
+        return WearRecordRaceFrame(
             status = runCatching {
-                WearGhostStatus.valueOf(frameJson.getString("status"))
-            }.getOrDefault(WearGhostStatus.Unavailable),
+                WearRecordRaceStatus.valueOf(frameJson.getString("status"))
+            }.getOrDefault(WearRecordRaceStatus.Unavailable),
             timeGapMs = frameJson.optLong("timeGapMs", 0L),
             distanceGapM = frameJson.optionalDouble("distanceGapM") ?: 0.0,
             routeProgress = frameJson.optionalDouble("routeProgress") ?: 0.0,
@@ -236,6 +259,13 @@ object WearActiveRunJsonMapper {
             totalRouteDistanceM = frameJson.optionalDouble("totalRouteDistanceM") ?: 0.0,
             distanceToFinishPointM = frameJson.optionalDouble("distanceToFinishPointM")
                 ?: Double.POSITIVE_INFINITY,
+            startConfirmed = frameJson.optBoolean("startConfirmed", true),
+            startCandidateCount = frameJson.optInt("startCandidateCount", 0),
+            startLastEvaluatedPointCount = frameJson.optInt("startLastEvaluatedPointCount", 0),
+            trackedDistanceAlongRouteM = frameJson.optionalDouble("trackedDistanceAlongRouteM"),
+            projectionSource = runCatching {
+                WearRecordRaceProjectionSource.valueOf(frameJson.optString("projectionSource", "Global"))
+            }.getOrDefault(WearRecordRaceProjectionSource.Global),
         )
     }
 

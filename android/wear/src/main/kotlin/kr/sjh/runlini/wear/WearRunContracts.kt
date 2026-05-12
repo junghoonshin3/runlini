@@ -38,7 +38,7 @@ data class WearRunState(
     val phase: WearRunPhase = WearRunPhase.Ready,
     val settings: WearRunSettings = WearRunSettings(),
     val countdownRemainingSeconds: Int? = null,
-    val countdownStartGhostConfig: WearGhostConfig? = null,
+    val countdownStartRecordRaceConfig: WearRecordRaceConfig? = null,
     val sessionId: String = "",
     val startedAtEpochMs: Long = 0,
     val endedAtEpochMs: Long? = null,
@@ -56,14 +56,18 @@ data class WearRunState(
     val elapsedBeforeActiveSegmentMs: Long = 0,
     val activeSegmentStartedRealtimeMs: Long? = null,
     val pendingDraftCount: Int = 0,
-    val ghostConfig: WearGhostConfig? = null,
-    val ghostConfigs: List<WearGhostConfig> = emptyList(),
-    val isGhostRun: Boolean = false,
-    val ghostFrame: WearGhostFrame? = null,
-    val ghostCompletionCandidateCount: Int = 0,
-    val ghostCompletionPrompt: Boolean = false,
-    val ghostCompletionDismissed: Boolean = false,
-    val ghostCompletionFrame: WearGhostFrame? = null,
+    val recordRaceConfig: WearRecordRaceConfig? = null,
+    val recordRaceConfigs: List<WearRecordRaceConfig> = emptyList(),
+    val isRecordRaceRun: Boolean = false,
+    val recordRaceFrame: WearRecordRaceFrame? = null,
+    val recordRaceStartConfirmed: Boolean = false,
+    val recordRaceStartCandidateCount: Int = 0,
+    val recordRaceStartLastEvaluatedPointCount: Int = 0,
+    val recordRaceTrackedDistanceAlongRouteM: Double? = null,
+    val recordRaceCompletionCandidateCount: Int = 0,
+    val recordRaceCompletionPrompt: Boolean = false,
+    val recordRaceCompletionDismissed: Boolean = false,
+    val recordRaceCompletionFrame: WearRecordRaceFrame? = null,
     val intervalFrame: WearIntervalFrame? = null,
     val pauseReason: WearPauseReason? = null,
     val statusMessage: String? = null,
@@ -87,7 +91,7 @@ data class WearRunDraftPayload(
     val sourceDeviceName: String,
     val caloriesKcal: Double?,
     val averageCadenceSpm: Double? = null,
-    val ghostSummary: WearRunGhostSummary? = null,
+    val recordRaceSummary: WearRunRecordRaceSummary? = null,
 ) {
     companion object {
         fun fromState(state: WearRunState, deviceName: String): WearRunDraftPayload {
@@ -101,9 +105,9 @@ data class WearRunDraftPayload(
                 sourceDeviceName = deviceName,
                 caloriesKcal = state.caloriesKcal,
                 averageCadenceSpm = state.averageCadenceSpm,
-                ghostSummary = WearRunGhostSummary.from(
-                    state.ghostConfig,
-                    state.ghostCompletionFrame ?: state.ghostFrame,
+                recordRaceSummary = WearRunRecordRaceSummary.from(
+                    state.recordRaceConfig,
+                    state.recordRaceCompletionFrame ?: state.recordRaceFrame,
                 ),
             )
         }
@@ -123,7 +127,7 @@ object WearRunDraftJsonMapper {
             .put("sourceDeviceName", draft.sourceDeviceName)
             .put("caloriesKcal", draft.caloriesKcal)
             .put("averageCadenceSpm", draft.averageCadenceSpm)
-            .put("ghostSummary", draft.ghostSummary?.toJson())
+            .put("recordRaceSummary", draft.recordRaceSummary?.toJson())
             .put("points", JSONArray(draft.points.map(::pointToJson)))
             .toString()
     }

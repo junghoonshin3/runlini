@@ -20,23 +20,23 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun readyPageModelAlwaysIncludesGhostPicker() {
+    fun readyPageModelAlwaysIncludesRecordRacePicker() {
         val pages = WearReadyPageModel.pagesFor(WearRunState())
 
-        assertEquals(listOf(WearReadyPage.Ready, WearReadyPage.Ghosts, WearReadyPage.Settings), pages)
+        assertEquals(listOf(WearReadyPage.Ready, WearReadyPage.RecordRaces, WearReadyPage.Settings), pages)
         assertEquals(0, WearReadyPageModel.initialPageFor(pages))
     }
 
     @Test
-    fun readyPageModelAddsGhostPickerWhenAnyGhostIsCached() {
+    fun readyPageModelAddsRecordRacePickerWhenAnyRecordRaceIsCached() {
         val pages = WearReadyPageModel.pagesFor(
             WearRunState(
-                ghostConfig = ghostConfig("ghost-1"),
-                ghostConfigs = listOf(ghostConfig("ghost-1")),
+                recordRaceConfig = recordRaceConfig("record-race-1"),
+                recordRaceConfigs = listOf(recordRaceConfig("record-race-1")),
             ),
         )
 
-        assertEquals(listOf(WearReadyPage.Ready, WearReadyPage.Ghosts, WearReadyPage.Settings), pages)
+        assertEquals(listOf(WearReadyPage.Ready, WearReadyPage.RecordRaces, WearReadyPage.Settings), pages)
         assertEquals(0, WearReadyPageModel.initialPageFor(pages))
     }
 
@@ -55,16 +55,16 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun pageModelInsertsGhostPageForGhostRuns() {
+    fun pageModelInsertsRecordRacePageForRecordRaceRuns() {
         val pages = WearActiveRunPageModel.pagesFor(
-            WearRunState(isGhostRun = true, ghostConfig = ghostConfig()),
+            WearRunState(isRecordRaceRun = true, recordRaceConfig = recordRaceConfig()),
         )
 
         assertEquals(
             listOf(
                 WearActiveRunPage.Controls,
                 WearActiveRunPage.Core,
-                WearActiveRunPage.Ghost,
+                WearActiveRunPage.RecordRace,
                 WearActiveRunPage.Details,
             ),
             pages,
@@ -93,11 +93,11 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun pageModelHidesIntervalPageForGhostRuns() {
+    fun pageModelHidesIntervalPageForRecordRaceRuns() {
         val pages = WearActiveRunPageModel.pagesFor(
             WearRunState(
-                isGhostRun = true,
-                ghostConfig = ghostConfig(),
+                isRecordRaceRun = true,
+                recordRaceConfig = recordRaceConfig(),
                 settings = WearRunSettings(
                     intervalWorkout = WearIntervalWorkout(enabled = true),
                 ),
@@ -108,7 +108,7 @@ class WearRunUiModelsTest {
             listOf(
                 WearActiveRunPage.Controls,
                 WearActiveRunPage.Core,
-                WearActiveRunPage.Ghost,
+                WearActiveRunPage.RecordRace,
                 WearActiveRunPage.Details,
             ),
             pages,
@@ -150,53 +150,53 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun readyModelPrioritizesGhostStartWhenGhostIsCached() {
+    fun readyModelPrioritizesRecordRaceStartWhenRecordRaceIsCached() {
         val model = WearReadyScreenModelBuilder.from(
             WearRunState(
-                ghostConfig = ghostConfig(),
+                recordRaceConfig = recordRaceConfig(),
                 pendingDraftCount = 2,
                 statusMessage = "준비 완료",
             ),
         )
 
-        assertEquals("고스트\n시작", model.primaryLabel)
-        assertTrue(model.usesGhostPrimary)
+        assertEquals("기록 레이스\n시작", model.primaryLabel)
+        assertTrue(model.usesRecordRacePrimary)
         assertEquals("일반 시작", model.secondaryLabel)
-        assertEquals("한강 5K", model.ghostLabel)
-        assertEquals(1, model.ghostCount)
+        assertEquals("한강 5K", model.recordRaceLabel)
+        assertEquals(1, model.recordRaceCount)
         assertFalse(model.isError)
     }
 
     @Test
-    fun ghostReadyActionModelShowsCachedGhostCount() {
+    fun recordRaceReadyActionModelShowsCachedRecordRaceCount() {
         val readyModel = WearReadyScreenModelBuilder.from(
             WearRunState(
-                ghostConfig = ghostConfig("ghost-1"),
-                ghostConfigs = listOf(ghostConfig("ghost-1"), ghostConfig("ghost-2")),
+                recordRaceConfig = recordRaceConfig("record-race-1"),
+                recordRaceConfigs = listOf(recordRaceConfig("record-race-1"), recordRaceConfig("record-race-2")),
             ),
         )
 
-        val actionModel = WearGhostReadyModelBuilder.actionsFrom(readyModel)
+        val actionModel = WearRecordRaceReadyModelBuilder.actionsFrom(readyModel)
 
-        assertEquals("고스트 2개", actionModel.statusLabel)
+        assertEquals("기록 레이스 2개", actionModel.statusLabel)
     }
 
     @Test
-    fun ghostPickerModelShowsOnlyThreeConciseOptions() {
-        val model = WearGhostPickerModelBuilder.from(
+    fun recordRacePickerModelShowsOnlyThreeConciseOptions() {
+        val model = WearRecordRacePickerModelBuilder.from(
             WearRunState(
-                ghostConfig = ghostConfig("ghost-2"),
-                ghostConfigs = listOf(
-                    ghostConfig("ghost-1", sourceSummary = "device:gps"),
-                    ghostConfig("ghost-2", sourceSummary = "한강 5K 빠른 기록"),
-                    ghostConfig("ghost-3", sourceSummary = "남산"),
-                    ghostConfig("ghost-4", sourceSummary = "초과"),
+                recordRaceConfig = recordRaceConfig("record-race-2"),
+                recordRaceConfigs = listOf(
+                    recordRaceConfig("record-race-1", sourceSummary = "device:gps"),
+                    recordRaceConfig("record-race-2", sourceSummary = "한강 5K 빠른 기록"),
+                    recordRaceConfig("record-race-3", sourceSummary = "남산"),
+                    recordRaceConfig("record-race-4", sourceSummary = "초과"),
                 ),
             ),
         )
 
         assertEquals(3, model.items.size)
-        assertEquals("고스트 1", model.items[0].label)
+        assertEquals("기록 레이스 1", model.items[0].label)
         assertEquals("한강 5K 빠른 기", model.items[1].label)
         assertEquals(true, model.items[1].isSelected)
         assertEquals("5.00 km", model.items[0].distance)
@@ -204,54 +204,54 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun ghostPickerModelShowsEmptyLabelWhenNoGhostsAreCached() {
-        val model = WearGhostPickerModelBuilder.from(WearRunState())
+    fun recordRacePickerModelShowsEmptyLabelWhenNoRecordRacesAreCached() {
+        val model = WearRecordRacePickerModelBuilder.from(WearRunState())
 
-        assertEquals(emptyList<WearGhostPickerItemModel>(), model.items)
+        assertEquals(emptyList<WearRecordRacePickerItemModel>(), model.items)
         assertEquals("없음", model.emptyLabel)
     }
 
     @Test
-    fun ghostReadyActionModelHidesSourceSummary() {
+    fun recordRaceReadyActionModelHidesSourceSummary() {
         val readyModel = WearReadyScreenModelBuilder.from(
             WearRunState(
-                ghostConfig = ghostConfig().copy(sourceSummary = "device:gps"),
+                recordRaceConfig = recordRaceConfig().copy(sourceSummary = "device:gps"),
             ),
         )
 
-        val actionModel = WearGhostReadyModelBuilder.actionsFrom(readyModel)
+        val actionModel = WearRecordRaceReadyModelBuilder.actionsFrom(readyModel)
 
-        assertEquals("고스트런\n시작", actionModel.ghostStartLabel)
+        assertEquals("기록 레이스\n시작", actionModel.recordRaceStartLabel)
         assertEquals("일반\n시작", actionModel.normalStartLabel)
-        assertEquals("고스트 모드 ON", actionModel.statusLabel)
+        assertEquals("기록 레이스 모드 ON", actionModel.statusLabel)
         assertFalse(actionModel.statusLabel.contains("device:gps"))
         assertFalse(actionModel.isError)
     }
 
     @Test
-    fun ghostReadyActionModelPrioritizesErrorStatus() {
+    fun recordRaceReadyActionModelPrioritizesErrorStatus() {
         val readyModel = WearReadyScreenModelBuilder.from(
             WearRunState(
-                ghostConfig = ghostConfig(),
+                recordRaceConfig = recordRaceConfig(),
                 errorMessage = "센서 오류",
             ),
         )
 
-        val actionModel = WearGhostReadyModelBuilder.actionsFrom(readyModel)
+        val actionModel = WearRecordRaceReadyModelBuilder.actionsFrom(readyModel)
 
         assertEquals("오류", actionModel.statusLabel)
         assertTrue(actionModel.isError)
     }
 
     @Test
-    fun ghostReadyCompactActionsFitSmallRoundScreen() {
-        val layout = WearGhostReadyModelBuilder.layoutFor(WearLayoutProfile.Compact)
+    fun recordRaceReadyCompactActionsFitSmallRoundScreen() {
+        val layout = WearRecordRaceReadyModelBuilder.layoutFor(WearLayoutProfile.Compact)
 
         assertEquals(64, layout.circleSizeDp)
         assertEquals(8, layout.gapDp)
         assertEquals(12, layout.labelSizeSp)
         assertEquals(19, layout.titleSizeSp)
-        assertTrue(WearGhostReadyModelBuilder.actionRowFits(widthDp = 192, heightDp = 192))
+        assertTrue(WearRecordRaceReadyModelBuilder.actionRowFits(widthDp = 192, heightDp = 192))
     }
 
     @Test
@@ -281,18 +281,18 @@ class WearRunUiModelsTest {
 
         assertEquals("시작", model.primaryLabel)
         assertEquals("준비 완료", model.statusLabel)
-        assertFalse(model.usesGhostPrimary)
+        assertFalse(model.usesRecordRacePrimary)
         assertNull(model.secondaryLabel)
     }
 
     @Test
-    fun readyModelUsesNormalStartWithoutGhost() {
+    fun readyModelUsesNormalStartWithoutRecordRace() {
         val model = WearReadyScreenModelBuilder.from(WearRunState())
 
         assertEquals("시작", model.primaryLabel)
-        assertFalse(model.usesGhostPrimary)
+        assertFalse(model.usesRecordRacePrimary)
         assertNull(model.secondaryLabel)
-        assertNull(model.ghostLabel)
+        assertNull(model.recordRaceLabel)
     }
 
     @Test
@@ -309,16 +309,16 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun countdownModelUsesGhostReadyLabelAndClampsNumber() {
+    fun countdownModelUsesRecordRaceReadyLabelAndClampsNumber() {
         val model = WearCountdownModelBuilder.from(
             WearRunState(
                 phase = WearRunPhase.CountingDown,
                 countdownRemainingSeconds = 4,
-                countdownStartGhostConfig = ghostConfig(),
+                countdownStartRecordRaceConfig = recordRaceConfig(),
             ),
         )
 
-        assertEquals("고스트 준비", model.label)
+        assertEquals("기록 레이스 준비", model.label)
         assertEquals("3", model.remainingSeconds)
     }
 
@@ -349,7 +349,7 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun reviewSummaryIncludesGhostResultWhenPresent() {
+    fun reviewSummaryIncludesRecordRaceResultWhenPresent() {
         val model = WearReviewSummaryModelBuilder.from(
             WearRunState(
                 elapsedMs = 600_000L,
@@ -360,10 +360,10 @@ class WearRunUiModelsTest {
                 caloriesKcal = 123.0,
                 speedMps = 3.33,
                 pendingDraftCount = 1,
-                isGhostRun = true,
-                ghostConfig = ghostConfig(),
-                ghostFrame = WearGhostFrame(
-                    status = WearGhostStatus.Behind,
+                isRecordRaceRun = true,
+                recordRaceConfig = recordRaceConfig(),
+                recordRaceFrame = WearRecordRaceFrame(
+                    status = WearRecordRaceStatus.Behind,
                     timeGapMs = -8_000L,
                     distanceGapM = -12.0,
                 ),
@@ -377,7 +377,7 @@ class WearRunUiModelsTest {
         assertEquals("123 kcal", model.calories)
         assertEquals("156 bpm", model.heartRate)
         assertEquals("12.0 km/h", model.speed)
-        assertEquals("뒤처지는 중 -0:08", model.ghostResult)
+        assertEquals("뒤처지는 중 -0:08", model.recordRaceResult)
         assertEquals("전송 대기 1개", model.pendingLabel)
         assertEquals(
             listOf(
@@ -392,7 +392,7 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun reviewSummaryHidesGhostResultForNormalRun() {
+    fun reviewSummaryHidesRecordRaceResultForNormalRun() {
         val model = WearReviewSummaryModelBuilder.from(
             WearRunState(
                 elapsedMs = 180_000L,
@@ -402,11 +402,11 @@ class WearRunUiModelsTest {
                 averageCadenceSpm = null,
                 caloriesKcal = null,
                 speedMps = null,
-                isGhostRun = false,
+                isRecordRaceRun = false,
             ),
         )
 
-        assertNull(model.ghostResult)
+        assertNull(model.recordRaceResult)
         assertNull(model.pendingLabel)
         assertEquals("--", model.heartRate)
         assertEquals("--", model.averageCadence)
@@ -424,23 +424,23 @@ class WearRunUiModelsTest {
     }
 
     @Test
-    fun reviewSummaryHidesGhostResultUntilGhostFrameExists() {
+    fun reviewSummaryHidesRecordRaceResultUntilRecordRaceFrameExists() {
         val model = WearReviewSummaryModelBuilder.from(
             WearRunState(
-                isGhostRun = true,
-                ghostConfig = ghostConfig(),
-                ghostFrame = null,
+                isRecordRaceRun = true,
+                recordRaceConfig = recordRaceConfig(),
+                recordRaceFrame = null,
             ),
         )
 
-        assertNull(model.ghostResult)
+        assertNull(model.recordRaceResult)
     }
 
-    private fun ghostConfig(
-        id: String = "ghost-1",
+    private fun recordRaceConfig(
+        id: String = "record-race-1",
         sourceSummary: String = "한강 5K",
-    ): WearGhostConfig {
-        return WearGhostConfig(
+    ): WearRecordRaceConfig {
+        return WearRecordRaceConfig(
             id = id,
             durationMs = 1_800_000L,
             distanceM = 5_000.0,

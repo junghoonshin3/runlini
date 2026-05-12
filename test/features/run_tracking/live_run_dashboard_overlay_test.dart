@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
@@ -9,34 +9,66 @@ import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_overlay.dart';
 
 void main() {
-  testWidgets('starts collapsed with ghost judgment when racing a ghost', (
-    tester,
-  ) async {
-    await _pumpOverlay(tester, ghostRace: _ghostFrame());
+  testWidgets(
+    'starts collapsed with recordRace judgment when racing a recordRace',
+    (tester) async {
+      await _pumpOverlay(tester, recordRace: _recordRaceFrame());
 
-    expect(
-      find.byKey(const Key('live-run-dashboard-collapsed')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('live-run-dashboard-expanded')), findsNothing);
-    expect(find.byKey(const Key('live-run-ghost-collapsed')), findsOneWidget);
-    expect(
-      find.byKey(const Key('live-run-ghost-status-collapsed')),
-      findsOneWidget,
-    );
-    expect(find.text('1.20 km'), findsOneWidget);
-    expect(find.text('5:00 /km'), findsOneWidget);
-    expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
-    expect(find.text('12.0 km/h'), findsNothing);
-    expect(find.text('84 kcal'), findsNothing);
-  });
+      expect(
+        find.byKey(const Key('live-run-dashboard-collapsed')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('live-run-dashboard-expanded')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('live-run-record-race-collapsed')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('live-run-record-race-status-collapsed')),
+        findsOneWidget,
+      );
+      expect(find.text('1.20 km'), findsOneWidget);
+      expect(find.text('5:00 /km'), findsOneWidget);
+      expect(find.byKey(const Key('record-race-panel')), findsNothing);
+      expect(find.text('12.0 km/h'), findsNothing);
+      expect(find.text('84 kcal'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'shows recordRace comparison with a compact start confirmation badge',
+    (tester) async {
+      await _pumpOverlay(
+        tester,
+        recordRace: _recordRaceFrame(startConfirmed: false),
+      );
+
+      expect(
+        find.byKey(const Key('record-race-start-pending-badge')),
+        findsOneWidget,
+      );
+      expect(find.text('확인 중'), findsOneWidget);
+      expect(find.text('이기는 중'), findsOneWidget);
+      expect(find.text('+0:12'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('record-race-panel')), findsOneWidget);
+      expect(find.text('기록 레이스 42m 뒤'), findsOneWidget);
+      expect(find.text('+0:12'), findsWidgets);
+    },
+  );
 
   testWidgets('toggle expands and collapses detailed run information', (
     tester,
   ) async {
     await _pumpOverlay(
       tester,
-      ghostRace: _ghostFrame(),
+      recordRace: _recordRaceFrame(),
       intervalFrame: _intervalFrame(),
     );
 
@@ -51,10 +83,10 @@ void main() {
       find.byKey(const Key('live-run-interval-step-label')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-race-progress-value')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-panel')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-progress-value')), findsOneWidget);
     expect(
-      find.byKey(const Key('ghost-race-remaining-distance-value')),
+      find.byKey(const Key('record-race-remaining-distance-value')),
       findsOneWidget,
     );
     expect(find.text('12.0 km/h'), findsOneWidget);
@@ -67,7 +99,7 @@ void main() {
       find.byKey(const Key('live-run-dashboard-collapsed')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('ghost-race-panel')), findsNothing);
+    expect(find.byKey(const Key('record-race-panel')), findsNothing);
     expect(find.byKey(const Key('live-run-interval-step-label')), findsNothing);
   });
 
@@ -106,7 +138,7 @@ Future<void> _pumpOverlay(
   WidgetTester tester, {
   String sessionId = 'run-a',
   LiveRunMetrics? metrics,
-  GhostRaceFrame? ghostRace,
+  RecordRaceFrame? recordRace,
   RunIntervalFrame? intervalFrame,
 }) async {
   await tester.pumpWidget(
@@ -119,7 +151,7 @@ Future<void> _pumpOverlay(
               sessionId: sessionId,
               metrics: metrics ?? _metrics(),
               displaySettings: const RunDisplaySettings(),
-              ghostRace: ghostRace,
+              recordRace: recordRace,
               intervalFrame: intervalFrame,
               onAdvanceInterval: () {},
             ),
@@ -141,18 +173,19 @@ LiveRunMetrics _metrics({bool isPaused = false}) {
   );
 }
 
-GhostRaceFrame _ghostFrame() {
-  return const GhostRaceFrame(
-    status: GhostRaceStatus.ahead,
+RecordRaceFrame _recordRaceFrame({bool startConfirmed = true}) {
+  return RecordRaceFrame(
+    status: RecordRaceStatus.ahead,
     timeGapMs: 12000,
     distanceGapM: 42,
-    ghostMarkerPoint: MapCoordinate(latitude: 0, longitude: 0),
+    recordRaceMarkerPoint: const MapCoordinate(latitude: 0, longitude: 0),
     isOffRoute: false,
     routeProgress: 0.5,
     distanceToFinishM: 500,
     distanceFromRouteM: 4,
     totalRouteDistanceM: 1000,
     distanceToFinishPointM: 500,
+    startConfirmed: startConfirmed,
   );
 }
 

@@ -47,7 +47,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('settings-button')), findsNothing);
-    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(find.byKey(const Key('pause-run-button')), findsNothing);
     expect(find.byKey(const Key('current-location-button')), findsNothing);
     expect(healthRecorder.finishCalls, 0);
@@ -58,7 +58,7 @@ void main() {
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
     expect(find.text('START'), findsOneWidget);
     expect(sessionRepository.savedSessions.length, 3);
     expect(healthRecorder.finishCalls, 0);
@@ -108,7 +108,7 @@ void main() {
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
     expect(sessionRepository.savedSessions.length, 2);
     expect(healthRecorder.cancelCalls, 1);
     expect(healthRecorder.finishCalls, 0);

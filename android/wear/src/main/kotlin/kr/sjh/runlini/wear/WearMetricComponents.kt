@@ -37,6 +37,7 @@ internal object RunliniWearColors {
     val Border = Color(0xFF2A2A27)
     val VoltGreen = Color(0xFFB6FF00)
     val ElectricRed = Color(0xFFFF2D55)
+    val Cyan = Color(0xFF4AE2FF)
 }
 
 @Composable
@@ -331,12 +332,12 @@ internal fun WearPageIndicator(
     }
 }
 
-internal fun ghostColor(status: WearGhostStatus?): Color {
+internal fun recordRaceColor(status: WearRecordRaceStatus?): Color {
     return when (status) {
-        WearGhostStatus.Ahead -> RunliniWearColors.VoltGreen
-        WearGhostStatus.Behind,
-        WearGhostStatus.OffRoute -> RunliniWearColors.ElectricRed
-        WearGhostStatus.Level -> RunliniWearColors.Chalk
-        WearGhostStatus.Unavailable, null -> RunliniWearColors.Muted
+        WearRecordRaceStatus.Ahead -> RunliniWearColors.VoltGreen
+        WearRecordRaceStatus.Behind,
+        WearRecordRaceStatus.OffRoute -> RunliniWearColors.ElectricRed
+        WearRecordRaceStatus.Level -> RunliniWearColors.Chalk
+        WearRecordRaceStatus.Unavailable, null -> RunliniWearColors.Muted
     }
 }

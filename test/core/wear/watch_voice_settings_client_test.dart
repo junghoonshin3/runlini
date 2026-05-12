@@ -26,7 +26,7 @@ void main() {
     await client.sendVoiceSettings(
       voiceCueEnabled: true,
       kmVoiceCueEnabled: false,
-      ghostVoiceCueEnabled: true,
+      recordRaceVoiceCueEnabled: true,
       autoPauseEnabled: true,
       volume: 0.6,
       playTestCue: true,
@@ -35,7 +35,10 @@ void main() {
     expect(calls.single.method, 'sendVoiceSettings');
     expect(calls.single.arguments, containsPair('voiceCueEnabled', true));
     expect(calls.single.arguments, containsPair('kmVoiceCueEnabled', false));
-    expect(calls.single.arguments, containsPair('ghostVoiceCueEnabled', true));
+    expect(
+      calls.single.arguments,
+      containsPair('recordRaceVoiceCueEnabled', true),
+    );
     expect(calls.single.arguments, containsPair('autoPauseEnabled', true));
     expect(calls.single.arguments, containsPair('volume', 0.6));
     expect(calls.single.arguments, containsPair('playTestCue', true));
@@ -55,7 +58,7 @@ void main() {
     await client.sendVoiceSettings(
       voiceCueEnabled: true,
       kmVoiceCueEnabled: true,
-      ghostVoiceCueEnabled: false,
+      recordRaceVoiceCueEnabled: false,
       autoPauseEnabled: false,
       volume: 1.8,
     );
@@ -78,7 +81,7 @@ void main() {
     await client.sendVoiceSettings(
       voiceCueEnabled: true,
       kmVoiceCueEnabled: true,
-      ghostVoiceCueEnabled: false,
+      recordRaceVoiceCueEnabled: false,
       autoPauseEnabled: false,
       volume: 0.6,
     );

@@ -15,10 +15,10 @@ internal fun WearRunScreen(
         WearRunPhase.CountingDown -> WearCountdownScreen(state = state)
         WearRunPhase.Running,
         WearRunPhase.Paused,
-        -> if (state.ghostCompletionPrompt) {
-            WearGhostCompletionScreen(
+        -> if (state.recordRaceCompletionPrompt) {
+            WearRecordRaceCompletionScreen(
                 onStop = actions.onStop,
-                onContinue = actions.onGhostCompletionContinue,
+                onContinue = actions.onRecordRaceCompletionContinue,
             )
         } else {
             WearActiveRunPager(
@@ -39,11 +39,11 @@ internal fun WearRunScreen(
 
 internal data class WearRunActions(
     val onStart: () -> Unit,
-    val onGhostStart: () -> Unit,
+    val onRecordRaceStart: () -> Unit,
     val onPause: () -> Unit,
     val onStop: () -> Unit,
     val onResume: () -> Unit,
-    val onGhostCompletionContinue: () -> Unit,
+    val onRecordRaceCompletionContinue: () -> Unit,
     val onSave: () -> Unit,
     val onDiscard: () -> Unit,
     val onCountdownEnabledChange: (Boolean) -> Unit,
@@ -52,18 +52,18 @@ internal data class WearRunActions(
     val onKmAlertEnabledChange: (Boolean) -> Unit,
     val onVoiceCueEnabledChange: (Boolean) -> Unit,
     val onVoiceCueVolumeChange: (Float) -> Unit,
-    val onGhostVoiceCueEnabledChange: (Boolean) -> Unit,
+    val onRecordRaceVoiceCueEnabledChange: (Boolean) -> Unit,
     val onIntervalWorkoutChange: (WearIntervalWorkout) -> Unit,
-    val onGhostSelect: (String) -> Unit,
+    val onRecordRaceSelect: (String) -> Unit,
 ) {
     companion object {
         val NoOp = WearRunActions(
             onStart = {},
-            onGhostStart = {},
+            onRecordRaceStart = {},
             onPause = {},
             onStop = {},
             onResume = {},
-            onGhostCompletionContinue = {},
+            onRecordRaceCompletionContinue = {},
             onSave = {},
             onDiscard = {},
             onCountdownEnabledChange = {},
@@ -72,9 +72,9 @@ internal data class WearRunActions(
             onKmAlertEnabledChange = {},
             onVoiceCueEnabledChange = {},
             onVoiceCueVolumeChange = {},
-            onGhostVoiceCueEnabledChange = {},
+            onRecordRaceVoiceCueEnabledChange = {},
             onIntervalWorkoutChange = {},
-            onGhostSelect = {},
+            onRecordRaceSelect = {},
         )
     }
 }

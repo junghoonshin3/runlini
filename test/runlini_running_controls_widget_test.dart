@@ -68,7 +68,7 @@ void main() {
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-      expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+      expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
       expect(find.byKey(const Key('pause-run-button')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);
 
@@ -89,10 +89,10 @@ void main() {
         findsNothing,
       );
       expect(find.byKey(const Key('run-status-label')), findsNothing);
-      expect(find.byKey(const Key('ghost-status-label')), findsNothing);
+      expect(find.byKey(const Key('record-race-status-label')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsNothing);
-      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       expect(find.byKey(const Key('pause-run-button')), findsOneWidget);
       expect(find.text('0.00 mi'), findsOneWidget);
       expect(find.text('0:00:00'), findsOneWidget);
@@ -144,13 +144,13 @@ void main() {
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
-      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       await tester.tap(find.byKey(const Key('save-run-button')));
       await tester.pump();
 
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-      expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+      expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
       expect(find.text('START'), findsOneWidget);
     },
   );
@@ -209,7 +209,7 @@ void main() {
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
       expect(find.byKey(const Key('settings-button')), findsNothing);
-      expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);
       expect(find.byKey(const Key('save-run-button')), findsOneWidget);
     },

@@ -22,12 +22,12 @@ class FakeRunFixtureLoader {
     return RunSession.fromJson(decoded);
   }
 
-  Future<RunSession> loadOsakaNambaTobitaGhost() async {
+  Future<RunSession> loadOsakaNambaTobitaRecordRace() async {
     final rawJson = await rootBundle.loadString(_osakaTobitaRouteAssetPath);
     final decoded = jsonDecode(rawJson) as Map<String, dynamic>;
     return _routeSessionFactory.fromGoogleRoutesResponse(
       decoded,
-      id: 'fixture_osaka_namba_tobita_ghost',
+      id: 'fixture_osaka_namba_tobita_record_race',
       startedAt: DateTime.utc(2026, 4, 18, 7, 30),
       sourceSummary: 'fixture:osaka-namba-tobita:pace-6:cadence-170',
       averagePaceSecPerKm: 360,
@@ -35,14 +35,14 @@ class FakeRunFixtureLoader {
     );
   }
 
-  Future<RunSession> loadOsakaNambaKanzakigawaGhost() async {
+  Future<RunSession> loadOsakaNambaKanzakigawaRecordRace() async {
     final rawJson = await rootBundle.loadString(
       _osakaKanzakigawaRouteAssetPath,
     );
     final decoded = jsonDecode(rawJson) as Map<String, dynamic>;
     return _routeSessionFactory.fromGoogleRoutesResponse(
       decoded,
-      id: 'fixture_osaka_namba_kanzakigawa_ghost',
+      id: 'fixture_osaka_namba_kanzakigawa_record_race',
       startedAt: DateTime.utc(2026, 4, 20, 7),
       sourceSummary: 'fixture:osaka-namba-kanzakigawa:pace-7:cadence-170',
       averagePaceSecPerKm: 420,
@@ -53,13 +53,14 @@ class FakeRunFixtureLoader {
 
   Future<List<RunSession>> loadAll() async {
     final primary = await loadDefault();
-    final osakaTobitaGhost = await loadOsakaNambaTobitaGhost();
-    final osakaKanzakigawaGhost = await loadOsakaNambaKanzakigawaGhost();
+    final osakaTobitaRecordRace = await loadOsakaNambaTobitaRecordRace();
+    final osakaKanzakigawaRecordRace =
+        await loadOsakaNambaKanzakigawaRecordRace();
 
     return <RunSession>[
       primary,
-      osakaTobitaGhost,
-      osakaKanzakigawaGhost,
+      osakaTobitaRecordRace,
+      osakaKanzakigawaRecordRace,
       _variant(
         primary,
         id: 'fixture_han_river_push',

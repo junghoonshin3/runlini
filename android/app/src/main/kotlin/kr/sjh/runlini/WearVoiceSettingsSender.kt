@@ -12,7 +12,7 @@ class WearVoiceSettingsSender(
     fun send(
         voiceCueEnabled: Boolean,
         kmVoiceCueEnabled: Boolean,
-        ghostVoiceCueEnabled: Boolean,
+        recordRaceVoiceCueEnabled: Boolean,
         autoPauseEnabled: Boolean,
         volume: Double,
         playTestCue: Boolean = false,
@@ -20,7 +20,8 @@ class WearVoiceSettingsSender(
         val request = PutDataMapRequest.create(ConfigPath).run {
             dataMap.putBoolean("voiceCueEnabled", voiceCueEnabled)
             dataMap.putBoolean("kmVoiceCueEnabled", kmVoiceCueEnabled)
-            dataMap.putBoolean("ghostVoiceCueEnabled", ghostVoiceCueEnabled)
+            dataMap.putBoolean("recordRaceVoiceCueEnabled", recordRaceVoiceCueEnabled)
+            dataMap.putBoolean("ghostVoiceCueEnabled", recordRaceVoiceCueEnabled)
             dataMap.putBoolean("autoPauseEnabled", autoPauseEnabled)
             dataMap.putDouble("volume", volume.coerceIn(0.0, 1.0))
             dataMap.putBoolean("playTestCue", playTestCue)

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
@@ -31,8 +31,9 @@ final runIntervalFrameProvider = Provider<RunIntervalFrame?>((Ref ref) {
   if (workout == null || !isRunIntervalEnabledForRuntime(workout)) {
     return null;
   }
-  final ghostSettings = ref.watch(ghostSettingsProvider);
-  if (ghostSettings.enabled && ghostSettings.selectedSessionId != null) {
+  final recordRaceSettings = ref.watch(recordRaceSettingsProvider);
+  if (recordRaceSettings.enabled &&
+      recordRaceSettings.selectedSessionId != null) {
     return null;
   }
   final metrics = ref.watch(liveRunMetricsProvider);

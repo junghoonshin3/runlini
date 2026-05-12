@@ -77,17 +77,17 @@ class MainActivity : FlutterFragmentActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            WEAR_GHOST_CONFIG_CHANNEL,
+            WEAR_RECORD_RACE_CONFIG_CHANNEL,
         ).setMethodCallHandler { call, result ->
-            val sender = WearGhostConfigSender(applicationContext)
+            val sender = WearRecordRaceConfigSender(applicationContext)
             when (call.method) {
-                "sendGhostConfig" -> {
+                "sendRecordRaceConfig" -> {
                     val id = call.argument<String>("id")
                     val json = call.argument<String>("json")
                     if (id == null || json == null) {
                         result.error(
                             "missing_config",
-                            "sendGhostConfig requires id and json arguments.",
+                            "sendRecordRaceConfig requires id and json arguments.",
                             null,
                         )
                     } else {
@@ -95,13 +95,13 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(null)
                     }
                 }
-                "sendGhostConfigs" -> {
+                "sendRecordRaceConfigs" -> {
                     val activeId = call.argument<String>("activeId")
                     val json = call.argument<String>("json")
                     if (json == null) {
                         result.error(
                             "missing_configs",
-                            "sendGhostConfigs requires a json argument.",
+                            "sendRecordRaceConfigs requires a json argument.",
                             null,
                         )
                     } else {
@@ -109,7 +109,7 @@ class MainActivity : FlutterFragmentActivity() {
                         result.success(null)
                     }
                 }
-                "clearGhostConfig" -> {
+                "clearRecordRaceConfig" -> {
                     sender.clearConfig()
                     result.success(null)
                 }
@@ -150,7 +150,7 @@ class MainActivity : FlutterFragmentActivity() {
                 "sendVoiceSettings" -> {
                     val voiceCueEnabled = call.argument<Boolean>("voiceCueEnabled") ?: true
                     val kmVoiceCueEnabled = call.argument<Boolean>("kmVoiceCueEnabled") ?: true
-                    val ghostVoiceCueEnabled = call.argument<Boolean>("ghostVoiceCueEnabled") ?: false
+                    val recordRaceVoiceCueEnabled = call.argument<Boolean>("recordRaceVoiceCueEnabled") ?: false
                     val autoPauseEnabled = call.argument<Boolean>("autoPauseEnabled") ?: false
                     val volume = call.argument<Double>("volume")
                     val playTestCue = call.argument<Boolean>("playTestCue") ?: false
@@ -164,7 +164,7 @@ class MainActivity : FlutterFragmentActivity() {
                         sender.send(
                             voiceCueEnabled = voiceCueEnabled,
                             kmVoiceCueEnabled = kmVoiceCueEnabled,
-                            ghostVoiceCueEnabled = ghostVoiceCueEnabled,
+                            recordRaceVoiceCueEnabled = recordRaceVoiceCueEnabled,
                             autoPauseEnabled = autoPauseEnabled,
                             volume = volume,
                             playTestCue = playTestCue,
@@ -192,7 +192,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val MOTION_EVIDENCE_CHANNEL = "runlini/motion_evidence"
         private const val WEAR_DRAFTS_CHANNEL = "runlini/wear_drafts"
         private const val WATCH_CONNECTION_CHANNEL = "runlini/watch_connection"
-        private const val WEAR_GHOST_CONFIG_CHANNEL = "runlini/wear_ghost_config"
+        private const val WEAR_RECORD_RACE_CONFIG_CHANNEL = "runlini/wear_record_race_config"
         private const val WEAR_INTERVAL_CONFIG_CHANNEL = "runlini/wear_interval_config"
         private const val WEAR_VOICE_SETTINGS_CHANNEL = "runlini/wear_voice_settings"
     }

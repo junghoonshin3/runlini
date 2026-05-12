@@ -1,6 +1,6 @@
 # Runlini Architecture
 
-Runlini uses an agent-legible Flutter layout.
+Runlini uses a layered Flutter layout.
 
 ## Top-Level Modules
 

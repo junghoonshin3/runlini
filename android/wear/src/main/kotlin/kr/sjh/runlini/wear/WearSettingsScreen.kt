@@ -60,7 +60,7 @@ internal fun WearSettingsScreen(
     onKmAlertEnabledChange: (Boolean) -> Unit,
     onVoiceCueEnabledChange: (Boolean) -> Unit,
     onVoiceCueVolumeChange: (Float) -> Unit,
-    onGhostVoiceCueEnabledChange: (Boolean) -> Unit,
+    onRecordRaceVoiceCueEnabledChange: (Boolean) -> Unit,
     onIntervalWorkoutChange: (WearIntervalWorkout) -> Unit,
 ) {
     BoxWithConstraints(
@@ -139,9 +139,9 @@ internal fun WearSettingsScreen(
             )
             Spacer(modifier = Modifier.height(5.dp))
             WearSettingToggleRow(
-                label = "고스트 음성",
-                checked = settings.ghostVoiceCueEnabled,
-                onCheckedChange = onGhostVoiceCueEnabledChange,
+                label = "기록 레이스 음성",
+                checked = settings.recordRaceVoiceCueEnabled,
+                onCheckedChange = onRecordRaceVoiceCueEnabledChange,
             )
         }
     }

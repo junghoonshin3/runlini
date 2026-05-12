@@ -4,14 +4,16 @@ import 'dart:ui' as ui;
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amap;
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
+import 'package:runlini/core/map/run_route_endpoint_icon_bytes.dart';
 
 abstract final class AppleRunMarkerIcons {
-  static const double _ghostMarkerSize = 30;
+  static const double _recordRaceMarkerSize = 30;
 
-  static Future<amap.BitmapDescriptor> ghost({
+  static Future<amap.BitmapDescriptor> recordRace({
     required double devicePixelRatio,
   }) async {
-    final int imageSizePx = (_ghostMarkerSize * devicePixelRatio).round();
+    final int imageSizePx = (_recordRaceMarkerSize * devicePixelRatio).round();
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final size = Size(imageSizePx.toDouble(), imageSizePx.toDouble());
@@ -44,5 +46,31 @@ abstract final class AppleRunMarkerIcons {
     }
 
     return amap.BitmapDescriptor.fromBytes(Uint8List.view(byteData.buffer));
+  }
+
+  static Future<Map<MapRouteEndpointRole, amap.BitmapDescriptor>>
+  routeEndpoints({required double devicePixelRatio}) async {
+    return <MapRouteEndpointRole, amap.BitmapDescriptor>{
+      for (final role in MapRouteEndpointRole.values)
+        role: await routeEndpoint(
+          role: role,
+          devicePixelRatio: devicePixelRatio,
+        ),
+    };
+  }
+
+  static Future<amap.BitmapDescriptor> routeEndpoint({
+    required MapRouteEndpointRole role,
+    required double devicePixelRatio,
+  }) async {
+    final bytes = await runRouteEndpointIconBytes(
+      role: role,
+      devicePixelRatio: devicePixelRatio,
+    );
+    if (bytes == null) {
+      return amap.BitmapDescriptor.defaultAnnotationWithHue(0);
+    }
+
+    return amap.BitmapDescriptor.fromBytes(bytes);
   }
 }

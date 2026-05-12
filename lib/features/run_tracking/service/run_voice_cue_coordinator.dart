@@ -1,21 +1,26 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
-import 'package:runlini/features/ghost_racer/service/ghost_race_event_engine.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/service/record_race_event_engine.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
+import 'package:runlini/features/run_tracking/service/run_voice_cue_formatter.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
-import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
+enum RunVoiceCuePriority { low, normal, urgent }
+
 @immutable
 class RunVoiceCue {
-  const RunVoiceCue({required this.text, required this.volume});
+  const RunVoiceCue({
+    required this.text,
+    required this.volume,
+    this.priority = RunVoiceCuePriority.normal,
+  });
 
   final String text;
   final double volume;
+  final RunVoiceCuePriority priority;
 }
 
 @immutable
@@ -24,26 +29,26 @@ class RunVoiceCueSnapshot {
     required this.playbackState,
     required this.metrics,
     required this.intervalFrame,
-    required this.ghostFrame,
+    required this.recordRaceFrame,
     required this.settings,
     required this.now,
-    this.isGhostRun = false,
+    this.isRecordRaceRun = false,
   });
 
   final RunPlaybackState playbackState;
   final LiveRunMetrics? metrics;
   final RunIntervalFrame? intervalFrame;
-  final GhostRaceFrame? ghostFrame;
+  final RecordRaceFrame? recordRaceFrame;
   final RunSettingsState settings;
   final DateTime now;
-  final bool isGhostRun;
+  final bool isRecordRaceRun;
 }
 
 class RunVoiceCueCoordinator {
   String? _activeSessionId;
   int _lastSpokenKm = 0;
   String? _lastIntervalStepKey;
-  final GhostRaceEventEngine _ghostEventEngine = GhostRaceEventEngine();
+  final RecordRaceEventEngine _recordRaceEventEngine = RecordRaceEventEngine();
 
   List<RunVoiceCue> cuesFor(RunVoiceCueSnapshot snapshot) {
     final playback = snapshot.playbackState;
@@ -64,43 +69,64 @@ class RunVoiceCueCoordinator {
       return const <RunVoiceCue>[];
     }
 
-    final cues = <RunVoiceCue>[];
     final volume = snapshot.settings.voiceCueVolume.clamp(
       runVoiceCueVolumeMin,
       runVoiceCueVolumeMax,
     );
     final safeVolume = volume.toDouble();
+    final recordRaceSpeechEnabled =
+        snapshot.isRecordRaceRun && snapshot.settings.recordRaceVoiceCueEnabled;
 
     final kmCue = _kilometerCue(
       metrics,
       snapshot.settings,
-      ghostFrame: snapshot.isGhostRun ? snapshot.ghostFrame : null,
+      recordRaceFrame: recordRaceSpeechEnabled
+          ? snapshot.recordRaceFrame
+          : null,
     );
-    if (kmCue != null) {
-      cues.add(RunVoiceCue(text: kmCue, volume: safeVolume));
-    }
 
-    if (snapshot.isGhostRun) {
-      final ghostEvents = _ghostEventEngine.eventsFor(
+    if (snapshot.isRecordRaceRun) {
+      final recordRaceEvents = _recordRaceEventEngine.eventsFor(
         sessionId: activeSessionId,
-        frame: snapshot.ghostFrame,
+        frame: snapshot.recordRaceFrame,
         isRunning: true,
         now: snapshot.now,
-        completionPending: playback.ghostCompletionPromptPending,
+        completionPending: playback.recordRaceCompletionPromptPending,
       );
-      if (snapshot.settings.ghostVoiceCueEnabled) {
-        for (final event in ghostEvents) {
-          final text = _ghostCue(event);
-          if (text != null) {
-            cues.add(RunVoiceCue(text: text, volume: safeVolume));
-          }
+      if (recordRaceSpeechEnabled) {
+        final recordRaceCue = _highestPriorityRecordRaceCue(
+          recordRaceEvents,
+          volume: safeVolume,
+        );
+        if (recordRaceCue != null) {
+          return [recordRaceCue];
         }
       }
-    } else {
-      final intervalCue = _intervalCue(snapshot.intervalFrame);
-      if (intervalCue != null) {
-        cues.add(RunVoiceCue(text: intervalCue, volume: safeVolume));
+      if (kmCue != null) {
+        return [
+          RunVoiceCue(
+            text: kmCue,
+            volume: safeVolume,
+            priority: RunVoiceCuePriority.low,
+          ),
+        ];
       }
+      return const <RunVoiceCue>[];
+    }
+
+    final cues = <RunVoiceCue>[];
+    if (kmCue != null) {
+      cues.add(
+        RunVoiceCue(
+          text: kmCue,
+          volume: safeVolume,
+          priority: RunVoiceCuePriority.low,
+        ),
+      );
+    }
+    final intervalCue = _intervalCue(snapshot.intervalFrame);
+    if (intervalCue != null) {
+      cues.add(RunVoiceCue(text: intervalCue, volume: safeVolume));
     }
     return cues;
   }
@@ -109,13 +135,13 @@ class RunVoiceCueCoordinator {
     _activeSessionId = null;
     _lastSpokenKm = 0;
     _lastIntervalStepKey = null;
-    _ghostEventEngine.reset();
+    _recordRaceEventEngine.reset();
   }
 
   String? _kilometerCue(
     LiveRunMetrics metrics,
     RunSettingsState settings, {
-    GhostRaceFrame? ghostFrame,
+    RecordRaceFrame? recordRaceFrame,
   }) {
     if (!settings.kmVoiceCueEnabled) {
       return null;
@@ -129,7 +155,7 @@ class RunVoiceCueCoordinator {
       kilometer: currentKm,
       averagePaceSecPerKm: metrics.averagePaceSecPerKm,
       elapsedMs: metrics.elapsedMs,
-      ghostGap: _ghostGapSpeech(ghostFrame),
+      recordRaceGapMs: _recordRaceGapMsForSpeech(recordRaceFrame),
     );
   }
 
@@ -145,134 +171,82 @@ class RunVoiceCueCoordinator {
       return null;
     }
     _lastIntervalStepKey = key;
-    return _intervalStepLabel(step);
+    return RunVoiceCueFormatter.intervalStepLabel(step);
   }
 
-  String? _ghostCue(GhostRaceEvent event) {
-    final gap = _ghostGapSpeech(event.frame);
-    return switch (event.type) {
-      GhostRaceEventType.offRoute => '경로를 벗어났어요',
-      GhostRaceEventType.backOnRoute => '경로로 돌아왔어요',
-      GhostRaceEventType.overtake =>
-        gap == null ? '고스트를 추월했어요' : '고스트를 추월했어요, $gap',
-      GhostRaceEventType.lostLead =>
-        gap == null ? '고스트에게 역전당했어요' : '고스트에게 역전당했어요, $gap',
-      GhostRaceEventType.last500m => '마지막 500미터',
-      GhostRaceEventType.last200m => '마지막 200미터',
-      GhostRaceEventType.completed =>
-        gap == null ? '고스트 코스 완료' : '고스트 코스 완료, $gap',
+  RunVoiceCue? _recordRaceCue(RecordRaceEvent event, {required double volume}) {
+    final gap = RunVoiceCueFormatter.recordRaceGapSpeech(
+      _recordRaceGapMsForSpeech(event.frame),
+    );
+    final text = switch (event.type) {
+      RecordRaceEventType.offRoute => '경로를 벗어났어요',
+      RecordRaceEventType.backOnRoute => '경로로 돌아왔어요',
+      RecordRaceEventType.overtake =>
+        gap == null ? '기록 레이스를 추월했어요' : '기록 레이스를 추월했어요. 지금은 $gap',
+      RecordRaceEventType.lostLead =>
+        gap == null ? '기록 레이스에게 역전당했어요' : '기록 레이스에게 역전당했어요. 지금은 $gap',
+      RecordRaceEventType.last500m => '마지막 500미터',
+      RecordRaceEventType.last200m => '마지막 200미터',
+      RecordRaceEventType.completed =>
+        RunVoiceCueFormatter.recordRaceCompletionFromGap(event.frame.timeGapMs),
+    };
+    return RunVoiceCue(
+      text: text,
+      volume: volume,
+      priority: _recordRaceCuePriority(event.type),
+    );
+  }
+
+  RunVoiceCue? _highestPriorityRecordRaceCue(
+    List<RecordRaceEvent> events, {
+    required double volume,
+  }) {
+    RecordRaceEvent? selected;
+    var selectedPriority = 1 << 30;
+    for (final event in events) {
+      final priority = _recordRaceEventPriority(event.type);
+      if (priority < selectedPriority) {
+        selected = event;
+        selectedPriority = priority;
+      }
+    }
+    if (selected == null) {
+      return null;
+    }
+    return _recordRaceCue(selected, volume: volume);
+  }
+
+  RunVoiceCuePriority _recordRaceCuePriority(RecordRaceEventType type) {
+    return switch (type) {
+      RecordRaceEventType.offRoute ||
+      RecordRaceEventType.backOnRoute ||
+      RecordRaceEventType.completed => RunVoiceCuePriority.urgent,
+      RecordRaceEventType.overtake ||
+      RecordRaceEventType.lostLead ||
+      RecordRaceEventType.last200m ||
+      RecordRaceEventType.last500m => RunVoiceCuePriority.normal,
     };
   }
 
-  String? _ghostGapSpeech(GhostRaceFrame? frame) {
-    if (frame == null || frame.isOffRoute) {
+  int _recordRaceEventPriority(RecordRaceEventType type) {
+    return switch (type) {
+      RecordRaceEventType.completed => 0,
+      RecordRaceEventType.offRoute || RecordRaceEventType.backOnRoute => 10,
+      RecordRaceEventType.overtake || RecordRaceEventType.lostLead => 20,
+      RecordRaceEventType.last200m => 30,
+      RecordRaceEventType.last500m => 31,
+    };
+  }
+
+  int? _recordRaceGapMsForSpeech(RecordRaceFrame? frame) {
+    if (frame == null || frame.isOffRoute || !frame.startConfirmed) {
       return null;
     }
     return switch (frame.status) {
-      GhostRaceStatus.ahead =>
-        '${RunVoiceCueFormatter.gapSpeech(frame.timeGapMs)} 앞서요',
-      GhostRaceStatus.behind =>
-        '${RunVoiceCueFormatter.gapSpeech(frame.timeGapMs)} 뒤처져요',
-      GhostRaceStatus.level ||
-      GhostRaceStatus.offRoute ||
-      GhostRaceStatus.unavailable => null,
+      RecordRaceStatus.ahead || RecordRaceStatus.behind => frame.timeGapMs,
+      RecordRaceStatus.level ||
+      RecordRaceStatus.offRoute ||
+      RecordRaceStatus.unavailable => null,
     };
-  }
-}
-
-class RunVoiceCueFormatter {
-  const RunVoiceCueFormatter._();
-
-  static String kilometerSummary({
-    required int kilometer,
-    required double? averagePaceSecPerKm,
-    required int elapsedMs,
-    String? ghostGap,
-  }) {
-    final parts = <String>['$kilometer킬로미터'];
-    final pace = paceSpeech(averagePaceSecPerKm);
-    if (pace != null) {
-      parts.add('평균 페이스 $pace');
-    }
-    final elapsed = elapsedSpeech(elapsedMs);
-    if (elapsed != null) {
-      parts.add('시간 $elapsed');
-    }
-    if (ghostGap != null) {
-      parts.add('고스트보다 $ghostGap');
-    }
-    return parts.join(', ');
-  }
-
-  static String gapSpeech(int gapMs) {
-    final totalSeconds = math.max(1, gapMs.abs() ~/ 1000);
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    if (minutes <= 0) {
-      return '$seconds초';
-    }
-    if (seconds == 0) {
-      return '$minutes분';
-    }
-    return '$minutes분 $seconds초';
-  }
-
-  static String? paceSpeech(double? paceSecPerKm) {
-    final pace = paceSecPerKm?.takeIfFinitePositive();
-    if (pace == null) {
-      return null;
-    }
-    final totalSeconds = pace.round().clamp(1, 24 * 60 * 60).toInt();
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    if (seconds == 0) {
-      return '$minutes분';
-    }
-    return '$minutes분 $seconds초';
-  }
-
-  static String? elapsedSpeech(int elapsedMs) {
-    if (elapsedMs <= 0) {
-      return null;
-    }
-    final totalSeconds = math.max(1, elapsedMs ~/ 1000);
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
-    final parts = <String>[];
-    if (hours > 0) {
-      parts.add('$hours시간');
-    }
-    if (minutes > 0) {
-      parts.add('$minutes분');
-    }
-    if (seconds > 0 || parts.isEmpty) {
-      parts.add('$seconds초');
-    }
-    return parts.join(' ');
-  }
-}
-
-String _intervalStepLabel(RunIntervalStep step) {
-  final base = switch (step.kind) {
-    RunIntervalStepKind.warmup => '워밍업',
-    RunIntervalStepKind.work => '질주',
-    RunIntervalStepKind.recovery => '휴식',
-    RunIntervalStepKind.cooldown => '쿨다운',
-    RunIntervalStepKind.finished => '완료',
-  };
-  final repeatIndex = step.repeatIndex;
-  if (repeatIndex == null) {
-    return base;
-  }
-  return '$base $repeatIndex/${step.repeatCount}';
-}
-
-extension on double {
-  double? takeIfFinitePositive() {
-    if (!isFinite || this <= 0) {
-      return null;
-    }
-    return this;
   }
 }

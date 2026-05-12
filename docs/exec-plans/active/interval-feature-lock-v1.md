@@ -30,6 +30,8 @@ available for future reactivation.
 - Preserve stored interval settings and do not add a migration.
 - Keep interval sheet tests in place because the hidden implementation remains
   valid future code.
+- Do not commit because the project guide requires an explicit user request for
+  commits and the current worktree contains unrelated changes.
 
 ## Implementation Steps
 
@@ -46,10 +48,12 @@ available for future reactivation.
 
 - `flutter test test/features/run_tracking/run_interval_sheet_test.dart test/features/run_tracking/ghost_interval_conflict_test.dart test/features/ghost_racer/ghost_settings_flow_test.dart` passed.
 - `dart run tool/guardrails.dart` passed.
-- `flutter analyze` passed.
+- `flutter analyze` passed after removing an unnecessary direct import.
 - `flutter test` passed.
 
 ## Risks or Recovery
 
-- Remove the lock by setting `runIntervalFeatureLocked` to `false` and restoring
-  the conflict tests when interval configuration is reopened.
+- The worktree has many unrelated changes. Keep edits scoped and do not revert
+  unrelated files.
+- If broad `flutter test` fails because of unrelated dirty worktree changes,
+  run the focused interval and ghost tests and report the broader failure.

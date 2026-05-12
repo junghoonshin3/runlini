@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/theme/app_theme.dart';
 import 'package:runlini/core/wear/watch_connection_client.dart';
-import 'package:runlini/core/wear/watch_ghost_config_client.dart';
+import 'package:runlini/core/wear/watch_record_race_config_client.dart';
 import 'package:runlini/core/wear/wear_draft_inbox_client.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
@@ -17,7 +17,7 @@ import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
-import 'package:runlini/features/run_tracking/types/watch_ghost_config.dart';
+import 'package:runlini/features/run_tracking/types/watch_record_race_config.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 
 import '../../helpers/runlini_widget_harness.dart';
@@ -34,7 +34,7 @@ void main() {
         failedCount: 0,
       ),
     );
-    final ghostClient = _FakeWatchGhostConfigClient();
+    final recordRaceClient = _FakeWatchRecordRaceConfigClient();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -50,7 +50,9 @@ void main() {
               WatchConnectionStatus.disconnected,
             ),
           ),
-          watchGhostConfigClientProvider.overrideWithValue(ghostClient),
+          watchRecordRaceConfigClientProvider.overrideWithValue(
+            recordRaceClient,
+          ),
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
@@ -71,7 +73,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(wearSyncService.calls, 1);
-    expect(ghostClient.sentConfigs.single.id, 'ghost-ready');
+    expect(recordRaceClient.sentConfigs.single.id, 'record-race-ready');
     expect(find.text('워치 기록 가져오기'), findsOneWidget);
     expect(find.text('1개의 워치 기록을 가져왔어요.'), findsOneWidget);
   });
@@ -159,8 +161,8 @@ Future<void> _pumpSyncSection(
         watchConnectionClientProvider.overrideWithValue(
           _FakeWatchConnectionClient(connectionStatus),
         ),
-        watchGhostConfigClientProvider.overrideWithValue(
-          _FakeWatchGhostConfigClient(),
+        watchRecordRaceConfigClientProvider.overrideWithValue(
+          _FakeWatchRecordRaceConfigClient(),
         ),
       ],
       child: MaterialApp(
@@ -186,7 +188,7 @@ Future<void> _tapWearImportButton(WidgetTester tester) async {
 
 RunSession _session() {
   return RunSession(
-    id: 'ghost-ready',
+    id: 'record-race-ready',
     startedAt: DateTime.utc(2026, 4, 30, 7),
     durationMs: 600000,
     distanceM: 2000,

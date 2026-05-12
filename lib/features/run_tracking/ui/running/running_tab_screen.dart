@@ -9,35 +9,37 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/performance/startup_trace.dart';
+import 'package:runlini/core/voice/run_voice_cue_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
-import 'package:runlini/features/run_tracking/state/run_ghost_race_providers.dart';
+import 'package:runlini/features/run_tracking/service/run_voice_cue_dispatcher.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_voice_cue_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_finish_review_panel.dart';
 import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_overlay.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_control_buttons.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_ghost_completion_overlay.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_ghost_control_chip.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_map_panel.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_record_race_completion_overlay.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_record_race_control_chip.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_save_feedback.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_session_ghost_summary_mapper.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_session_record_race_summary_mapper.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 part 'running_tab_screen_actions.dart';
-part 'running_tab_screen_ghost_completion.dart';
+part 'running_tab_screen_record_race_completion.dart';
 
 final bool _isFlutterTest = Platform.environment.containsKey('FLUTTER_TEST');
 
@@ -50,11 +52,27 @@ class RunningTabScreen extends ConsumerStatefulWidget {
 
 class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
   final RunVoiceCueCoordinator _voiceCueCoordinator = RunVoiceCueCoordinator();
+  final RunVoiceCueDispatcher _voiceCueDispatcher = RunVoiceCueDispatcher();
+  late final RunVoiceCueClient _voiceCueClient;
+  ProviderSubscription<RunVoiceCueSnapshot>? _voiceCueSubscription;
+  ProviderSubscription<RecordRaceFrame?>? _recordRaceCompletionSubscription;
+  String? _recordRaceCompletionSessionId;
+  int _recordRaceCompletionCandidateCount = 0;
+  bool _recordRaceCompletionWriteQueued = false;
   bool _startFlowInProgress = false;
 
   @override
   void initState() {
     super.initState();
+    _voiceCueClient = ref.read(runVoiceCueClientProvider);
+    _voiceCueSubscription = ref.listenManual<RunVoiceCueSnapshot>(
+      runVoiceCueSnapshotProvider,
+      (previous, next) => _handleRunVoiceCueSnapshot(next),
+    );
+    _recordRaceCompletionSubscription = ref.listenManual<RecordRaceFrame?>(
+      recordRaceFrameProvider,
+      (previous, next) => _handleRecordRaceCompletionFrame(next),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
         return;
@@ -90,12 +108,21 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
   }
 
   @override
+  void dispose() {
+    _voiceCueSubscription?.close();
+    _recordRaceCompletionSubscription?.close();
+    unawaited(_voiceCueDispatcher.stop(_voiceCueClient));
+    _voiceCueCoordinator.reset();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final mapViewState = ref.watch(ghostAwareRunMapViewStateProvider);
+    final mapViewState = ref.watch(recordRaceAwareRunMapViewStateProvider);
     final playbackState = ref.watch(runPlaybackControllerProvider);
     final liveRunMetrics = ref.watch(liveRunMetricsProvider);
     final displaySettings = ref.watch(runDisplaySettingsProvider);
-    final ghostRaceFrame = ref.watch(ghostRaceFrameProvider);
+    final recordRaceFrame = ref.watch(recordRaceFrameProvider);
     final intervalFrame = ref.watch(runIntervalFrameProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
     final mapControlsReady = ref.watch(runMapControlsReadyProvider);
@@ -107,10 +134,8 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     );
     final pendingFinishedSession = playbackState.pendingFinishedSession;
     final isReviewing = playbackState.isReviewing;
-    final ghostCompletionSummary = playbackState.ghostCompletionSummary;
-
-    _listenForRunVoiceCues();
-    _listenForGhostCompletion(context);
+    final recordRaceCompletionSummary =
+        playbackState.recordRaceCompletionSummary;
 
     return SafeArea(
       bottom: false,
@@ -131,7 +156,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 sessionId: playbackState.activeSessionId,
                 metrics: liveRunMetrics,
                 displaySettings: displaySettings,
-                ghostRace: ghostRaceFrame,
+                recordRace: recordRaceFrame,
                 intervalFrame: intervalFrame,
                 onAdvanceInterval: ref
                     .read(runPlaybackControllerProvider.notifier)
@@ -163,7 +188,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 left: 20,
                 right: 20,
                 bottom: 156,
-                child: RunGhostControlChip(),
+                child: RunRecordRaceControlChip(),
               ),
             Positioned(
               right: 20,
@@ -203,19 +228,19 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 },
               ),
             ),
-          if (playbackState.ghostCompletionPromptPending &&
-              ghostCompletionSummary != null &&
+          if (playbackState.recordRaceCompletionPromptPending &&
+              recordRaceCompletionSummary != null &&
               !isReviewing)
             Positioned.fill(
-              child: RunGhostCompletionOverlay(
+              child: RunRecordRaceCompletionOverlay(
                 onContinue: () {
                   ref
                       .read(runPlaybackControllerProvider.notifier)
-                      .continueAfterGhostCompletion();
+                      .continueAfterRecordRaceCompletion();
                 },
                 onStop: () async {
-                  await _stopActiveRunWithGhostSummary(
-                    preferredGhostSummary: ghostCompletionSummary,
+                  await _stopActiveRunWithRecordRaceSummary(
+                    preferredRecordRaceSummary: recordRaceCompletionSummary,
                   );
                 },
               ),
@@ -225,26 +250,24 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     );
   }
 
-  void _listenForRunVoiceCues() {
-    ref.listen(runVoiceCueSnapshotProvider, (previous, next) {
-      final cues = _voiceCueCoordinator.cuesFor(next);
-      if (cues.isEmpty) {
-        return;
+  void _handleRunVoiceCueSnapshot(RunVoiceCueSnapshot snapshot) {
+    final cues = _voiceCueCoordinator.cuesFor(snapshot);
+    if (cues.isEmpty) {
+      if (_shouldStopVoiceCuePlayback(snapshot)) {
+        unawaited(_voiceCueDispatcher.stop(_voiceCueClient));
       }
-      unawaited(_speakRunVoiceCues(cues));
-    });
+      return;
+    }
+    _voiceCueDispatcher.enqueue(cues, _voiceCueClient);
   }
 
-  Future<void> _speakRunVoiceCues(List<RunVoiceCue> cues) async {
-    final client = ref.read(runVoiceCueClientProvider);
-    try {
-      for (final cue in cues) {
-        await client.speak(cue.text, volume: cue.volume);
-      }
-    } catch (error, stackTrace) {
-      debugPrint('Runlini voice cue failed: $error');
-      debugPrint('$stackTrace');
-    }
+  bool _shouldStopVoiceCuePlayback(RunVoiceCueSnapshot snapshot) {
+    final metrics = snapshot.metrics;
+    return !snapshot.playbackState.hasActiveSession ||
+        snapshot.playbackState.status != RunScreenStatus.running ||
+        metrics == null ||
+        metrics.isPaused ||
+        !snapshot.settings.voiceCueEnabled;
   }
 
   void _handleIntervalButtonPressed(BuildContext context) {

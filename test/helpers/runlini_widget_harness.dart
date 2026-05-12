@@ -203,14 +203,14 @@ Future<void> _tapBottomTab(WidgetTester tester, IconData icon) async {
 
 dynamic staticMapStateOverride({
   required MapCoordinate fallbackMapCenter,
-  RunSession? selectedGhostSession,
+  RunSession? selectedRecordRaceSession,
 }) {
   return runMapStaticStateProvider.overrideWith((Ref ref) async {
     return RunMapStaticState(
       fallbackMapCenter: fallbackMapCenter,
-      ghostPolylinePoints: selectedGhostSession == null
+      recordRacePolylinePoints: selectedRecordRaceSession == null
           ? const <MapCoordinate>[]
-          : selectedGhostSession.points
+          : selectedRecordRaceSession.points
                 .map(
                   (RunPoint point) => MapCoordinate(
                     latitude: point.latitude,
@@ -218,14 +218,14 @@ dynamic staticMapStateOverride({
                   ),
                 )
                 .toList(growable: false),
-      selectedGhostSession: selectedGhostSession,
+      selectedRecordRaceSession: selectedRecordRaceSession,
     );
   });
 }
 
-RunSession ghostSession() {
+RunSession recordRaceSession() {
   return RunSession(
-    id: 'ghost-route',
+    id: 'record-race-route',
     startedAt: DateTime.utc(2026, 4, 19, 6),
     endedAt: DateTime.utc(2026, 4, 19, 6, 10),
     distanceM: 1000,

@@ -1,5 +1,5 @@
 name: runlini
-description: "Runlini agent-first running coach bootstrap."
+description: "Runlini running coach app."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -38,6 +38,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/map/
     - assets/fixtures/fake_run_session.json
     - assets/fixtures/osaka_namba_tobita_route.json
     - assets/fixtures/osaka_namba_kanzakigawa_route.json

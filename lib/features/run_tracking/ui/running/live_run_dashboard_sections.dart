@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
@@ -8,26 +8,27 @@ import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/live_run_metrics_formatters.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_interval_formatters.dart';
-import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_ghost_section.dart';
 import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_primitives.dart';
+import 'package:runlini/features/run_tracking/ui/running/live_run_dashboard_record_race_section.dart';
 
 class LiveRunDashboardCollapsed extends StatelessWidget {
   const LiveRunDashboardCollapsed({
     super.key,
     required this.metrics,
     required this.displaySettings,
-    this.ghostRace,
+    this.recordRace,
   });
 
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
-  final GhostRaceFrame? ghostRace;
+  final RecordRaceFrame? recordRace;
 
   @override
   Widget build(BuildContext context) {
-    final ghostFrame = ghostRace;
-    final hasGhostFrame =
-        ghostFrame != null && ghostFrame.status != GhostRaceStatus.unavailable;
+    final recordRaceFrame = recordRace;
+    final hasRecordRaceFrame =
+        recordRaceFrame != null &&
+        recordRaceFrame.status != RecordRaceStatus.unavailable;
     return Row(
       key: const Key('live-run-dashboard-collapsed'),
       children: [
@@ -35,10 +36,10 @@ class LiveRunDashboardCollapsed extends StatelessWidget {
           const LiveDashboardPausedPill(),
           const SizedBox(width: 8),
         ],
-        if (hasGhostFrame) ...[
+        if (hasRecordRaceFrame) ...[
           Expanded(
             flex: 2,
-            child: LiveRunDashboardGhostCollapsed(frame: ghostFrame),
+            child: LiveRunDashboardRecordRaceCollapsed(frame: recordRaceFrame),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -103,13 +104,13 @@ class LiveRunDashboardExpanded extends StatelessWidget {
     required this.metrics,
     required this.displaySettings,
     required this.onAdvanceInterval,
-    this.ghostRace,
+    this.recordRace,
     this.intervalFrame,
   });
 
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
-  final GhostRaceFrame? ghostRace;
+  final RecordRaceFrame? recordRace;
   final RunIntervalFrame? intervalFrame;
   final VoidCallback onAdvanceInterval;
 
@@ -180,11 +181,11 @@ class LiveRunDashboardExpanded extends StatelessWidget {
             ),
           ],
         ),
-        if (ghostRace != null &&
-            ghostRace!.status != GhostRaceStatus.unavailable) ...[
+        if (recordRace != null &&
+            recordRace!.status != RecordRaceStatus.unavailable) ...[
           const LiveDashboardDivider(),
-          LiveRunDashboardGhostExpanded(
-            frame: ghostRace!,
+          LiveRunDashboardRecordRaceExpanded(
+            frame: recordRace!,
             displaySettings: displaySettings,
           ),
         ],

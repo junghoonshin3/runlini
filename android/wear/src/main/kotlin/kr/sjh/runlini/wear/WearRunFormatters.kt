@@ -53,17 +53,23 @@ internal object WearRunFormatters {
         return "${cadence.roundToInt()} spm"
     }
 
-    fun ghostStatusLabel(status: WearGhostStatus?): String {
+    fun recordRaceStatusLabel(status: WearRecordRaceStatus?): String {
         return when (status) {
-            WearGhostStatus.Ahead -> "앞서는 중"
-            WearGhostStatus.Behind -> "뒤처지는 중"
-            WearGhostStatus.Level -> "접전"
-            WearGhostStatus.OffRoute -> "경로 이탈"
-            WearGhostStatus.Unavailable, null -> "고스트 준비 중"
+            WearRecordRaceStatus.Ahead -> "앞서는 중"
+            WearRecordRaceStatus.Behind -> "뒤처지는 중"
+            WearRecordRaceStatus.Level -> "접전"
+            WearRecordRaceStatus.OffRoute -> "경로 이탈"
+            WearRecordRaceStatus.Unavailable, null -> "기록 레이스 준비 중"
         }
     }
 
-    fun ghostGap(frame: WearGhostFrame?): String {
+    fun recordRaceStatus(frame: WearRecordRaceFrame?): String {
+        if (frame != null && !frame.startConfirmed) return "출발 확인 중"
+        return recordRaceStatusLabel(frame?.status)
+    }
+
+    fun recordRaceGap(frame: WearRecordRaceFrame?): String {
+        if (frame != null && !frame.startConfirmed) return "--"
         val gapMs = frame?.timeGapMs ?: return "--"
         val sign = if (gapMs >= 0) "+" else "-"
         val totalSeconds = (abs(gapMs) / 1000).coerceAtLeast(0L)
@@ -72,18 +78,18 @@ internal object WearRunFormatters {
         return "$sign$minutes:%02d".format(seconds)
     }
 
-    fun ghostResult(frame: WearGhostFrame?): String {
-        return "${ghostStatusLabel(frame?.status)} ${ghostGap(frame)}"
+    fun recordRaceResult(frame: WearRecordRaceFrame?): String {
+        return "${recordRaceStatus(frame)} ${recordRaceGap(frame)}"
     }
 
-    fun ghostProgress(frame: WearGhostFrame?): String {
+    fun recordRaceProgress(frame: WearRecordRaceFrame?): String {
         val progress = frame?.routeProgress
             ?.takeIf { it.isFinite() }
             ?: return "--"
         return "${(progress.coerceIn(0.0, 1.0) * 100.0).roundToInt()}%"
     }
 
-    fun ghostRemaining(frame: WearGhostFrame?): String {
+    fun recordRaceRemaining(frame: WearRecordRaceFrame?): String {
         val remaining = frame?.distanceToFinishM
             ?.takeIf { it.isFinite() && it >= 0.0 }
             ?: return "--"

@@ -1,33 +1,36 @@
 import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amap;
 import 'package:flutter/material.dart';
-import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/apple_map_coordinate_adapter.dart';
+import 'package:runlini/core/map/apple_run_map_layers.dart';
 import 'package:runlini/core/map/apple_run_marker_icons.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 
 class AppleRunMapView extends StatefulWidget {
   const AppleRunMapView({
     super.key,
     required this.mapCenter,
     this.runnerMarkerPoint,
-    this.ghostMarkerPoint,
+    this.recordRaceMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
     required this.currentRunnerPolylineSegments,
-    required this.ghostPolylinePoints,
-    required this.ghostPolylineSegments,
+    required this.recordRacePolylinePoints,
+    required this.recordRacePolylineSegments,
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
     required this.recenterTick,
   });
 
   final MapCoordinate mapCenter;
   final MapCoordinate? runnerMarkerPoint;
-  final MapCoordinate? ghostMarkerPoint;
+  final MapCoordinate? recordRaceMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
   final int recenterTick;
 
   @override
@@ -38,8 +41,10 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
   static const double _zoomLevel = 16.5;
 
   amap.AppleMapController? _mapController;
-  amap.BitmapDescriptor? _ghostMarkerIcon;
-  double? _ghostMarkerDevicePixelRatio;
+  amap.BitmapDescriptor? _recordRaceMarkerIcon;
+  Map<MapRouteEndpointRole, amap.BitmapDescriptor>? _routeEndpointMarkerIcons;
+  double? _recordRaceMarkerDevicePixelRatio;
+  double? _routeEndpointMarkerDevicePixelRatio;
 
   @override
   void didChangeDependencies() {
@@ -47,21 +52,25 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
     final devicePixelRatio =
         MediaQuery.maybeDevicePixelRatioOf(context) ??
         View.of(context).devicePixelRatio;
-    if (_ghostMarkerIcon == null ||
-        _ghostMarkerDevicePixelRatio != devicePixelRatio) {
-      _loadGhostMarkerIcon(devicePixelRatio);
+    if (_recordRaceMarkerIcon == null ||
+        _recordRaceMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRecordRaceMarkerIcon(devicePixelRatio);
+    }
+    if (_routeEndpointMarkerIcons == null ||
+        _routeEndpointMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRouteEndpointMarkerIcons(devicePixelRatio);
     }
   }
 
   @override
   void didUpdateWidget(covariant AppleRunMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final shouldFitGhostPolyline =
+    final shouldFitRecordRacePolyline =
         widget.currentRunnerPolylinePoints.isEmpty &&
-        widget.ghostPolylinePoints.isNotEmpty &&
-        oldWidget.ghostPolylinePoints != widget.ghostPolylinePoints;
-    if (shouldFitGhostPolyline) {
-      _scheduleFitGhostPolyline();
+        widget.recordRacePolylinePoints.isNotEmpty &&
+        oldWidget.recordRacePolylinePoints != widget.recordRacePolylinePoints;
+    if (shouldFitRecordRacePolyline) {
+      _scheduleFitRecordRacePolyline();
       return;
     }
 
@@ -101,8 +110,8 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
       onMapCreated: (amap.AppleMapController controller) {
         _mapController = controller;
         if (widget.currentRunnerPolylinePoints.isEmpty &&
-            widget.ghostPolylinePoints.isNotEmpty) {
-          _scheduleFitGhostPolyline();
+            widget.recordRacePolylinePoints.isNotEmpty) {
+          _scheduleFitRecordRacePolyline();
         }
       },
       mapType: amap.MapType.standard,
@@ -110,12 +119,17 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
       trafficEnabled: false,
       pitchGesturesEnabled: false,
       annotations: <amap.Annotation>{
-        if (widget.ghostMarkerPoint != null && _ghostMarkerIcon != null)
+        ...appleRouteEndpointAnnotations(
+          markers: widget.recordRaceRouteEndpointMarkers,
+          icons: _routeEndpointMarkerIcons,
+        ),
+        if (widget.recordRaceMarkerPoint != null &&
+            _recordRaceMarkerIcon != null)
           amap.Annotation(
-            annotationId: amap.AnnotationId('ghost-marker'),
-            position: widget.ghostMarkerPoint!.toAppleLatLng(),
+            annotationId: amap.AnnotationId('record-race-marker'),
+            position: widget.recordRaceMarkerPoint!.toAppleLatLng(),
             anchor: const Offset(0.5, 0.5),
-            icon: _ghostMarkerIcon!,
+            icon: _recordRaceMarkerIcon!,
             zIndex: 2,
           ),
         if (widget.runnerMarkerPoint != null)
@@ -126,104 +140,29 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
             zIndex: 3,
           ),
       },
-      polylines: <amap.Polyline>{..._ghostPolylines(), ..._runnerPolylines()},
+      polylines: <amap.Polyline>{
+        ...appleRecordRacePolylines(
+          points: widget.recordRacePolylinePoints,
+          segments: widget.recordRacePolylineSegments,
+        ),
+        ...appleRunnerPolylines(
+          points: widget.currentRunnerPolylinePoints,
+          segments: widget.currentRunnerPolylineSegments,
+        ),
+      },
     );
   }
 
-  Set<amap.Polyline> _runnerPolylines() {
-    final segments = widget.currentRunnerPolylineSegments.isEmpty
-        ? <MapPolylineSegment>[
-            if (widget.currentRunnerPolylinePoints.length >= 2)
-              MapPolylineSegment(
-                points: widget.currentRunnerPolylinePoints,
-                color: AppColors.voltGreen,
-              ),
-          ]
-        : widget.currentRunnerPolylineSegments;
-    return <amap.Polyline>{
-      for (var index = 0; index < segments.length; index += 1)
-        _runnerPolyline(
-          id: 'runner-polyline-$index',
-          points: segments[index].points,
-          color: segments[index].color,
-        ),
-    };
-  }
-
-  amap.Polyline _runnerPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return amap.Polyline(
-      polylineId: amap.PolylineId(id),
-      points: points
-          .map((MapCoordinate point) => point.toAppleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 6,
-      zIndex: 2,
-    );
-  }
-
-  Set<amap.Polyline> _ghostPolylines() {
-    if (widget.ghostPolylineSegments.isEmpty &&
-        widget.ghostPolylinePoints.isEmpty) {
-      return const <amap.Polyline>{};
-    }
-
-    if (widget.ghostPolylineSegments.isEmpty) {
-      return <amap.Polyline>{
-        _ghostPolyline(
-          id: 'ghost-polyline',
-          points: widget.ghostPolylinePoints,
-          color: AppColors.electricRed,
-        ),
-      };
-    }
-
-    return <amap.Polyline>{
-      for (
-        var index = 0;
-        index < widget.ghostPolylineSegments.length;
-        index += 1
-      )
-        _ghostPolyline(
-          id: 'ghost-polyline-$index',
-          points: widget.ghostPolylineSegments[index].points,
-          color: widget.ghostPolylineSegments[index].color,
-        ),
-    };
-  }
-
-  amap.Polyline _ghostPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return amap.Polyline(
-      polylineId: amap.PolylineId(id),
-      polylineCap: amap.Cap.roundCap,
-      jointType: amap.JointType.round,
-      points: points
-          .map((MapCoordinate point) => point.toAppleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 10,
-      zIndex: 1,
-    );
-  }
-
-  void _scheduleFitGhostPolyline() {
+  void _scheduleFitRecordRacePolyline() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mapController = _mapController;
       if (!mounted ||
           mapController == null ||
-          widget.ghostPolylinePoints.isEmpty) {
+          widget.recordRacePolylinePoints.isEmpty) {
         return;
       }
 
-      final bounds = appleBoundsFor(widget.ghostPolylinePoints);
+      final bounds = appleBoundsFor(widget.recordRacePolylinePoints);
       final hasSinglePointBounds =
           bounds.southwest.latitude == bounds.northeast.latitude &&
           bounds.southwest.longitude == bounds.northeast.longitude;
@@ -231,7 +170,7 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
       if (hasSinglePointBounds) {
         mapController.animateCamera(
           amap.CameraUpdate.newLatLngZoom(
-            widget.ghostPolylinePoints.first.toAppleLatLng(),
+            widget.recordRacePolylinePoints.first.toAppleLatLng(),
             _zoomLevel,
           ),
         );
@@ -244,8 +183,8 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
     });
   }
 
-  Future<void> _loadGhostMarkerIcon(double devicePixelRatio) async {
-    final amap.BitmapDescriptor icon = await AppleRunMarkerIcons.ghost(
+  Future<void> _loadRecordRaceMarkerIcon(double devicePixelRatio) async {
+    final amap.BitmapDescriptor icon = await AppleRunMarkerIcons.recordRace(
       devicePixelRatio: devicePixelRatio,
     );
     if (!mounted) {
@@ -253,8 +192,22 @@ class _AppleRunMapViewState extends State<AppleRunMapView> {
     }
 
     setState(() {
-      _ghostMarkerIcon = icon;
-      _ghostMarkerDevicePixelRatio = devicePixelRatio;
+      _recordRaceMarkerIcon = icon;
+      _recordRaceMarkerDevicePixelRatio = devicePixelRatio;
+    });
+  }
+
+  Future<void> _loadRouteEndpointMarkerIcons(double devicePixelRatio) async {
+    final icons = await AppleRunMarkerIcons.routeEndpoints(
+      devicePixelRatio: devicePixelRatio,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _routeEndpointMarkerIcons = icons;
+      _routeEndpointMarkerDevicePixelRatio = devicePixelRatio;
     });
   }
 }

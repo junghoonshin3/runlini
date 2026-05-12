@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Use parallel agents to refine the native Wear OS app UX and change the phone
-History tab so it opens on today's run data instead of a recent-records list.
+Refine the native Wear OS app UX and change the phone History tab so it opens
+on today's run data instead of a recent-records list.
 
 ## Context And Orientation
 

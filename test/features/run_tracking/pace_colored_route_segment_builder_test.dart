@@ -8,7 +8,7 @@ void main() {
   test('resamples sparse route points into interpolated gradient chunks', () {
     const builder = PaceColoredRouteSegmentBuilder();
     final session = RunSession(
-      id: 'ghost-sparse',
+      id: 'record-race-sparse',
       startedAt: DateTime.utc(2026, 4, 21, 6),
       distanceM: 222,
       durationMs: 80000,
@@ -29,7 +29,7 @@ void main() {
       ],
     );
 
-    final segments = builder.buildGhostSegments(session);
+    final segments = builder.buildRecordRaceSegments(session);
 
     expect(segments, hasLength(1));
     expect(segments.single.color, AppColors.amber);
@@ -44,7 +44,7 @@ void main() {
     () {
       const builder = PaceColoredRouteSegmentBuilder();
       final session = RunSession(
-        id: 'ghost-gradient',
+        id: 'record-race-gradient',
         startedAt: DateTime.utc(2026, 4, 21, 6),
         distanceM: 333,
         durationMs: 130000,
@@ -77,7 +77,7 @@ void main() {
         ],
       );
 
-      final segments = builder.buildGhostSegments(session);
+      final segments = builder.buildRecordRaceSegments(session);
       final colors = segments.map((segment) => segment.color).toSet();
 
       expect(segments.length, greaterThan(3));
@@ -176,7 +176,7 @@ void main() {
   test('merges adjacent chunks that quantize to the same gradient color', () {
     const builder = PaceColoredRouteSegmentBuilder();
     final session = RunSession(
-      id: 'ghost-merged-gradient',
+      id: 'record-race-merged-gradient',
       startedAt: DateTime.utc(2026, 4, 21, 6),
       distanceM: 222,
       durationMs: 80000,
@@ -197,7 +197,7 @@ void main() {
       ],
     );
 
-    final segments = builder.buildGhostSegments(session);
+    final segments = builder.buildRecordRaceSegments(session);
 
     expect(segments, hasLength(1));
     expect(segments.single.points.length, greaterThan(5));
@@ -206,7 +206,7 @@ void main() {
   test('uses chalk fallback when route timing cannot produce valid pace', () {
     const builder = PaceColoredRouteSegmentBuilder();
     final session = RunSession(
-      id: 'ghost-invalid-time',
+      id: 'record-race-invalid-time',
       startedAt: DateTime.utc(2026, 4, 21, 6),
       distanceM: 0,
       durationMs: 0,
@@ -227,7 +227,7 @@ void main() {
       ],
     );
 
-    final segments = builder.buildGhostSegments(session);
+    final segments = builder.buildRecordRaceSegments(session);
 
     expect(segments, hasLength(1));
     expect(segments.single.color, AppColors.chalk);
@@ -236,7 +236,7 @@ void main() {
   test('returns no segments for routes without enough geometry', () {
     const builder = PaceColoredRouteSegmentBuilder();
     final session = RunSession(
-      id: 'ghost-empty',
+      id: 'record-race-empty',
       startedAt: DateTime.utc(2026, 4, 21, 6),
       distanceM: 0,
       durationMs: 0,
@@ -251,6 +251,6 @@ void main() {
       ],
     );
 
-    expect(builder.buildGhostSegments(session), isEmpty);
+    expect(builder.buildRecordRaceSegments(session), isEmpty);
   });
 }
