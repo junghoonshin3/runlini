@@ -25,7 +25,7 @@
   - `synced`
   - `syncSkipped`
   - `syncFailed`
-- `ghost_summary_json` TEXT
+- `record_race_summary_json` TEXT
 - `shoe_id` TEXT
 
 ## app_settings
@@ -55,6 +55,9 @@
 - `speed_mps` REAL
 - `elevation_m` REAL
 - `heart_rate_bpm` INTEGER
+- `cadence_spm` REAL
+- `horizontal_accuracy_m` REAL
+- `speed_accuracy_mps` REAL
 - `source` TEXT NOT NULL
 
 ## Indexes

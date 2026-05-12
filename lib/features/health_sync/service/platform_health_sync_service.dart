@@ -94,7 +94,8 @@ class PlatformHealthSyncService implements HealthSyncService {
       externalId: imported.externalId ?? existing?.externalId,
       lastSyncedAt: _clock(),
       syncStatus: RunSessionSyncStatus.synced,
-      ghostSummary: existing?.ghostSummary ?? imported.ghostSummary,
+      recordRaceSummary:
+          existing?.recordRaceSummary ?? imported.recordRaceSummary,
     );
   }
 

@@ -1,7 +1,7 @@
 # Runlini Feature Priorities
 
 Runlini should feel like a running app that answers one question instantly:
-"Am I ahead or behind my ghost?"
+"Am I ahead or behind my previous record?"
 
 ## Near-Term Product Stack
 
@@ -29,8 +29,8 @@ Runlini should feel like a running app that answers one question instantly:
   - touchable line charts for pace over time, speed, elevation when GPS
     altitude is available, and heart rate when watch or health data is
     available; touch selects a large ring point and tooltip without a guide line
-  - optional ghost comparison summary when the run was recorded against a
-    selected ghost
+  - optional record-race comparison summary when the run was recorded against a
+    selected record race
   - active calories when body weight is set or Health data provides calories
 - History list with:
   - local DB records as the single visible source of truth
@@ -76,17 +76,17 @@ Runlini should feel like a running app that answers one question instantly:
 
 ### 2. Runlini Differentiation
 
-- Ghost race against a previous run
-- Pre-start ghost selection chip above `START`
-- Selected ghost route preview before the run starts
-- Gradient-style pace-colored ghost route segments based on the selected run's baseline pace
-- Start and finish flags on the selected ghost route, combined when endpoints are within 10m
+- Record race against a previous run
+- Pre-start record race selection chip above `START`
+- Selected record-race route preview before the run starts
+- Gradient-style pace-colored record-race route segments based on the selected run's baseline pace
+- Start and finish flags on the selected record-race route, combined when endpoints are within 10m
 - Live ahead/behind gap in seconds
-- Live ghost distance gap and off-route feedback while running
-- Optional current-time ghost marker on the running map, off by default
-- Clear pace-state feedback tied to the ghost
+- Live record race distance gap and off-route feedback while running
+- Optional current-time record-race marker on the running map, off by default
+- Clear pace-state feedback tied to the selected record
 - Pace-colored route rendering
-- Post-run replay against the ghost session
+- Post-run replay against the selected record session
 
 ### 3. High-Value Enhancements
 
@@ -94,7 +94,7 @@ Runlini should feel like a running app that answers one question instantly:
 - Cadence
 - Elevation gain
 - Auto laps and split review
-- Audio cues for pace, distance, and ghost gap
+- Audio cues for pace, distance, and record-race gap
 - Pre-run readiness details such as weather, daylight, and GPS readiness
 - Sensor and watch connection status
 - Wear OS / watchOS apps with pre-run, running, and finish review screens
@@ -102,7 +102,7 @@ Runlini should feel like a running app that answers one question instantly:
 ## Delivery Order
 
 1. Stabilize run capture and route quality
-2. Complete the ghost race experience
+2. Complete the record race experience
 3. Strengthen post-run analysis
 4. Add watch-driven recording flows
 5. Add safety and social features

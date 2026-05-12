@@ -130,11 +130,11 @@ private fun RunliniWearApp() {
 private fun WearRunRecordingService.actions(): WearRunActions {
     return WearRunActions(
         onStart = ::startRun,
-        onGhostStart = ::startGhostRun,
+        onRecordRaceStart = ::startRecordRaceRun,
         onPause = ::pauseRun,
         onStop = ::stopRun,
         onResume = ::resumeRun,
-        onGhostCompletionContinue = ::continueAfterGhostCompletion,
+        onRecordRaceCompletionContinue = ::continueAfterRecordRaceCompletion,
         onSave = ::saveDraft,
         onDiscard = ::discardDraft,
         onCountdownEnabledChange = { enabled ->
@@ -161,8 +161,8 @@ private fun WearRunRecordingService.actions(): WearRunActions {
             )
             playVoiceTestCue(safeVolume)
         },
-        onGhostVoiceCueEnabledChange = { enabled ->
-            updateSettings(state.value.settings.copy(ghostVoiceCueEnabled = enabled))
+        onRecordRaceVoiceCueEnabledChange = { enabled ->
+            updateSettings(state.value.settings.copy(recordRaceVoiceCueEnabled = enabled))
         },
         onIntervalWorkoutChange = { workout ->
             updateSettings(
@@ -171,7 +171,7 @@ private fun WearRunRecordingService.actions(): WearRunActions {
                 ),
             )
         },
-        onGhostSelect = ::selectGhostConfig,
+        onRecordRaceSelect = ::selectRecordRaceConfig,
     )
 }
 

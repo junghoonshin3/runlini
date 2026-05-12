@@ -1,7 +1,7 @@
 # Git Workflow
 
-Runlini uses Git as a lightweight collaboration log for humans and agents. The
-workflow should protect the codebase without slowing down fast iteration.
+Runlini uses Git as a lightweight collaboration log. The workflow should protect
+the codebase without slowing down fast iteration.
 
 ## Branch Strategy
 
@@ -201,7 +201,7 @@ git status --short --branch
 - If no remote exists, configure `origin` intentionally before pushing.
 - New GitHub repositories default to private unless the user says otherwise.
 
-## Agent Safety Rules
+## Safety Rules
 
 - Never use destructive Git commands such as `git reset --hard`,
   `git checkout --`, or force-push unless the user explicitly asks.
@@ -216,5 +216,3 @@ git diff --stat
 - Stage only task-related files unless the user asks for all changes.
 - Keep `local.properties`, `.gradle/`, `.dart_tool/`, `build/`, generated
   platform output, secrets, and SDK paths out of commits.
-- With multiple agents, assign disjoint file ownership and integrate results
-  before committing.

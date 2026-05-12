@@ -1,4 +1,4 @@
-// 고스트 코스 시작점과 종료점 지도 마커를 정의한다.
+// 기록 레이스 코스 시작점과 종료점 지도 마커를 정의한다.
 import 'package:latlong2/latlong.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 

@@ -10,7 +10,7 @@ data class WearRunSettings(
     val kmAlertEnabled: Boolean = false,
     val voiceCueEnabled: Boolean = true,
     val voiceCueVolume: Float = WearRunSettingsDefaults.DefaultVoiceCueVolume,
-    val ghostVoiceCueEnabled: Boolean = false,
+    val recordRaceVoiceCueEnabled: Boolean = false,
     val autoPauseEnabled: Boolean = false,
     val intervalWorkout: WearIntervalWorkout = WearIntervalWorkout(),
 )
@@ -54,7 +54,7 @@ object WearRunSettingsJsonMapper {
             .put("kmAlertEnabled", settings.kmAlertEnabled)
             .put("voiceCueEnabled", settings.voiceCueEnabled)
             .put("voiceCueVolume", WearRunSettingsDefaults.clampVoiceVolume(settings.voiceCueVolume))
-            .put("ghostVoiceCueEnabled", settings.ghostVoiceCueEnabled)
+            .put("recordRaceVoiceCueEnabled", settings.recordRaceVoiceCueEnabled)
             .put("autoPauseEnabled", settings.autoPauseEnabled)
             .put(
                 "intervalWorkout",
@@ -76,7 +76,10 @@ object WearRunSettingsJsonMapper {
                     WearRunSettingsDefaults.DefaultVoiceCueVolume.toDouble(),
                 ).toFloat(),
             ),
-            ghostVoiceCueEnabled = objectJson.optBoolean("ghostVoiceCueEnabled", false),
+            recordRaceVoiceCueEnabled = objectJson.optBoolean(
+                "recordRaceVoiceCueEnabled",
+                objectJson.optBoolean("ghostVoiceCueEnabled", false),
+            ),
             autoPauseEnabled = objectJson.optBoolean("autoPauseEnabled", false),
             intervalWorkout = objectJson.optJSONObject("intervalWorkout")?.let {
                 WearIntervalWorkoutJsonMapper.fromJson(it.toString())

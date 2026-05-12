@@ -1,4 +1,4 @@
-// 테스트용 지도 표면의 고스트 코스 endpoint marker 렌더링을 검증한다.
+// 테스트용 지도 표면의 기록 레이스 코스 endpoint marker 렌더링을 검증한다.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/map/fake_run_map_surface.dart';
@@ -18,12 +18,12 @@ void main() {
           child: FakeRunMapSurface(
             mapCenter: MapCoordinate(latitude: 37.5, longitude: 127),
             currentRunnerPolylinePoints: <MapCoordinate>[],
-            ghostPolylinePoints: <MapCoordinate>[
+            recordRacePolylinePoints: <MapCoordinate>[
               MapCoordinate(latitude: 37.5, longitude: 127),
               MapCoordinate(latitude: 37.5, longitude: 127.001),
             ],
-            ghostPolylineSegments: [],
-            ghostRouteEndpointMarkers: <MapRouteEndpointMarker>[
+            recordRacePolylineSegments: [],
+            recordRaceRouteEndpointMarkers: <MapRouteEndpointMarker>[
               MapRouteEndpointMarker(
                 coordinate: MapCoordinate(latitude: 37.5, longitude: 127),
                 role: MapRouteEndpointRole.start,
@@ -68,12 +68,12 @@ void main() {
           child: FakeRunMapSurface(
             mapCenter: MapCoordinate(latitude: 37.5, longitude: 127),
             currentRunnerPolylinePoints: <MapCoordinate>[],
-            ghostPolylinePoints: <MapCoordinate>[
+            recordRacePolylinePoints: <MapCoordinate>[
               MapCoordinate(latitude: 37.5, longitude: 127),
               MapCoordinate(latitude: 37.50001, longitude: 127.00001),
             ],
-            ghostPolylineSegments: [],
-            ghostRouteEndpointMarkers: <MapRouteEndpointMarker>[
+            recordRacePolylineSegments: [],
+            recordRaceRouteEndpointMarkers: <MapRouteEndpointMarker>[
               MapRouteEndpointMarker(
                 coordinate: MapCoordinate(latitude: 37.5, longitude: 127),
                 role: MapRouteEndpointRole.startFinish,

@@ -11,40 +11,40 @@ class FakeRunMapSurface extends StatelessWidget {
     super.key,
     required this.mapCenter,
     this.runnerMarkerPoint,
-    this.ghostMarkerPoint,
+    this.recordRaceMarkerPoint,
     required this.currentRunnerPolylinePoints,
     this.currentRunnerPolylineSegments = const <MapPolylineSegment>[],
-    required this.ghostPolylinePoints,
-    required this.ghostPolylineSegments,
-    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
+    required this.recordRacePolylinePoints,
+    required this.recordRacePolylineSegments,
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
   });
 
   final MapCoordinate mapCenter;
   final MapCoordinate? runnerMarkerPoint;
-  final MapCoordinate? ghostMarkerPoint;
+  final MapCoordinate? recordRaceMarkerPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
-  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
 
   @override
   Widget build(BuildContext context) {
     final runnerMarkerPoints = runnerMarkerPoint == null
         ? null
         : <MapCoordinate>[runnerMarkerPoint!];
-    final ghostMarkerPoints = ghostMarkerPoint == null
+    final recordRaceMarkerPoints = recordRaceMarkerPoint == null
         ? null
-        : <MapCoordinate>[ghostMarkerPoint!];
+        : <MapCoordinate>[recordRaceMarkerPoint!];
     final allPoints = <MapCoordinate>[
       mapCenter,
       ...?runnerMarkerPoints,
-      ...?ghostMarkerPoints,
-      ...ghostPolylinePoints,
-      ...ghostRouteEndpointMarkers.map(
+      ...?recordRaceMarkerPoints,
+      ...recordRacePolylinePoints,
+      ...recordRaceRouteEndpointMarkers.map(
         (MapRouteEndpointMarker marker) => marker.coordinate,
       ),
-      ...ghostPolylineSegments.expand(
+      ...recordRacePolylineSegments.expand(
         (MapPolylineSegment segment) => segment.points,
       ),
       ...currentRunnerPolylinePoints,
@@ -70,14 +70,14 @@ class FakeRunMapSurface extends StatelessWidget {
                   ),
                 ),
               ),
-              if (ghostPolylinePoints.isNotEmpty ||
-                  ghostPolylineSegments.isNotEmpty)
+              if (recordRacePolylinePoints.isNotEmpty ||
+                  recordRacePolylineSegments.isNotEmpty)
                 Positioned.fill(
                   child: KeyedSubtree(
-                    key: const Key('ghost-polyline-layer'),
+                    key: const Key('record-race-polyline-layer'),
                     child: Stack(
                       children: [
-                        for (final segment in _ghostSegments())
+                        for (final segment in _recordRaceSegments())
                           Positioned.fill(
                             child: CustomPaint(
                               painter: FakeRunPolylinePainter(
@@ -118,11 +118,11 @@ class FakeRunMapSurface extends StatelessWidget {
                   key: const Key('run-map'),
                   child: Stack(
                     children: [
-                      if (ghostMarkerPoint != null)
+                      if (recordRaceMarkerPoint != null)
                         Builder(
                           builder: (BuildContext context) {
                             final markerOffset = fakeRunMapProject(
-                              ghostMarkerPoint!,
+                              recordRaceMarkerPoint!,
                               allPoints,
                               constraints.biggest,
                             );
@@ -132,7 +132,7 @@ class FakeRunMapSurface extends StatelessWidget {
                               width: 32,
                               height: 32,
                               child: const KeyedSubtree(
-                                key: Key('ghost-marker-layer'),
+                                key: Key('record-race-marker-layer'),
                                 child: IgnorePointer(
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
@@ -154,10 +154,10 @@ class FakeRunMapSurface extends StatelessWidget {
                             );
                           },
                         ),
-                      if (ghostRouteEndpointMarkers.isNotEmpty)
+                      if (recordRaceRouteEndpointMarkers.isNotEmpty)
                         Positioned.fill(
                           child: FakeRunRouteEndpointMarkerLayer(
-                            markers: ghostRouteEndpointMarkers,
+                            markers: recordRaceRouteEndpointMarkers,
                             allPoints: allPoints,
                             size: constraints.biggest,
                           ),
@@ -217,14 +217,14 @@ class FakeRunMapSurface extends StatelessWidget {
     ];
   }
 
-  List<MapPolylineSegment> _ghostSegments() {
-    if (ghostPolylineSegments.isNotEmpty) {
-      return ghostPolylineSegments;
+  List<MapPolylineSegment> _recordRaceSegments() {
+    if (recordRacePolylineSegments.isNotEmpty) {
+      return recordRacePolylineSegments;
     }
 
     return <MapPolylineSegment>[
       MapPolylineSegment(
-        points: ghostPolylinePoints,
+        points: recordRacePolylinePoints,
         color: AppColors.electricRed,
       ),
     ];

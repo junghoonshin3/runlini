@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/wear/watch_connection_client.dart';
-import 'package:runlini/core/wear/watch_ghost_config_client.dart';
 import 'package:runlini/core/wear/watch_interval_config_client.dart';
+import 'package:runlini/core/wear/watch_record_race_config_client.dart';
 import 'package:runlini/core/wear/watch_voice_settings_client.dart';
 import 'package:runlini/core/wear/wear_draft_inbox_client.dart';
-import 'package:runlini/features/run_tracking/service/watch_ghost_config_sync_service.dart';
+import 'package:runlini/features/run_tracking/service/watch_record_race_config_sync_service.dart';
 import 'package:runlini/features/run_tracking/service/watch_run_session_import_service.dart';
 import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
@@ -24,11 +24,10 @@ final wearDraftInboxClientProvider = Provider<WearDraftInboxClient>((Ref ref) {
   return const MethodChannelWearDraftInboxClient();
 });
 
-final watchGhostConfigClientProvider = Provider<WatchGhostConfigClient>((
-  Ref ref,
-) {
-  return const MethodChannelWatchGhostConfigClient();
-});
+final watchRecordRaceConfigClientProvider =
+    Provider<WatchRecordRaceConfigClient>((Ref ref) {
+      return const MethodChannelWatchRecordRaceConfigClient();
+    });
 
 final watchIntervalConfigClientProvider = Provider<WatchIntervalConfigClient>((
   Ref ref,
@@ -48,14 +47,14 @@ final watchConnectionClientProvider = Provider<WatchConnectionClient>((
   return const MethodChannelWatchConnectionClient();
 });
 
-final watchGhostConfigSyncServiceProvider =
-    Provider<WatchGhostConfigSyncService>((Ref ref) {
-      return WatchGhostConfigSyncService(
-        client: ref.watch(watchGhostConfigClientProvider),
+final watchRecordRaceConfigSyncServiceProvider =
+    Provider<WatchRecordRaceConfigSyncService>((Ref ref) {
+      return WatchRecordRaceConfigSyncService(
+        client: ref.watch(watchRecordRaceConfigClientProvider),
       );
     });
 
-final recentWatchGhostSessionsProvider =
+final recentWatchRecordRaceSessionsProvider =
     FutureProvider.family<List<RunSession>, String?>((
       Ref ref,
       selectedId,

@@ -29,7 +29,7 @@ Set<amap.Polyline> appleRunnerPolylines({
   };
 }
 
-Set<amap.Polyline> appleGhostPolylines({
+Set<amap.Polyline> appleRecordRacePolylines({
   required List<MapCoordinate> points,
   required List<MapPolylineSegment> segments,
 }) {
@@ -45,7 +45,7 @@ Set<amap.Polyline> appleGhostPolylines({
   return <amap.Polyline>{
     for (var index = 0; index < routeSegments.length; index += 1)
       _applePolyline(
-        id: 'ghost-polyline-$index',
+        id: 'record-race-polyline-$index',
         points: routeSegments[index].points,
         color: routeSegments[index].color,
         width: 10,
@@ -97,8 +97,8 @@ amap.Polyline _applePolyline({
 
 String _endpointMarkerId(MapRouteEndpointRole role) {
   return switch (role) {
-    MapRouteEndpointRole.start => 'ghost-route-start-marker',
-    MapRouteEndpointRole.finish => 'ghost-route-finish-marker',
-    MapRouteEndpointRole.startFinish => 'ghost-route-start-finish-marker',
+    MapRouteEndpointRole.start => 'record-race-route-start-marker',
+    MapRouteEndpointRole.finish => 'record-race-route-finish-marker',
+    MapRouteEndpointRole.startFinish => 'record-race-route-start-finish-marker',
   };
 }

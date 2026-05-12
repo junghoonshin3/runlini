@@ -10,11 +10,11 @@ class RunMapViewState {
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
     this.currentRunnerPolylineSegments = const <MapPolylineSegment>[],
-    required this.ghostPolylinePoints,
-    this.ghostPolylineSegments = const <MapPolylineSegment>[],
-    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
-    this.ghostMarkerPoint,
-    this.selectedGhostSession,
+    required this.recordRacePolylinePoints,
+    this.recordRacePolylineSegments = const <MapPolylineSegment>[],
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
+    this.recordRaceMarkerPoint,
+    this.selectedRecordRaceSession,
   });
 
   final MapCoordinate mapCenter;
@@ -22,11 +22,11 @@ class RunMapViewState {
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
-  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
-  final MapCoordinate? ghostMarkerPoint;
-  final RunSession? selectedGhostSession;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
+  final MapCoordinate? recordRaceMarkerPoint;
+  final RunSession? selectedRecordRaceSession;
 
   RunMapViewState copyWith({
     MapCoordinate? mapCenter,
@@ -34,12 +34,12 @@ class RunMapViewState {
     MapCoordinate? recenterTargetPoint,
     List<MapCoordinate>? currentRunnerPolylinePoints,
     List<MapPolylineSegment>? currentRunnerPolylineSegments,
-    List<MapCoordinate>? ghostPolylinePoints,
-    List<MapPolylineSegment>? ghostPolylineSegments,
-    List<MapRouteEndpointMarker>? ghostRouteEndpointMarkers,
-    MapCoordinate? ghostMarkerPoint,
-    bool clearGhostMarkerPoint = false,
-    RunSession? selectedGhostSession,
+    List<MapCoordinate>? recordRacePolylinePoints,
+    List<MapPolylineSegment>? recordRacePolylineSegments,
+    List<MapRouteEndpointMarker>? recordRaceRouteEndpointMarkers,
+    MapCoordinate? recordRaceMarkerPoint,
+    bool clearRecordRaceMarkerPoint = false,
+    RunSession? selectedRecordRaceSession,
   }) {
     return RunMapViewState(
       mapCenter: mapCenter ?? this.mapCenter,
@@ -49,15 +49,17 @@ class RunMapViewState {
           currentRunnerPolylinePoints ?? this.currentRunnerPolylinePoints,
       currentRunnerPolylineSegments:
           currentRunnerPolylineSegments ?? this.currentRunnerPolylineSegments,
-      ghostPolylinePoints: ghostPolylinePoints ?? this.ghostPolylinePoints,
-      ghostPolylineSegments:
-          ghostPolylineSegments ?? this.ghostPolylineSegments,
-      ghostRouteEndpointMarkers:
-          ghostRouteEndpointMarkers ?? this.ghostRouteEndpointMarkers,
-      ghostMarkerPoint: clearGhostMarkerPoint
+      recordRacePolylinePoints:
+          recordRacePolylinePoints ?? this.recordRacePolylinePoints,
+      recordRacePolylineSegments:
+          recordRacePolylineSegments ?? this.recordRacePolylineSegments,
+      recordRaceRouteEndpointMarkers:
+          recordRaceRouteEndpointMarkers ?? this.recordRaceRouteEndpointMarkers,
+      recordRaceMarkerPoint: clearRecordRaceMarkerPoint
           ? null
-          : ghostMarkerPoint ?? this.ghostMarkerPoint,
-      selectedGhostSession: selectedGhostSession ?? this.selectedGhostSession,
+          : recordRaceMarkerPoint ?? this.recordRaceMarkerPoint,
+      selectedRecordRaceSession:
+          selectedRecordRaceSession ?? this.selectedRecordRaceSession,
     );
   }
 }

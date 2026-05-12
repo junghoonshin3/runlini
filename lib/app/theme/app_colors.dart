@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_projection_frame.dart';
 
 abstract final class AppColors {
   static const Color black = Color(0xFF000000);
@@ -13,13 +13,13 @@ abstract final class AppColors {
   static const Color orange = Color(0xFFFF8A00);
   static const Color muted = Color(0xFF8B8F98);
 
-  static Color borderFor(GhostRelativeState state) {
+  static Color borderFor(RecordRaceRelativeState state) {
     switch (state) {
-      case GhostRelativeState.ahead:
+      case RecordRaceRelativeState.ahead:
         return voltGreen;
-      case GhostRelativeState.behind:
+      case RecordRaceRelativeState.behind:
         return electricRed;
-      case GhostRelativeState.level:
+      case RecordRaceRelativeState.level:
         return chalk;
     }
   }

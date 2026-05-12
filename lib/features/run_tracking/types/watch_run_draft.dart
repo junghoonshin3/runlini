@@ -1,5 +1,5 @@
 import 'package:runlini/features/run_tracking/types/run_point.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/watch_run_platform.dart';
 
 class WatchRunDraft {
@@ -15,7 +15,7 @@ class WatchRunDraft {
     this.sourceDeviceName,
     this.averageCadenceSpm,
     this.caloriesKcal,
-    this.ghostSummary,
+    this.recordRaceSummary,
   });
 
   final String id;
@@ -29,7 +29,7 @@ class WatchRunDraft {
   final String? sourceDeviceName;
   final double? averageCadenceSpm;
   final double? caloriesKcal;
-  final RunSessionGhostSummary? ghostSummary;
+  final RunSessionRecordRaceSummary? recordRaceSummary;
 
   factory WatchRunDraft.fromJson(Map<String, dynamic> json) {
     return WatchRunDraft(
@@ -50,10 +50,12 @@ class WatchRunDraft {
       sourceDeviceName: json['sourceDeviceName'] as String?,
       averageCadenceSpm: (json['averageCadenceSpm'] as num?)?.toDouble(),
       caloriesKcal: (json['caloriesKcal'] as num?)?.toDouble(),
-      ghostSummary: json['ghostSummary'] == null
+      recordRaceSummary:
+          (json['recordRaceSummary'] ?? json['ghostSummary']) == null
           ? null
-          : RunSessionGhostSummary.fromJson(
-              json['ghostSummary'] as Map<String, dynamic>,
+          : RunSessionRecordRaceSummary.fromJson(
+              (json['recordRaceSummary'] ?? json['ghostSummary'])
+                  as Map<String, dynamic>,
             ),
     );
   }
@@ -70,7 +72,7 @@ class WatchRunDraft {
       'sourceDeviceName': sourceDeviceName,
       'averageCadenceSpm': averageCadenceSpm,
       'caloriesKcal': caloriesKcal,
-      'ghostSummary': ghostSummary?.toJson(),
+      'recordRaceSummary': recordRaceSummary?.toJson(),
       'points': points.map((RunPoint point) => point.toJson()).toList(),
     };
   }

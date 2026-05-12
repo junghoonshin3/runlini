@@ -1,5 +1,22 @@
 # Context Notes
 
+## 2026-05-12
+
+- 사용자는 `고스트런`을 러닝앱 사용자에게 더 직관적인 이름으로 바꾸길 원했고,
+  최종 사용자 표시명은 `기록 레이스`로 결정했다.
+- 내부 코드명은 `record_race`로 결정했다.
+- 기존 `ghost_*` 로컬 DB, 설정 키, Wear Data Layer 경로와 워치 캐시는
+  마이그레이션 또는 fallback으로 보존한다.
+- 완료된 archive 실행 계획은 변경 이력으로 남기고, 살아 있는 제품/플랫폼 문서만
+  현재 명칭에 맞춘다.
+- 기존 작업트리의 `docs/exec-plans/active/interval-feature-lock-v1.md` 수정은
+  이번 작업에서 건드리지 않는다.
+- `record_race` 리네이밍은 새 DB 컬럼 `record_race_summary_json`을 쓰고,
+  기존 `ghost_summary_json`, `ghostSummary`, Wear `ghost_*` 경로는 읽기
+  fallback으로 유지한다.
+- 최종 검증은 guardrails, analyzer, 전체 Flutter 테스트, app/wear unit test,
+  Wear debug assemble로 완료했다.
+
 ## 2026-05-11
 
 - 문제 재현 맥락은 출발 확인 이후 러닝 중 고스트 경로 이탈 안내가 나와야 하는 상황이다.

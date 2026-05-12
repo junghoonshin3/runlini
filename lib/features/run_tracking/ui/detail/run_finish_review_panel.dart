@@ -5,7 +5,7 @@ import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_charts_section.dart';
-import 'package:runlini/features/run_tracking/ui/detail/run_detail_ghost_comparison.dart';
+import 'package:runlini/features/run_tracking/ui/detail/run_detail_record_race_comparison.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_preview.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_route_speed_tooltip.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_detail_shoe_section.dart';
@@ -32,7 +32,7 @@ class RunFinishReviewPanel extends StatelessWidget {
     this.includePrimaryMetrics = true,
     this.showHeaderSummaryMetrics = true,
     this.showRouteSpeedTooltip = false,
-    this.ghostSession,
+    this.recordRaceSession,
   });
 
   final RunSession session;
@@ -49,7 +49,7 @@ class RunFinishReviewPanel extends StatelessWidget {
   final bool includePrimaryMetrics;
   final bool showHeaderSummaryMetrics;
   final bool showRouteSpeedTooltip;
-  final RunSession? ghostSession;
+  final RunSession? recordRaceSession;
 
   @override
   Widget build(BuildContext context) {
@@ -90,12 +90,12 @@ class RunFinishReviewPanel extends StatelessWidget {
                         const SizedBox(height: 12),
                         const _PrivacyBadge(),
                       ],
-                      if (session.ghostSummary != null) ...[
+                      if (session.recordRaceSummary != null) ...[
                         const SizedBox(height: 14),
-                        RunDetailGhostComparison(
+                        RunDetailRecordRaceComparison(
                           session: session,
-                          summary: session.ghostSummary!,
-                          ghostSession: ghostSession,
+                          summary: session.recordRaceSummary!,
+                          recordRaceSession: recordRaceSession,
                           displaySettings: displaySettings,
                         ),
                       ],

@@ -14,14 +14,14 @@ import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 part 'run_playback_ingest_extension.dart';
-part 'run_playback_ghost_extension.dart';
+part 'run_playback_record_race_extension.dart';
 
 class RunPlaybackController extends Notifier<RunPlaybackState>
-    with RunPlaybackLiveSampleIngest, RunPlaybackGhostTracking {
+    with RunPlaybackLiveSampleIngest, RunPlaybackRecordRaceTracking {
   @override
   RunPlaybackState build() {
     ref.listen(runSettingsControllerProvider, (previous, next) {
@@ -66,7 +66,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     return RunTrackingToggleResult.started;
   }
 
-  Future<void> stop({RunSessionGhostSummary? ghostSummary}) async {
+  Future<void> stop({RunSessionRecordRaceSummary? recordRaceSummary}) async {
     if (!state.hasActiveSession) {
       try {
         await ref.read(healthWorkoutRecorderProvider).cancelRunCapture();
@@ -109,7 +109,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
           recordedPoints: recordedPoints,
           bodyWeightKg: bodyWeightKg,
           cadenceStepCount: state.cadenceStepCount,
-          ghostSummary: ghostSummary,
+          recordRaceSummary: recordRaceSummary,
         );
     state = state.copyWith(
       status: RunScreenStatus.reviewing,

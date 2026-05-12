@@ -8,12 +8,12 @@ import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 import 'package:runlini/core/map/run_route_endpoint_icon_bytes.dart';
 
 abstract final class AppleRunMarkerIcons {
-  static const double _ghostMarkerSize = 30;
+  static const double _recordRaceMarkerSize = 30;
 
-  static Future<amap.BitmapDescriptor> ghost({
+  static Future<amap.BitmapDescriptor> recordRace({
     required double devicePixelRatio,
   }) async {
-    final int imageSizePx = (_ghostMarkerSize * devicePixelRatio).round();
+    final int imageSizePx = (_recordRaceMarkerSize * devicePixelRatio).round();
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final size = Size(imageSizePx.toDouble(), imageSizePx.toDouble());

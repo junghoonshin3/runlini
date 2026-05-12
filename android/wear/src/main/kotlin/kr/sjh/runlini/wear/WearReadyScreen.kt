@@ -14,15 +14,15 @@ import androidx.wear.compose.material3.Text
 internal fun WearReadyScreen(
     state: WearRunState,
     onStart: () -> Unit,
-    onGhostStart: () -> Unit,
+    onRecordRaceStart: () -> Unit,
     reservePageIndicator: Boolean = false,
 ) {
     val model = WearReadyScreenModelBuilder.from(state)
-    if (model.usesGhostPrimary) {
-        WearGhostReadyScreen(
+    if (model.usesRecordRacePrimary) {
+        WearRecordRaceReadyScreen(
             model = model,
             onStart = onStart,
-            onGhostStart = onGhostStart,
+            onRecordRaceStart = onRecordRaceStart,
             reservePageIndicator = reservePageIndicator,
         )
         return
@@ -32,7 +32,7 @@ internal fun WearReadyScreen(
         primaryLabel = model.primaryLabel.replace('\n', ' '),
         primaryColor = RunliniWearColors.VoltGreen,
         primaryTextColor = RunliniWearColors.Black,
-        onPrimary = if (model.usesGhostPrimary) onGhostStart else onStart,
+        onPrimary = if (model.usesRecordRacePrimary) onRecordRaceStart else onStart,
         secondaryLabel = model.secondaryLabel,
         secondaryColor = RunliniWearColors.Chalk,
         secondaryTextColor = RunliniWearColors.Black,
@@ -44,18 +44,18 @@ internal fun WearReadyScreen(
 }
 
 @Composable
-private fun WearGhostReadyScreen(
+private fun WearRecordRaceReadyScreen(
     model: WearReadyScreenModel,
     onStart: () -> Unit,
-    onGhostStart: () -> Unit,
+    onRecordRaceStart: () -> Unit,
     reservePageIndicator: Boolean,
 ) {
-    val actions = WearGhostReadyModelBuilder.actionsFrom(model)
+    val actions = WearRecordRaceReadyModelBuilder.actionsFrom(model)
     WearRunPageFrame(
         verticalArrangement = Arrangement.SpaceBetween,
         reservePageIndicator = reservePageIndicator,
     ) { spec ->
-        val layout = WearGhostReadyModelBuilder.layoutFor(spec.profile)
+        val layout = WearRecordRaceReadyModelBuilder.layoutFor(spec.profile)
 
         Text(
             text = "RUNLINI",
@@ -73,12 +73,12 @@ private fun WearGhostReadyScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             WearCircleButton(
-                label = actions.ghostStartLabel,
+                label = actions.recordRaceStartLabel,
                 color = RunliniWearColors.VoltGreen,
                 textColor = RunliniWearColors.Black,
                 size = layout.circleSizeDp.dp,
                 labelFontSize = layout.labelSizeSp.sp,
-                onClick = onGhostStart,
+                onClick = onRecordRaceStart,
             )
             WearCircleButton(
                 label = actions.normalStartLabel,

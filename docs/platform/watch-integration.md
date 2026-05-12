@@ -34,7 +34,7 @@ Runlini should therefore treat Galaxy Watch workouts as Health Connect imports:
 - Request Health Connect permission only from explicit runner actions in
   Settings > 연동 or the empty-history recovery CTA.
 - Import Health Connect records into the local database.
-- Preserve local enriched fields such as route detail, ghost metadata, shoes,
+- Preserve local enriched fields such as route detail, record-race metadata, shoes,
   and tombstones when merging.
 - Never assume Samsung Health has already synced. The runner may need to open
   Samsung Health, grant Health Connect app permissions, or trigger Samsung
@@ -78,39 +78,44 @@ Current Android native V1 implementation:
   then returns to a clean Ready launch hub without leaving `저장됨` / `삭제됨`
   status text behind.
 - Settings > 연동 exposes a manual `워치 기록 가져오기` action that drains the phone
-  pending inbox and refreshes the watch's recent ghost route cache. The watch
-  keeps pending drafts internally, but the Ready screen does not show sync counts
-  or retry controls; the watch is the recording surface and the phone is the sync
-  management surface.
+  pending inbox and refreshes the watch's recent record-race route cache. The
+  watch keeps pending drafts internally, but the Ready screen does not show sync
+  counts or retry controls; the watch is the recording surface and the phone is
+  the sync management surface.
 - The manual phone action checks whether a Wear node is connected for clearer
   status text, but connection is not a hard prerequisite: drafts that have
   already reached the phone inbox can be imported even while the watch is
   disconnected.
 - The default Ready screen leaves the area below the start button empty. When a
-  ghost route is cached, Ready hides source labels such as `device:gps`, shows a
-  small `고스트 모드 ON` pill, and places circular `고스트런 시작` / `일반 시작`
-  actions side by side. Errors still collapse to a small red `오류` pill.
+  record-race route is cached, Ready hides source labels such as `device:gps`,
+  shows a small `기록 레이스 ON` pill, and places circular `기록 레이스 시작` /
+  `일반 시작` actions side by side. Errors still collapse to a small red `오류`
+  pill.
 - From Ready, swiping left opens a small local watch settings page. V1 settings
   are countdown, vibration, and 1 km alerts only.
 - The phone also drains the same pending Wear inbox opportunistically on app
   launch, foreground resume, and History pull-to-refresh.
-- Phone-selected Ghost Rider records are sent to the watch on
-  `/runlini/phone/ghost_config` as a `ghostJson` asset. The watch caches the
-  selected ghost route and can start an independent ghost run without a live
-  phone connection.
-- The phone also sends the three most recent runnable ghost routes on
-  `/runlini/phone/ghost_configs` as a `ghostConfigsJson` asset. The batch keeps
-  one active id and up to three full `WatchGhostConfig` payloads.
-- The watch keeps the three most recent phone-selected ghost routes as original
-  timed route points. V1 does not thin or resample points because `timestampRelMs`
-  and route shape accuracy drive the ghost gap.
-- The phone filters recent ghost candidates before sending them to the watch.
+- Phone-selected Record Race records are sent to the watch on
+  `/runlini/phone/record_race_config` as a `recordRaceJson` asset. The watch
+  caches the selected record-race route and can start an independent
+  record-race run without a live phone connection.
+- The phone also sends the three most recent runnable record-race routes on
+  `/runlini/phone/record_race_configs` as a `recordRaceConfigsJson` asset. The
+  batch keeps one active id and up to three full `WatchRecordRaceConfig`
+  payloads.
+- Legacy `/runlini/phone/ghost_config`, `/runlini/phone/ghost_configs`,
+  `ghostJson`, and `ghostConfigsJson` payloads remain readable during the
+  rename window.
+- The watch keeps the three most recent phone-selected record-race routes as
+  original timed route points. V1 does not thin or resample points because
+  `timestampRelMs` and route shape accuracy drive the record-race gap.
+- The phone filters recent record-race candidates before sending them to the watch.
   A candidate must have positive distance/duration, finite coordinates,
   strictly increasing `timestampRelMs`, sane elevation values, and a compact
   route bounds. This keeps corrupt emulator/test routes out of the watch cache.
-- Recent ghost cache refresh happens on phone app launch, foreground resume, run
-  list changes, and Settings manual sync. Charging-only background refresh is a
-  later WorkManager-style enhancement.
+- Recent record-race cache refresh happens on phone app launch, foreground
+  resume, run list changes, and Settings manual sync. Charging-only background
+  refresh is a later WorkManager-style enhancement.
 - Phone interval settings are sent to the watch on
   `/runlini/phone/interval_config` as an `intervalJson` asset. V1 supports
   `warmup -> work/recovery repeats -> cooldown`, with time, distance, open, and
@@ -118,26 +123,27 @@ Current Android native V1 implementation:
 - Interval configuration is currently product-locked on the phone. Stored
   interval settings are preserved, but the phone runtime and Wear sync treat the
   interval workout as disabled until the feature is reopened.
-- When interval configuration is reopened, V1 treats ghost runs and interval
-  runs as mutually exclusive active modes. Phone users resolve the conflict with
-  an explicit prompt. Wear ghost runs silently ignore interval settings for that
-  active run, while normal Wear runs keep interval guidance.
+- When interval configuration is reopened, V1 treats record-race runs and
+  interval runs as mutually exclusive active modes. Phone users resolve the
+  conflict with an explicit prompt. Wear record-race runs silently ignore
+  interval settings for that active run, while normal Wear runs keep interval
+  guidance.
 - During a normal active Wear interval run, the core page shows a compact
   current-step pill and the active pager includes an interval page with current
   step, remaining target, and next step.
 - Interval step changes reuse the watch haptic / voice cue settings. V1 does
   not save interval lap summaries into `RunSession`; the completed run remains
   a normal run record.
-- The Ready pager always exposes a small `고스트 선택` page. With zero cached
+- The Ready pager always exposes a small `기록 선택` page. With zero cached
   routes it shows `없음`; with cached routes it shows only those options. With
-  one route, Ready still keeps the direct `고스트런 시작` / `일반 시작` actions.
-- Wear ghost runs include optional `ghostSummary` metadata in the completed
-  `WatchRunDraft`; phone import stores it as the normal `RunSession`
-  ghost comparison result.
-- Wear ghost runs detect a conservative route finish near the end of the cached
-  ghost route. The watch shows `고스트 완료` with `종료` / `계속`; it does not
-  auto-save. Choosing `계속` suppresses the completion prompt for that active
-  run, and choosing `종료` uses the existing review flow.
+  one route, Ready still keeps the direct `기록 레이스 시작` / `일반 시작` actions.
+- Wear record-race runs include optional `recordRaceSummary` metadata in the
+  completed `WatchRunDraft`; phone import stores it as the normal `RunSession`
+  record-race comparison result.
+- Wear record-race runs detect a conservative route finish near the end of the
+  cached record-race route. The watch shows `기록 레이스 완료` with `종료` /
+  `계속`; it does not auto-save. Choosing `계속` suppresses the completion prompt
+  for that active run, and choosing `종료` uses the existing review flow.
 - Live `WatchRunSnapshot` / `WatchRunEvent` streaming is not part of this slice.
 
 ### Android Testing Notes
@@ -146,7 +152,7 @@ Current Android native V1 implementation:
   communication.
 - Wear OS emulator Health Services may use synthetic exercise location that does
   not follow arbitrary `adb emu geo fix` routes. Runlini therefore includes a
-  debug-build-only GPS injection path for emulator ghost-run validation.
+  debug-build-only GPS injection path for emulator record-race validation.
 - The debug injection path accepts `kr.sjh.runlini.wear.debug.GPS_SAMPLE`
   broadcasts only in debug builds. It overrides route motion metrics while
   keeping Health Services heart rate, calories, and cadence.
@@ -163,7 +169,7 @@ Current Android native V1 implementation:
 Apple Watch and iPhone apps are not limited to exchanging data through
 HealthKit. Apple provides WatchConnectivity for direct communication between a
 paired iOS app and watchOS app. Runlini can use it for app-owned payloads such
-as live UI snapshots, ghost state, commands, file transfer, and post-run draft
+as live UI snapshots, record-race state, commands, file transfer, and post-run draft
 handoff.
 
 HealthKit is still the official boundary for health and fitness records. Workout
@@ -208,7 +214,7 @@ Recommended architecture:
   workout session started on Apple Watch. The watch starts the primary session;
   the companion iPhone receives a mirrored `HKWorkoutSession`.
 - Use WatchConnectivity for Runlini-owned companion messages when the payload is
-  not itself a health record, such as live UI updates, ghost comparison, settings
+  not itself a health record, such as live UI updates, record-race comparison, settings
   handoff, or post-run draft transfer.
 - Save the workout to HealthKit, then upsert it into the Runlini local database
   on the phone.
@@ -233,8 +239,8 @@ Recommended architecture:
 - The watch app has only pre-run, running, and finish review screens in v1.
 - The watch can start an independent run, pause / resume, stop, and save or
   discard the completed draft.
-- Wear OS starts both normal and ghost runs after a 3-second countdown. Health
-  Services recording begins only after the countdown completes.
+- Wear OS starts both normal and record-race runs after a 3-second countdown.
+  Health Services recording begins only after the countdown completes.
 - The countdown can be disabled from the watch Ready settings page. When it is
   off, Health Services recording starts immediately after the start action.
 - Save/discard completion is transient feedback, not Ready status. Ready stays
@@ -245,19 +251,19 @@ Recommended architecture:
   active pager, and the controls hub primary action changes from pause to
   resume.
 - The finish review is a scrollable workout summary so small round screens can
-  show richer metrics without clipping save/delete actions. Ghost result is
-  shown only for ghost-started runs with a final ghost frame.
+  show richer metrics without clipping save/delete actions. Record-race result
+  is shown only for record-race-started runs with a final record-race frame.
 - Active run pages replace the pre-run start surface with controls. Running
   opens on core metrics, and swiping back toward the start surface shows only
   pause / stop controls. That controls page keeps the `RUNLINI` header and
   places pause/resume and stop as two centered side-by-side icon buttons.
 - The core running page renders distance as split value and unit text, so long
   values such as `12.10 km` do not ellipsize on round Wear screens.
-- Android native V1 does not include phone-started run mirroring, ghost gap, or
-  live companion snapshots.
-- Ghost Rider on Wear OS starts from a phone-selected cached ghost route. The
-  watch does not browse history; it shows `GHOST START` only when a runnable
-  cached ghost exists.
+- Android native V1 does not include phone-started run mirroring, record-race
+  gap, or live companion snapshots.
+- Record Race on Wear OS starts from a phone-selected cached record-race route.
+  The watch does not browse history; it shows `기록 레이스 시작` only when a
+  runnable cached record-race route exists.
 - Watch displays elapsed time, distance, pace, heart rate, and active calories
   when Health Services provides them.
 - Watch auto pause is opt-in. Runlini's stationary movement detector calls
@@ -268,12 +274,13 @@ Recommended architecture:
 - Watch feedback is haptic plus large text. Wear OS V1 also plays short
   watch-local TTS cues: `1km 알림` controls 1km haptic and voice summaries
   with average pace and elapsed time, `음성 안내` is the TTS master switch,
-  and `고스트 음성` enables ghost-specific race events. During ghost runs,
-  kilometer summaries are allowed when `1km 알림` and `음성 안내` are on.
-  Ghost-specific speech is event based: stable route exit/return, overtake,
+  and `기록 레이스 음성` enables record-race-specific race events. During
+  record-race runs, kilometer summaries are allowed when `1km 알림` and
+  `음성 안내` are on.
+  Record-race-specific speech is event based: stable route exit/return, overtake,
   lost lead, final stretch, and completion. Level/tie state is not spoken.
-  Interval speech remains disabled during ghost runs because ghost and
-  interval modes are mutually exclusive for the active run. Voice cue volume is
+  Interval speech remains disabled during record-race runs because record-race
+  and interval modes are mutually exclusive for the active run. Voice cue volume is
   adjustable on the phone and watch, then applied to Wear OS TTS output. When
   the runner changes voice volume, the watch plays a short `음량 테스트` cue.
   Phone-routed voice cues are a later companion feature.
@@ -283,8 +290,8 @@ Recommended architecture:
 ## Shared Contracts
 
 - `WatchRunSnapshot` is the live state shown on the watch.
-- `WatchRunEvent` represents start, pause, resume, stop, lap, ghost, and audio
-  cue events.
+- `WatchRunEvent` represents start, pause, resume, stop, lap, record-race, and
+  audio cue events.
 - `WatchRunDraft` is the completed workout payload sent from a native watch app
   to the phone.
 - Phone-side import maps watch drafts into normal `RunSession` records with
@@ -297,7 +304,7 @@ Recommended architecture:
 - Do not build watch logic into Flutter UI files. Platform adapters belong in
   `core/`, while feature state continues to expose screen-ready state.
 - Keep the layering rule: `types -> repo -> service -> state -> ui`.
-- The phone app remains responsible for run history, ghost sessions, shoe
+- The phone app remains responsible for run history, record-race sessions, shoe
   mileage, deletion tombstones, and user-visible sync status.
 - Health stores are not the UI source of truth. They are backup, restore, and
   external import sources.

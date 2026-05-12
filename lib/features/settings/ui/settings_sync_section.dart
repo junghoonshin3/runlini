@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_destination_labels.dart';
 import 'package:runlini/core/health/health_route_client.dart';
 import 'package:runlini/core/wear/watch_connection_client.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_backup_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
 import 'package:runlini/features/health_sync/types/health_sync_status.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/run_tracking/service/wear_draft_sync_service.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
@@ -201,7 +201,7 @@ class SettingsSyncSection extends ConsumerWidget {
     final result = await ref
         .read(wearDraftSyncControllerProvider.notifier)
         .syncPendingDrafts();
-    await _syncRecentGhostConfigs(ref);
+    await _syncRecentRecordRaceConfigs(ref);
     if (!context.mounted) {
       return;
     }
@@ -210,19 +210,19 @@ class SettingsSyncSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _syncRecentGhostConfigs(WidgetRef ref) async {
+  Future<void> _syncRecentRecordRaceConfigs(WidgetRef ref) async {
     try {
       final selectedSessionId = ref
-          .read(ghostSettingsProvider)
+          .read(recordRaceSettingsProvider)
           .selectedSessionId;
       final sessions = await ref.read(
-        recentWatchGhostSessionsProvider(selectedSessionId).future,
+        recentWatchRecordRaceSessionsProvider(selectedSessionId).future,
       );
       await ref
-          .read(watchGhostConfigSyncServiceProvider)
+          .read(watchRecordRaceConfigSyncServiceProvider)
           .syncRecentSessions(sessions, selectedSessionId: selectedSessionId);
     } catch (_) {
-      // Wear ghost route cache sync is best-effort.
+      // Wear recordRace route cache sync is best-effort.
     }
   }
 

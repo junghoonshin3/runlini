@@ -12,25 +12,25 @@ class GoogleRunMapView extends StatefulWidget {
     super.key,
     required this.mapCenter,
     this.runnerMarkerPoint,
-    this.ghostMarkerPoint,
+    this.recordRaceMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
     required this.currentRunnerPolylineSegments,
-    required this.ghostPolylinePoints,
-    required this.ghostPolylineSegments,
-    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
+    required this.recordRacePolylinePoints,
+    required this.recordRacePolylineSegments,
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
     required this.recenterTick,
   });
 
   final MapCoordinate mapCenter;
   final MapCoordinate? runnerMarkerPoint;
-  final MapCoordinate? ghostMarkerPoint;
+  final MapCoordinate? recordRaceMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
-  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
   final int recenterTick;
 
   @override
@@ -42,10 +42,10 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
 
   gmap.GoogleMapController? _mapController;
   gmap.BitmapDescriptor? _runnerMarkerIcon;
-  gmap.BitmapDescriptor? _ghostMarkerIcon;
+  gmap.BitmapDescriptor? _recordRaceMarkerIcon;
   Map<MapRouteEndpointRole, gmap.BitmapDescriptor>? _routeEndpointMarkerIcons;
   double? _runnerMarkerDevicePixelRatio;
-  double? _ghostMarkerDevicePixelRatio;
+  double? _recordRaceMarkerDevicePixelRatio;
   double? _routeEndpointMarkerDevicePixelRatio;
 
   @override
@@ -58,9 +58,9 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
         _runnerMarkerDevicePixelRatio != devicePixelRatio) {
       _loadRunnerMarkerIcon(devicePixelRatio);
     }
-    if (_ghostMarkerIcon == null ||
-        _ghostMarkerDevicePixelRatio != devicePixelRatio) {
-      _loadGhostMarkerIcon(devicePixelRatio);
+    if (_recordRaceMarkerIcon == null ||
+        _recordRaceMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRecordRaceMarkerIcon(devicePixelRatio);
     }
     if (_routeEndpointMarkerIcons == null ||
         _routeEndpointMarkerDevicePixelRatio != devicePixelRatio) {
@@ -71,12 +71,12 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
   @override
   void didUpdateWidget(covariant GoogleRunMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final shouldFitGhostPolyline =
+    final shouldFitRecordRacePolyline =
         widget.currentRunnerPolylinePoints.isEmpty &&
-        widget.ghostPolylinePoints.isNotEmpty &&
-        oldWidget.ghostPolylinePoints != widget.ghostPolylinePoints;
-    if (shouldFitGhostPolyline) {
-      _scheduleFitGhostPolyline();
+        widget.recordRacePolylinePoints.isNotEmpty &&
+        oldWidget.recordRacePolylinePoints != widget.recordRacePolylinePoints;
+    if (shouldFitRecordRacePolyline) {
+      _scheduleFitRecordRacePolyline();
       return;
     }
 
@@ -122,8 +122,8 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       onMapCreated: (gmap.GoogleMapController controller) {
         _mapController = controller;
         if (widget.currentRunnerPolylinePoints.isEmpty &&
-            widget.ghostPolylinePoints.isNotEmpty) {
-          _scheduleFitGhostPolyline();
+            widget.recordRacePolylinePoints.isNotEmpty) {
+          _scheduleFitRecordRacePolyline();
         }
       },
       mapType: gmap.MapType.normal,
@@ -133,9 +133,9 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       mapToolbarEnabled: false,
       trafficEnabled: false,
       polylines: <gmap.Polyline>{
-        ...googleGhostPolylines(
-          points: widget.ghostPolylinePoints,
-          segments: widget.ghostPolylineSegments,
+        ...googleRecordRacePolylines(
+          points: widget.recordRacePolylinePoints,
+          segments: widget.recordRacePolylineSegments,
         ),
         ...googleRunnerPolylines(
           points: widget.currentRunnerPolylinePoints,
@@ -144,15 +144,16 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       },
       markers: <gmap.Marker>{
         ...googleRouteEndpointMarkers(
-          markers: widget.ghostRouteEndpointMarkers,
+          markers: widget.recordRaceRouteEndpointMarkers,
           icons: _routeEndpointMarkerIcons,
         ),
-        if (widget.ghostMarkerPoint != null && _ghostMarkerIcon != null)
+        if (widget.recordRaceMarkerPoint != null &&
+            _recordRaceMarkerIcon != null)
           gmap.Marker(
-            markerId: const gmap.MarkerId('ghost-marker'),
-            position: widget.ghostMarkerPoint!.toGoogleLatLng(),
+            markerId: const gmap.MarkerId('record-race-marker'),
+            position: widget.recordRaceMarkerPoint!.toGoogleLatLng(),
             anchor: const Offset(0.5, 0.5),
-            icon: _ghostMarkerIcon!,
+            icon: _recordRaceMarkerIcon!,
             zIndexInt: 2,
           ),
         if (widget.runnerMarkerPoint != null && _runnerMarkerIcon != null)
@@ -167,16 +168,16 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     );
   }
 
-  void _scheduleFitGhostPolyline() {
+  void _scheduleFitRecordRacePolyline() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mapController = _mapController;
       if (!mounted ||
           mapController == null ||
-          widget.ghostPolylinePoints.isEmpty) {
+          widget.recordRacePolylinePoints.isEmpty) {
         return;
       }
 
-      final bounds = googleBoundsFor(widget.ghostPolylinePoints);
+      final bounds = googleBoundsFor(widget.recordRacePolylinePoints);
       final hasSinglePointBounds =
           bounds.southwest.latitude == bounds.northeast.latitude &&
           bounds.southwest.longitude == bounds.northeast.longitude;
@@ -184,7 +185,7 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       if (hasSinglePointBounds) {
         mapController.animateCamera(
           gmap.CameraUpdate.newLatLngZoom(
-            widget.ghostPolylinePoints.first.toGoogleLatLng(),
+            widget.recordRacePolylinePoints.first.toGoogleLatLng(),
             _zoomLevel,
           ),
         );
@@ -211,8 +212,8 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     });
   }
 
-  Future<void> _loadGhostMarkerIcon(double devicePixelRatio) async {
-    final gmap.BitmapDescriptor icon = await GoogleRunMarkerIcons.ghost(
+  Future<void> _loadRecordRaceMarkerIcon(double devicePixelRatio) async {
+    final gmap.BitmapDescriptor icon = await GoogleRunMarkerIcons.recordRace(
       devicePixelRatio: devicePixelRatio,
     );
     if (!mounted) {
@@ -220,8 +221,8 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     }
 
     setState(() {
-      _ghostMarkerIcon = icon;
-      _ghostMarkerDevicePixelRatio = devicePixelRatio;
+      _recordRaceMarkerIcon = icon;
+      _recordRaceMarkerDevicePixelRatio = devicePixelRatio;
     });
   }
 

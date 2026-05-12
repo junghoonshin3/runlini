@@ -46,9 +46,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.settings.autoPauseEnabled, isTrue);
 
-    await tester.tap(find.byKey(const Key('show-ghost-marker-switch')));
+    await tester.tap(find.byKey(const Key('show-record-race-marker-switch')));
     await tester.pumpAndSettle();
-    expect(repository.settings.showGhostMarker, isTrue);
+    expect(repository.settings.showRecordRaceMarker, isTrue);
 
     await tester.tap(find.byKey(const Key('voice-cue-enabled-switch')));
     await tester.pumpAndSettle();
@@ -58,9 +58,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.settings.kmVoiceCueEnabled, isFalse);
 
-    await tester.tap(find.byKey(const Key('ghost-voice-cue-enabled-switch')));
+    await tester.tap(
+      find.byKey(const Key('record-race-voice-cue-enabled-switch')),
+    );
     await tester.pumpAndSettle();
-    expect(repository.settings.ghostVoiceCueEnabled, isTrue);
+    expect(repository.settings.recordRaceVoiceCueEnabled, isTrue);
 
     final volumeSliderFinder = find.byKey(const Key('voice-cue-volume-slider'));
     await tester.ensureVisible(volumeSliderFinder);

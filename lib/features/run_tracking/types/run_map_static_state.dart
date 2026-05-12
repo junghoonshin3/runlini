@@ -6,15 +6,15 @@ import 'package:runlini/features/run_tracking/types/run_session.dart';
 class RunMapStaticState {
   const RunMapStaticState({
     required this.fallbackMapCenter,
-    required this.ghostPolylinePoints,
-    this.ghostPolylineSegments = const <MapPolylineSegment>[],
-    this.ghostRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
-    this.selectedGhostSession,
+    required this.recordRacePolylinePoints,
+    this.recordRacePolylineSegments = const <MapPolylineSegment>[],
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
+    this.selectedRecordRaceSession,
   });
 
   final MapCoordinate fallbackMapCenter;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
-  final List<MapRouteEndpointMarker> ghostRouteEndpointMarkers;
-  final RunSession? selectedGhostSession;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
+  final RunSession? selectedRecordRaceSession;
 }

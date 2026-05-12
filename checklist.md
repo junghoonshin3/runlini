@@ -1,5 +1,19 @@
 # Checklist
 
+## 기록 레이스 리네이밍
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Dart 도메인, provider, UI, 테스트를 `record_race`로 바꾼다.
+- [x] DB와 설정 키 레거시 호환을 추가한다.
+- [x] Kotlin Wear/phone 경로와 테스트를 `record_race`로 바꾼다.
+- [x] 사용자 문구와 살아 있는 제품 문서를 갱신한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `flutter test`를 실행한다.
+- [x] `./gradlew :app:testDebugUnitTest`를 실행한다.
+- [x] `./gradlew :wear:testDebugUnitTest`를 실행한다.
+- [x] `./gradlew :wear:assembleDebug`를 실행한다.
+
 - [x] 실행 계획과 컨텍스트 노트를 만든다.
 - [x] TTS 클라이언트가 발화 수락 여부를 반환하도록 바꾼다.
 - [x] 음성 안내 우선순위와 고스트 긴급 cue 매핑을 추가한다.

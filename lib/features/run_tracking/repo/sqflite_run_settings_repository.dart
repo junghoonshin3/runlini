@@ -74,12 +74,15 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         RunLocationTrackingPreset.balanced,
       ),
       autoPauseEnabled: _bool(values[_autoPauseEnabledKey]),
-      showGhostMarker: _bool(values[_showGhostMarkerKey]),
+      showRecordRaceMarker: _bool(
+        values[_showRecordRaceMarkerKey] ?? values[_legacyShowGhostMarkerKey],
+      ),
       intervalWorkout: _intervalWorkout(values[_intervalWorkoutKey]),
       voiceCueEnabled: _boolWithDefault(values[_voiceCueEnabledKey], true),
       kmVoiceCueEnabled: _boolWithDefault(values[_kmVoiceCueEnabledKey], true),
-      ghostVoiceCueEnabled: _boolWithDefault(
-        values[_ghostVoiceCueEnabledKey],
+      recordRaceVoiceCueEnabled: _boolWithDefault(
+        values[_recordRaceVoiceCueEnabledKey] ??
+            values[_legacyGhostVoiceCueEnabledKey],
         false,
       ),
       voiceCueVolume: _voiceCueVolume(values[_voiceCueVolumeKey]),
@@ -149,7 +152,11 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
         _autoPauseEnabledKey,
         '${settings.autoPauseEnabled}',
       );
-      await _saveValue(txn, _showGhostMarkerKey, '${settings.showGhostMarker}');
+      await _saveValue(
+        txn,
+        _showRecordRaceMarkerKey,
+        '${settings.showRecordRaceMarker}',
+      );
       await _saveValue(
         txn,
         _intervalWorkoutKey,
@@ -163,8 +170,8 @@ class SqfliteRunSettingsRepository implements RunSettingsRepository {
       );
       await _saveValue(
         txn,
-        _ghostVoiceCueEnabledKey,
-        '${settings.ghostVoiceCueEnabled}',
+        _recordRaceVoiceCueEnabledKey,
+        '${settings.recordRaceVoiceCueEnabled}',
       );
       await _saveValue(txn, _voiceCueVolumeKey, '${settings.voiceCueVolume}');
       if (settings.bodyWeightKg == null) {

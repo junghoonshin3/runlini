@@ -1,5 +1,5 @@
 name: runlini
-description: "Runlini agent-first running coach bootstrap."
+description: "Runlini running coach app."
 publish_to: 'none'
 version: 1.0.0+1
 

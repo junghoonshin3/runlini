@@ -2,18 +2,18 @@ import 'dart:math' as math;
 
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 
 class RunVoiceCueFormatter {
   const RunVoiceCueFormatter._();
 
-  static String ghostStart() => '고스트런 시작';
+  static String recordRaceStart() => '기록 레이스 시작';
 
   static String kilometerSummary({
     required int kilometer,
     required double? averagePaceSecPerKm,
     required int elapsedMs,
-    int? ghostGapMs,
+    int? recordRaceGapMs,
   }) {
     final parts = <String>['$kilometer킬로미터'];
     final pace = paceSpeech(averagePaceSecPerKm);
@@ -24,9 +24,9 @@ class RunVoiceCueFormatter {
     if (elapsed != null) {
       parts.add('시간 $elapsed');
     }
-    final ghostGap = ghostGapSpeech(ghostGapMs);
-    if (ghostGap != null) {
-      parts.add(ghostGap);
+    final recordRaceGap = recordRaceGapSpeech(recordRaceGapMs);
+    if (recordRaceGap != null) {
+      parts.add(recordRaceGap);
     }
     return parts.join('. ');
   }
@@ -81,32 +81,32 @@ class RunVoiceCueFormatter {
     return parts.join(' ');
   }
 
-  static String? ghostGapSpeech(int? gapMs) {
+  static String? recordRaceGapSpeech(int? gapMs) {
     if (gapMs == null || gapMs == 0) {
       return null;
     }
     final gap = _gapSpeech(gapMs);
-    return gapMs > 0 ? '고스트보다 $gap 앞서고 있어요' : '고스트보다 $gap 뒤처지고 있어요';
+    return gapMs > 0 ? '기록 레이스보다 $gap 앞서고 있어요' : '기록 레이스보다 $gap 뒤처지고 있어요';
   }
 
-  static String ghostCompletion(RunSessionGhostSummary summary) {
-    if (summary.result == RunSessionGhostResult.level) {
-      return '고스트 코스 완료. 거의 같아요';
+  static String recordRaceCompletion(RunSessionRecordRaceSummary summary) {
+    if (summary.result == RunSessionRecordRaceResult.level) {
+      return '기록 레이스 코스 완료. 거의 같아요';
     }
-    return ghostCompletionFromGap(summary.timeGapMs);
+    return recordRaceCompletionFromGap(summary.timeGapMs);
   }
 
-  static String ghostCompletionFromGap(int? gapMs) {
+  static String recordRaceCompletionFromGap(int? gapMs) {
     if (gapMs == null) {
-      return '고스트 코스 완료';
+      return '기록 레이스 코스 완료';
     }
     if (gapMs == 0) {
-      return '고스트 코스 완료. 거의 같아요';
+      return '기록 레이스 코스 완료. 거의 같아요';
     }
     final gap = _gapSpeech(gapMs);
     return gapMs > 0
-        ? '고스트 코스 완료. 고스트보다 $gap 빨랐어요'
-        : '고스트 코스 완료. 고스트보다 $gap 늦었어요';
+        ? '기록 레이스 코스 완료. 기록 레이스보다 $gap 빨랐어요'
+        : '기록 레이스 코스 완료. 기록 레이스보다 $gap 늦었어요';
   }
 
   static String _gapSpeech(int gapMs) {

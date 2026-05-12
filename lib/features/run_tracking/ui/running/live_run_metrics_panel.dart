@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
-import 'package:runlini/features/ghost_racer/ui/ghost_race_formatters.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
+import 'package:runlini/features/record_race/ui/record_race_formatters.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/live_run_metrics_formatters.dart';
@@ -12,12 +12,12 @@ class LiveRunMetricsPanel extends StatelessWidget {
     super.key,
     required this.metrics,
     this.displaySettings = const RunDisplaySettings(),
-    this.ghostRace,
+    this.recordRace,
   });
 
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
-  final GhostRaceFrame? ghostRace;
+  final RecordRaceFrame? recordRace;
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +59,10 @@ class LiveRunMetricsPanel extends StatelessWidget {
             value: formatLiveRunElapsed(metrics.elapsedMs),
             valueKey: const Key('live-run-elapsed-value'),
           ),
-          if (ghostRace != null &&
-              ghostRace!.status != GhostRaceStatus.unavailable) ...[
+          if (recordRace != null &&
+              recordRace!.status != RecordRaceStatus.unavailable) ...[
             const SizedBox(height: 16),
-            _GhostRaceMetric(frame: ghostRace!),
+            _RecordRaceMetric(frame: recordRace!),
           ],
           const SizedBox(height: 16),
           Row(
@@ -104,16 +104,16 @@ class LiveRunMetricsPanel extends StatelessWidget {
   }
 }
 
-class _GhostRaceMetric extends StatelessWidget {
-  const _GhostRaceMetric({required this.frame});
+class _RecordRaceMetric extends StatelessWidget {
+  const _RecordRaceMetric({required this.frame});
 
-  final GhostRaceFrame frame;
+  final RecordRaceFrame frame;
 
   @override
   Widget build(BuildContext context) {
     final color = _colorFor(frame.status);
     return Container(
-      key: const Key('ghost-race-panel'),
+      key: const Key('record-race-panel'),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.graphite.withValues(alpha: 0.86),
@@ -127,8 +127,8 @@ class _GhostRaceMetric extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatGhostRaceStatus(frame.status),
-                  key: const Key('ghost-race-status-label'),
+                  formatRecordRaceStatus(frame.status),
+                  key: const Key('record-race-status-label'),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: color,
                     fontWeight: FontWeight.w900,
@@ -137,9 +137,9 @@ class _GhostRaceMetric extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   frame.isOffRoute
-                      ? '고스트 비교를 잠시 멈췄어요'
-                      : formatGhostRaceDistanceGap(frame.distanceGapM),
-                  key: const Key('ghost-race-distance-gap-value'),
+                      ? '기록 레이스 비교를 잠시 멈췄어요'
+                      : formatRecordRaceDistanceGap(frame.distanceGapM),
+                  key: const Key('record-race-distance-gap-value'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -154,8 +154,8 @@ class _GhostRaceMetric extends StatelessWidget {
           Text(
             frame.isOffRoute
                 ? '--:--'
-                : formatGhostRaceTimeGap(frame.timeGapMs),
-            key: const Key('ghost-race-time-gap-value'),
+                : formatRecordRaceTimeGap(frame.timeGapMs),
+            key: const Key('record-race-time-gap-value'),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w900,
@@ -166,17 +166,17 @@ class _GhostRaceMetric extends StatelessWidget {
     );
   }
 
-  Color _colorFor(GhostRaceStatus status) {
+  Color _colorFor(RecordRaceStatus status) {
     switch (status) {
-      case GhostRaceStatus.ahead:
+      case RecordRaceStatus.ahead:
         return AppColors.voltGreen;
-      case GhostRaceStatus.behind:
+      case RecordRaceStatus.behind:
         return AppColors.electricRed;
-      case GhostRaceStatus.level:
+      case RecordRaceStatus.level:
         return AppColors.chalk;
-      case GhostRaceStatus.offRoute:
+      case RecordRaceStatus.offRoute:
         return AppColors.orange;
-      case GhostRaceStatus.unavailable:
+      case RecordRaceStatus.unavailable:
         return AppColors.muted;
     }
   }

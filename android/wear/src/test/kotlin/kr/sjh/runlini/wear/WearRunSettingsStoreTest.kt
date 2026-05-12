@@ -21,7 +21,7 @@ class WearRunSettingsStoreTest {
             kmAlertEnabled = true,
             voiceCueEnabled = false,
             voiceCueVolume = 0.6f,
-            ghostVoiceCueEnabled = true,
+            recordRaceVoiceCueEnabled = true,
             autoPauseEnabled = true,
         )
 
@@ -60,7 +60,7 @@ class WearRunSettingsStoreTest {
                 kmAlertEnabled = true,
                 voiceCueEnabled = true,
                 voiceCueVolume = 1.0f,
-                ghostVoiceCueEnabled = false,
+                recordRaceVoiceCueEnabled = false,
                 autoPauseEnabled = false,
             ),
             store.current(),

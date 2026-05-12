@@ -29,7 +29,7 @@ Set<gmap.Polyline> googleRunnerPolylines({
   };
 }
 
-Set<gmap.Polyline> googleGhostPolylines({
+Set<gmap.Polyline> googleRecordRacePolylines({
   required List<MapCoordinate> points,
   required List<MapPolylineSegment> segments,
 }) {
@@ -45,7 +45,7 @@ Set<gmap.Polyline> googleGhostPolylines({
   return <gmap.Polyline>{
     for (var index = 0; index < routeSegments.length; index += 1)
       _googlePolyline(
-        id: 'ghost-polyline-$index',
+        id: 'record-race-polyline-$index',
         points: routeSegments[index].points,
         color: routeSegments[index].color,
         width: 10,
@@ -98,8 +98,8 @@ gmap.Polyline _googlePolyline({
 
 String _endpointMarkerId(MapRouteEndpointRole role) {
   return switch (role) {
-    MapRouteEndpointRole.start => 'ghost-route-start-marker',
-    MapRouteEndpointRole.finish => 'ghost-route-finish-marker',
-    MapRouteEndpointRole.startFinish => 'ghost-route-start-finish-marker',
+    MapRouteEndpointRole.start => 'record-race-route-start-marker',
+    MapRouteEndpointRole.finish => 'record-race-route-finish-marker',
+    MapRouteEndpointRole.startFinish => 'record-race-route-start-finish-marker',
   };
 }

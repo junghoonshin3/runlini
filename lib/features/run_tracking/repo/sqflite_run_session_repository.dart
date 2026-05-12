@@ -4,7 +4,7 @@ import 'package:runlini/core/persistence/runlini_database.dart';
 import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -184,7 +184,9 @@ ORDER BY started_at DESC
         row['sync_status'] as String?,
         RunSessionSyncStatus.localOnly,
       ),
-      ghostSummary: _ghostSummary(row['ghost_summary_json']),
+      recordRaceSummary: _recordRaceSummary(
+        row['record_race_summary_json'] ?? row['ghost_summary_json'],
+      ),
       shoeId: row['shoe_id'] as String?,
     );
   }

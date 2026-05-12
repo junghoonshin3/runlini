@@ -82,8 +82,8 @@ class _RoutePreviewBody extends ConsumerWidget {
         mapCenter: centerOfRoute(routePoints),
         currentRunnerPolylinePoints: routePoints,
         currentRunnerPolylineSegments: routeSegments,
-        ghostPolylinePoints: const <MapCoordinate>[],
-        ghostPolylineSegments: const [],
+        recordRacePolylinePoints: const <MapCoordinate>[],
+        recordRacePolylineSegments: const [],
       );
     }
 

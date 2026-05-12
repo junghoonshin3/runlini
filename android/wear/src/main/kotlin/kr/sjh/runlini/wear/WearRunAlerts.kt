@@ -46,7 +46,7 @@ class WearRunAlertController(
     private var lastIntervalStepLabel: String? = null
     private var speechCycleActive: Boolean = false
     private var speechEmittedInCycle: Boolean = false
-    private val ghostEventEngine = WearGhostRaceEventEngine()
+    private val recordRaceEventEngine = WearRecordRaceEventEngine()
 
     fun beginAlertCycle() {
         speechCycleActive = true
@@ -58,7 +58,7 @@ class WearRunAlertController(
         lastIntervalStepLabel = null
         speechCycleActive = false
         speechEmittedInCycle = false
-        ghostEventEngine.reset()
+        recordRaceEventEngine.reset()
     }
 
     fun onDistanceChanged(
@@ -66,8 +66,8 @@ class WearRunAlertController(
         averagePaceSecPerKm: Double?,
         settings: WearRunSettings,
         elapsedMs: Long? = null,
-        isGhostRun: Boolean = false,
-        ghostFrame: WearGhostFrame? = null,
+        isRecordRaceRun: Boolean = false,
+        recordRaceFrame: WearRecordRaceFrame? = null,
     ): Boolean {
         val currentKm = floor(distanceM / 1000.0).toInt()
         if (currentKm <= 0 || currentKm <= lastAlertedKm) return false
@@ -81,27 +81,27 @@ class WearRunAlertController(
                     kilometer = currentKm,
                     averagePaceSecPerKm = averagePaceSecPerKm,
                     elapsedMs = elapsedMs,
-                    ghostGapMs = if (isGhostRun && settings.ghostVoiceCueEnabled) {
-                        ghostGapMsForSpeech(ghostFrame)
+                    recordRaceGapMs = if (isRecordRaceRun && settings.recordRaceVoiceCueEnabled) {
+                        recordRaceGapMsForSpeech(recordRaceFrame)
                     } else {
                         null
                     },
                 ),
                 volume = settings.voiceCueVolume,
-                useCycleBudget = isGhostRun,
+                useCycleBudget = isRecordRaceRun,
             )
         }
         return false
     }
 
-    fun onGhostFrame(
-        frame: WearGhostFrame?,
+    fun onRecordRaceFrame(
+        frame: WearRecordRaceFrame?,
         settings: WearRunSettings,
-        isGhostRun: Boolean,
+        isRecordRaceRun: Boolean,
         nowMs: Long = System.currentTimeMillis(),
     ): Boolean {
-        if (!isGhostRun) return false
-        val events = ghostEventEngine.eventsFor(
+        if (!isRecordRaceRun) return false
+        val events = recordRaceEventEngine.eventsFor(
             frame = frame,
             isRunning = true,
             nowMs = nowMs,
@@ -110,9 +110,9 @@ class WearRunAlertController(
         if (settings.vibrationEnabled) {
             events.forEach { _ -> haptics.tick() }
         }
-        if (settings.voiceCueEnabled && settings.ghostVoiceCueEnabled) {
-            val event = events.minByOrNull { ghostEventPriority(it.type) } ?: return false
-            val text = WearRunVoiceCueFormatter.ghostEvent(event) ?: return false
+        if (settings.voiceCueEnabled && settings.recordRaceVoiceCueEnabled) {
+            val event = events.minByOrNull { recordRaceEventPriority(it.type) } ?: return false
+            val text = WearRunVoiceCueFormatter.recordRaceEvent(event) ?: return false
             return speak(text, settings.voiceCueVolume)
         }
         return false
@@ -121,7 +121,7 @@ class WearRunAlertController(
     fun onIntervalFrame(
         frame: WearIntervalFrame?,
         settings: WearRunSettings,
-        isGhostRun: Boolean = false,
+        isRecordRaceRun: Boolean = false,
     ): Boolean {
         val label = WearIntervalFormatters.stepLabel(frame?.step)
         if (frame == null || label == lastIntervalStepLabel) return false
@@ -129,40 +129,40 @@ class WearRunAlertController(
         if (settings.vibrationEnabled) {
             haptics.tick()
         }
-        if (!isGhostRun && settings.voiceCueEnabled) {
+        if (!isRecordRaceRun && settings.voiceCueEnabled) {
             speech.speak(label, settings.voiceCueVolume)
             return true
         }
         return false
     }
 
-    fun onGhostCompleted(
+    fun onRecordRaceCompleted(
         settings: WearRunSettings,
-        isGhostRun: Boolean,
-        frame: WearGhostFrame? = null,
+        isRecordRaceRun: Boolean,
+        frame: WearRecordRaceFrame? = null,
     ): Boolean {
-        if (isGhostRun && settings.vibrationEnabled) {
+        if (isRecordRaceRun && settings.vibrationEnabled) {
             haptics.tick()
         }
-        if (isGhostRun && settings.voiceCueEnabled && settings.ghostVoiceCueEnabled) {
+        if (isRecordRaceRun && settings.voiceCueEnabled && settings.recordRaceVoiceCueEnabled) {
             return speak(
-                WearRunVoiceCueFormatter.ghostCompleted(frame),
+                WearRunVoiceCueFormatter.recordRaceCompleted(frame),
                 settings.voiceCueVolume,
             )
         }
         return false
     }
 
-    private fun ghostGapMsForSpeech(frame: WearGhostFrame?): Long? {
-        if (frame == null || !frame.startConfirmed || frame.status == WearGhostStatus.OffRoute) {
+    private fun recordRaceGapMsForSpeech(frame: WearRecordRaceFrame?): Long? {
+        if (frame == null || !frame.startConfirmed || frame.status == WearRecordRaceStatus.OffRoute) {
             return null
         }
         return when (frame.status) {
-            WearGhostStatus.Ahead,
-            WearGhostStatus.Behind -> frame.timeGapMs
-            WearGhostStatus.Level,
-            WearGhostStatus.OffRoute,
-            WearGhostStatus.Unavailable -> null
+            WearRecordRaceStatus.Ahead,
+            WearRecordRaceStatus.Behind -> frame.timeGapMs
+            WearRecordRaceStatus.Level,
+            WearRecordRaceStatus.OffRoute,
+            WearRecordRaceStatus.Unavailable -> null
         }
     }
 
@@ -181,15 +181,15 @@ class WearRunAlertController(
         return true
     }
 
-    private fun ghostEventPriority(type: WearGhostRaceEventType): Int {
+    private fun recordRaceEventPriority(type: WearRecordRaceEventType): Int {
         return when (type) {
-            WearGhostRaceEventType.Completed -> 0
-            WearGhostRaceEventType.OffRoute,
-            WearGhostRaceEventType.BackOnRoute -> 10
-            WearGhostRaceEventType.Overtake,
-            WearGhostRaceEventType.LostLead -> 20
-            WearGhostRaceEventType.Last200m -> 30
-            WearGhostRaceEventType.Last500m -> 31
+            WearRecordRaceEventType.Completed -> 0
+            WearRecordRaceEventType.OffRoute,
+            WearRecordRaceEventType.BackOnRoute -> 10
+            WearRecordRaceEventType.Overtake,
+            WearRecordRaceEventType.LostLead -> 20
+            WearRecordRaceEventType.Last200m -> 30
+            WearRecordRaceEventType.Last500m -> 31
         }
     }
 
@@ -210,7 +210,7 @@ internal object WearRunVoiceCueFormatter {
         kilometer: Int,
         averagePaceSecPerKm: Double?,
         elapsedMs: Long? = null,
-        ghostGapMs: Long? = null,
+        recordRaceGapMs: Long? = null,
     ): String {
         val parts = mutableListOf("${kilometer}킬로미터")
         paceSpeech(averagePaceSecPerKm)?.let {
@@ -219,55 +219,55 @@ internal object WearRunVoiceCueFormatter {
         elapsedSpeech(elapsedMs)?.let {
             parts += "시간 $it"
         }
-        ghostGapPhrase(ghostGapMs)?.let {
+        recordRaceGapPhrase(recordRaceGapMs)?.let {
             parts += it
         }
         return parts.joinToString(". ")
     }
 
-    fun ghostStatus(frame: WearGhostFrame): String? {
+    fun recordRaceStatus(frame: WearRecordRaceFrame): String? {
         return when (frame.status) {
-            WearGhostStatus.Ahead -> "앞섬 ${gapSpeech(frame.timeGapMs)}"
-            WearGhostStatus.Behind -> "뒤처짐 ${gapSpeech(frame.timeGapMs)}"
-            WearGhostStatus.Level -> "접전"
-            WearGhostStatus.OffRoute -> "경로 이탈"
-            WearGhostStatus.Unavailable -> null
+            WearRecordRaceStatus.Ahead -> "앞섬 ${gapSpeech(frame.timeGapMs)}"
+            WearRecordRaceStatus.Behind -> "뒤처짐 ${gapSpeech(frame.timeGapMs)}"
+            WearRecordRaceStatus.Level -> "접전"
+            WearRecordRaceStatus.OffRoute -> "경로 이탈"
+            WearRecordRaceStatus.Unavailable -> null
         }
     }
 
-    fun ghostEvent(event: WearGhostRaceEvent): String? {
+    fun recordRaceEvent(event: WearRecordRaceEvent): String? {
         val frame = event.frame
-        val gap = ghostGapPhrase(frame)
+        val gap = recordRaceGapPhrase(frame)
         return when (event.type) {
-            WearGhostRaceEventType.OffRoute -> "경로를 벗어났어요"
-            WearGhostRaceEventType.BackOnRoute -> "경로로 돌아왔어요"
-            WearGhostRaceEventType.Overtake -> gap?.let {
-                "고스트를 추월했어요. 지금은 $it"
-            } ?: "고스트를 추월했어요"
-            WearGhostRaceEventType.LostLead -> gap?.let {
-                "고스트에게 역전당했어요. 지금은 $it"
-            } ?: "고스트에게 역전당했어요"
-            WearGhostRaceEventType.Last500m -> "마지막 500미터"
-            WearGhostRaceEventType.Last200m -> "마지막 200미터"
-            WearGhostRaceEventType.Completed -> ghostCompleted(frame)
+            WearRecordRaceEventType.OffRoute -> "경로를 벗어났어요"
+            WearRecordRaceEventType.BackOnRoute -> "경로로 돌아왔어요"
+            WearRecordRaceEventType.Overtake -> gap?.let {
+                "기록 레이스를 추월했어요. 지금은 $it"
+            } ?: "기록 레이스를 추월했어요"
+            WearRecordRaceEventType.LostLead -> gap?.let {
+                "기록 레이스에게 역전당했어요. 지금은 $it"
+            } ?: "기록 레이스에게 역전당했어요"
+            WearRecordRaceEventType.Last500m -> "마지막 500미터"
+            WearRecordRaceEventType.Last200m -> "마지막 200미터"
+            WearRecordRaceEventType.Completed -> recordRaceCompleted(frame)
         }
     }
 
-    fun ghostCompleted(frame: WearGhostFrame?): String {
-        val targetFrame = frame ?: return "고스트 코스 완료"
-        if (targetFrame.timeGapMs == 0L || targetFrame.status == WearGhostStatus.Level) {
-            return "고스트 코스 완료. 거의 같아요"
+    fun recordRaceCompleted(frame: WearRecordRaceFrame?): String {
+        val targetFrame = frame ?: return "기록 레이스 코스 완료"
+        if (targetFrame.timeGapMs == 0L || targetFrame.status == WearRecordRaceStatus.Level) {
+            return "기록 레이스 코스 완료. 거의 같아요"
         }
         return when (targetFrame.status) {
-            WearGhostStatus.Ahead -> {
-                "고스트 코스 완료. 고스트보다 ${gapSpeech(targetFrame.timeGapMs)} 빨랐어요"
+            WearRecordRaceStatus.Ahead -> {
+                "기록 레이스 코스 완료. 기록 레이스보다 ${gapSpeech(targetFrame.timeGapMs)} 빨랐어요"
             }
-            WearGhostStatus.Behind -> {
-                "고스트 코스 완료. 고스트보다 ${gapSpeech(targetFrame.timeGapMs)} 늦었어요"
+            WearRecordRaceStatus.Behind -> {
+                "기록 레이스 코스 완료. 기록 레이스보다 ${gapSpeech(targetFrame.timeGapMs)} 늦었어요"
             }
-            WearGhostStatus.Level -> "고스트 코스 완료. 거의 같아요"
-            WearGhostStatus.OffRoute,
-            WearGhostStatus.Unavailable -> "고스트 코스 완료"
+            WearRecordRaceStatus.Level -> "기록 레이스 코스 완료. 거의 같아요"
+            WearRecordRaceStatus.OffRoute,
+            WearRecordRaceStatus.Unavailable -> "기록 레이스 코스 완료"
         }
     }
 
@@ -311,25 +311,25 @@ internal object WearRunVoiceCueFormatter {
         }
     }
 
-    private fun ghostGapPhrase(frame: WearGhostFrame): String? {
-        return ghostGapPhrase(
+    private fun recordRaceGapPhrase(frame: WearRecordRaceFrame): String? {
+        return recordRaceGapPhrase(
             when (frame.status) {
-                WearGhostStatus.Ahead,
-                WearGhostStatus.Behind -> frame.timeGapMs
-                WearGhostStatus.Level,
-                WearGhostStatus.OffRoute,
-                WearGhostStatus.Unavailable -> null
+                WearRecordRaceStatus.Ahead,
+                WearRecordRaceStatus.Behind -> frame.timeGapMs
+                WearRecordRaceStatus.Level,
+                WearRecordRaceStatus.OffRoute,
+                WearRecordRaceStatus.Unavailable -> null
             },
         )
     }
 
-    private fun ghostGapPhrase(gapMs: Long?): String? {
+    private fun recordRaceGapPhrase(gapMs: Long?): String? {
         if (gapMs == null || gapMs == 0L) return null
         val gap = gapSpeech(gapMs)
         return if (gapMs > 0L) {
-            "고스트보다 $gap 앞서고 있어요"
+            "기록 레이스보다 $gap 앞서고 있어요"
         } else {
-            "고스트보다 $gap 뒤처지고 있어요"
+            "기록 레이스보다 $gap 뒤처지고 있어요"
         }
     }
 }

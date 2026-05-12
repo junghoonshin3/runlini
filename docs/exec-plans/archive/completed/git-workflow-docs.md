@@ -2,23 +2,21 @@
 
 ## Purpose
 
-Document how humans and agents should use Git in Runlini: branch choices,
-commit boundaries, validation, push behavior, and safety rules for dirty
-worktrees.
+Document how contributors should use Git in Runlini: branch choices, commit
+boundaries, validation, push behavior, and safety rules for dirty worktrees.
 
 ## Context And Orientation
 
-- Runlini already has agent-first guidance in `AGENTS.md`, `README.md`, and
-  `PLANS.md`.
+- Runlini already has project guidance in `README.md` and `ARCHITECTURE.md`.
 - The repo uses `main` with `origin` on GitHub.
-- Agents frequently work in a dirty worktree, so Git rules must be explicit
-  about not reverting unrelated changes.
+- Dirty worktrees are common, so Git rules must be explicit about not reverting
+  unrelated changes.
 
 ## Progress
 
 - [x] Inspect existing repo guide docs.
 - [x] Add `docs/development/git-workflow.md`.
-- [x] Link the Git workflow from `AGENTS.md` and `README.md`.
+- [x] Link the Git workflow from `README.md`.
 - [x] Run lightweight verification.
 - [x] Rework the draft after collaborative decisions.
 

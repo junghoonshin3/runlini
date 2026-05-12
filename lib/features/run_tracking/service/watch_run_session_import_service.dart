@@ -46,7 +46,7 @@ class WatchRunSessionImportService {
       captureSource: draft.platform.captureSource,
       externalId: _nonEmpty(draft.externalWorkoutId),
       syncStatus: RunSessionSyncStatus.localOnly,
-      ghostSummary: draft.ghostSummary,
+      recordRaceSummary: draft.recordRaceSummary,
       shoeId: shoeId,
     );
   }

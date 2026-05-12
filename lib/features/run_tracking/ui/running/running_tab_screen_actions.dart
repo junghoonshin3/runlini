@@ -6,7 +6,7 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     required RunPlaybackState playbackState,
   }) async {
     if (playbackState.hasActiveSession) {
-      await _stopActiveRunWithGhostSummary();
+      await _stopActiveRunWithRecordRaceSummary();
       return;
     }
 
@@ -14,14 +14,14 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
       return;
     }
 
-    if (!await _resolveGhostIntervalConflict(context)) {
+    if (!await _resolveRecordRaceIntervalConflict(context)) {
       return;
     }
     if (!context.mounted) {
       return;
     }
 
-    if (!await _ensureGhostRunAccuracy(context)) {
+    if (!await _ensureRecordRaceRunAccuracy(context)) {
       return;
     }
 
@@ -46,8 +46,8 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     }
   }
 
-  Future<bool> _resolveGhostIntervalConflict(BuildContext context) async {
-    if (!_hasSelectedGhostRun()) {
+  Future<bool> _resolveRecordRaceIntervalConflict(BuildContext context) async {
+    if (!_hasSelectedRecordRaceRun()) {
       return true;
     }
 
@@ -59,7 +59,7 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
       return true;
     }
 
-    final confirmed = await confirmDisableIntervalForGhost(context);
+    final confirmed = await confirmDisableIntervalForRecordRace(context);
     if (!context.mounted || !confirmed) {
       return false;
     }
@@ -69,8 +69,8 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     return true;
   }
 
-  Future<bool> _ensureGhostRunAccuracy(BuildContext context) async {
-    if (!_hasSelectedGhostRun()) {
+  Future<bool> _ensureRecordRaceRunAccuracy(BuildContext context) async {
+    if (!_hasSelectedRecordRaceRun()) {
       return true;
     }
 
@@ -86,17 +86,17 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          key: const Key('ghost-run-accuracy-dialog'),
+          key: const Key('record-race-run-accuracy-dialog'),
           backgroundColor: AppColors.panel,
-          title: const Text('고스트런은 정확한 위치가 필요해요'),
-          content: const Text('고스트와 비교하려면 위치 업데이트를 정확으로 설정해 주세요.'),
+          title: const Text('기록 레이스는 정확한 위치가 필요해요'),
+          content: const Text('기록 레이스와 비교하려면 위치 업데이트를 정확으로 설정해 주세요.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('취소'),
             ),
             TextButton(
-              key: const Key('ghost-run-accuracy-settings-button'),
+              key: const Key('record-race-run-accuracy-settings-button'),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('설정으로 이동'),
             ),
@@ -113,31 +113,38 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     return false;
   }
 
-  bool _hasSelectedGhostRun() {
-    final ghostSettings = ref.read(ghostSettingsProvider);
-    return ref.read(runMapStaticStateProvider).value?.selectedGhostSession !=
+  bool _hasSelectedRecordRaceRun() {
+    final recordRaceSettings = ref.read(recordRaceSettingsProvider);
+    return ref
+                .read(runMapStaticStateProvider)
+                .value
+                ?.selectedRecordRaceSession !=
             null ||
-        (ghostSettings.enabled && ghostSettings.selectedSessionId != null);
+        (recordRaceSettings.enabled &&
+            recordRaceSettings.selectedSessionId != null);
   }
 
-  Future<void> _stopActiveRunWithGhostSummary({
-    RunSessionGhostSummary? preferredGhostSummary,
+  Future<void> _stopActiveRunWithRecordRaceSummary({
+    RunSessionRecordRaceSummary? preferredRecordRaceSummary,
   }) async {
-    final ghostFrame = ref.read(ghostRaceFrameProvider);
-    final selectedGhostSession = ref
+    final recordRaceFrame = ref.read(recordRaceFrameProvider);
+    final selectedRecordRaceSession = ref
         .read(runMapStaticStateProvider)
         .value
-        ?.selectedGhostSession;
+        ?.selectedRecordRaceSession;
     final completionSummary = ref
         .read(runPlaybackControllerProvider)
-        .ghostCompletionSummary;
+        .recordRaceCompletionSummary;
     await ref
         .read(runPlaybackControllerProvider.notifier)
         .stop(
-          ghostSummary:
-              preferredGhostSummary ??
+          recordRaceSummary:
+              preferredRecordRaceSummary ??
               completionSummary ??
-              runSessionGhostSummaryFromFrame(ghostFrame, selectedGhostSession),
+              runSessionRecordRaceSummaryFromFrame(
+                recordRaceFrame,
+                selectedRecordRaceSession,
+              ),
         );
   }
 

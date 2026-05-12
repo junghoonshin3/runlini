@@ -54,7 +54,7 @@ LiveLocationSample _sample({
 
 void main() {
   test(
-    'run map view state follows live location while preserving runner and ghost polylines',
+    'run map view state follows live location while preserving runner and recordRace polylines',
     () async {
       final container = ProviderContainer(
         overrides: [
@@ -78,11 +78,11 @@ void main() {
                 latitude: 37.0,
                 longitude: 127.0,
               ),
-              ghostPolylinePoints: <MapCoordinate>[
+              recordRacePolylinePoints: <MapCoordinate>[
                 MapCoordinate(latitude: 37.2, longitude: 127.2),
                 MapCoordinate(latitude: 37.3, longitude: 127.3),
               ],
-              ghostPolylineSegments: <MapPolylineSegment>[
+              recordRacePolylineSegments: <MapPolylineSegment>[
                 MapPolylineSegment(
                   points: <MapCoordinate>[
                     MapCoordinate(latitude: 37.2, longitude: 127.2),
@@ -91,7 +91,7 @@ void main() {
                   color: AppColors.voltGreen,
                 ),
               ],
-              ghostRouteEndpointMarkers: <MapRouteEndpointMarker>[
+              recordRaceRouteEndpointMarkers: <MapRouteEndpointMarker>[
                 MapRouteEndpointMarker(
                   coordinate: MapCoordinate(latitude: 37.2, longitude: 127.2),
                   role: MapRouteEndpointRole.start,
@@ -116,11 +116,11 @@ void main() {
         const MapCoordinate(latitude: 37.55, longitude: 126.97),
       );
       expect(mapViewState.currentRunnerPolylinePoints, hasLength(2));
-      expect(mapViewState.ghostPolylinePoints, hasLength(2));
-      expect(mapViewState.ghostPolylineSegments, hasLength(1));
-      expect(mapViewState.ghostRouteEndpointMarkers, hasLength(1));
+      expect(mapViewState.recordRacePolylinePoints, hasLength(2));
+      expect(mapViewState.recordRacePolylineSegments, hasLength(1));
+      expect(mapViewState.recordRaceRouteEndpointMarkers, hasLength(1));
       expect(
-        mapViewState.ghostPolylineSegments.first.color,
+        mapViewState.recordRacePolylineSegments.first.color,
         AppColors.voltGreen,
       );
     },
@@ -148,7 +148,7 @@ void main() {
                 latitude: 37.44,
                 longitude: 127.44,
               ),
-              ghostPolylinePoints: <MapCoordinate>[],
+              recordRacePolylinePoints: <MapCoordinate>[],
             );
           }),
         ],
@@ -193,8 +193,8 @@ void main() {
         const MapCoordinate(latitude: 37.5665, longitude: 126.9780),
       );
       expect(mapViewState.runnerMarkerPoint, isNull);
-      expect(mapViewState.ghostPolylinePoints, isEmpty);
-      expect(mapViewState.ghostPolylineSegments, isEmpty);
+      expect(mapViewState.recordRacePolylinePoints, isEmpty);
+      expect(mapViewState.recordRacePolylineSegments, isEmpty);
     },
   );
 
@@ -221,7 +221,7 @@ void main() {
       const MapCoordinate(latitude: 37.5665, longitude: 126.9780),
     );
     expect(mapViewState.runnerMarkerPoint, isNull);
-    expect(mapViewState.ghostPolylinePoints, isEmpty);
-    expect(mapViewState.ghostPolylineSegments, isEmpty);
+    expect(mapViewState.recordRacePolylinePoints, isEmpty);
+    expect(mapViewState.recordRacePolylineSegments, isEmpty);
   });
 }

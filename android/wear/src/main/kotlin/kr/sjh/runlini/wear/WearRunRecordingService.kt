@@ -52,8 +52,8 @@ class WearRunRecordingService : Service() {
         controller.startRun()
     }
 
-    fun startGhostRun() {
-        controller.startGhostRun()
+    fun startRecordRaceRun() {
+        controller.startRecordRaceRun()
     }
 
     fun pauseRun() {
@@ -69,8 +69,8 @@ class WearRunRecordingService : Service() {
         controller.stopRun()
     }
 
-    fun continueAfterGhostCompletion() {
-        controller.continueAfterGhostCompletion()
+    fun continueAfterRecordRaceCompletion() {
+        controller.continueAfterRecordRaceCompletion()
     }
 
     fun saveDraft() {
@@ -101,8 +101,8 @@ class WearRunRecordingService : Service() {
         controller.playVoiceTestCue(volume)
     }
 
-    fun selectGhostConfig(id: String) {
-        controller.selectGhostConfig(id)
+    fun selectRecordRaceConfig(id: String) {
+        controller.selectRecordRaceConfig(id)
     }
 
     inner class LocalBinder : Binder() {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_formatter.dart';
@@ -100,19 +100,19 @@ RunVoiceCueSnapshot _snapshot({
   RunPlaybackState? playbackState,
   LiveRunMetrics? metrics,
   RunIntervalFrame? intervalFrame,
-  GhostRaceFrame? ghostFrame,
+  RecordRaceFrame? recordRaceFrame,
   RunSettingsState settings = const RunSettingsState(),
   DateTime? now,
-  bool isGhostRun = false,
+  bool isRecordRaceRun = false,
 }) {
   return RunVoiceCueSnapshot(
     playbackState: playbackState ?? _playback(),
     metrics: metrics ?? _metrics(),
     intervalFrame: intervalFrame,
-    ghostFrame: ghostFrame,
+    recordRaceFrame: recordRaceFrame,
     settings: settings,
     now: now ?? DateTime(2026, 5, 3),
-    isGhostRun: isGhostRun,
+    isRecordRaceRun: isRecordRaceRun,
   );
 }
 

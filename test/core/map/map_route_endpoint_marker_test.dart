@@ -1,4 +1,4 @@
-// 고스트 코스 시작/종료 마커 판정 규칙을 검증한다.
+// 기록 레이스 코스 시작/종료 마커 판정 규칙을 검증한다.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_route_endpoint_marker.dart';

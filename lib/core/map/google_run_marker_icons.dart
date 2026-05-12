@@ -9,7 +9,7 @@ import 'package:runlini/core/map/run_route_endpoint_icon_bytes.dart';
 
 abstract final class GoogleRunMarkerIcons {
   static const double _runnerMarkerSize = 42;
-  static const double _ghostMarkerSize = 30;
+  static const double _recordRaceMarkerSize = 30;
   static const Color _runnerMarkerBlue = Color(0xFF1A73E8);
 
   static Future<gmap.BitmapDescriptor> runner({
@@ -62,10 +62,10 @@ abstract final class GoogleRunMarkerIcons {
     );
   }
 
-  static Future<gmap.BitmapDescriptor> ghost({
+  static Future<gmap.BitmapDescriptor> recordRace({
     required double devicePixelRatio,
   }) async {
-    final int imageSizePx = (_ghostMarkerSize * devicePixelRatio).round();
+    final int imageSizePx = (_recordRaceMarkerSize * devicePixelRatio).round();
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final size = Size(imageSizePx.toDouble(), imageSizePx.toDouble());
@@ -101,8 +101,8 @@ abstract final class GoogleRunMarkerIcons {
 
     return gmap.BitmapDescriptor.bytes(
       Uint8List.view(byteData.buffer),
-      width: _ghostMarkerSize,
-      height: _ghostMarkerSize,
+      width: _recordRaceMarkerSize,
+      height: _recordRaceMarkerSize,
     );
   }
 

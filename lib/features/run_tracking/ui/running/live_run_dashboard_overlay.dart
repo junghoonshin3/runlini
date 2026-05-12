@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -13,14 +13,14 @@ class LiveRunDashboardOverlay extends StatefulWidget {
     required this.metrics,
     required this.displaySettings,
     required this.onAdvanceInterval,
-    this.ghostRace,
+    this.recordRace,
     this.intervalFrame,
   });
 
   final String? sessionId;
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
-  final GhostRaceFrame? ghostRace;
+  final RecordRaceFrame? recordRace;
   final RunIntervalFrame? intervalFrame;
   final VoidCallback onAdvanceInterval;
 
@@ -46,14 +46,14 @@ class _LiveRunDashboardOverlayState extends State<LiveRunDashboardOverlay> {
         ? LiveRunDashboardExpanded(
             metrics: widget.metrics,
             displaySettings: widget.displaySettings,
-            ghostRace: widget.ghostRace,
+            recordRace: widget.recordRace,
             intervalFrame: widget.intervalFrame,
             onAdvanceInterval: widget.onAdvanceInterval,
           )
         : LiveRunDashboardCollapsed(
             metrics: widget.metrics,
             displaySettings: widget.displaySettings,
-            ghostRace: widget.ghostRace,
+            recordRace: widget.recordRace,
           );
 
     return AnimatedSize(

@@ -15,9 +15,9 @@ Map<String, Object?> _sessionRow(RunSession session) {
     'external_id': session.externalId,
     'last_synced_at': session.lastSyncedAt?.toIso8601String(),
     'sync_status': session.syncStatus.name,
-    'ghost_summary_json': session.ghostSummary == null
+    'record_race_summary_json': session.recordRaceSummary == null
         ? null
-        : jsonEncode(session.ghostSummary!.toJson()),
+        : jsonEncode(session.recordRaceSummary!.toJson()),
     'shoe_id': session.shoeId,
   };
 }
@@ -140,11 +140,11 @@ bool _isLikelyDeletedSession(
       distanceDeltaM <= distanceToleranceM;
 }
 
-RunSessionGhostSummary? _ghostSummary(Object? value) {
+RunSessionRecordRaceSummary? _recordRaceSummary(Object? value) {
   if (value == null) {
     return null;
   }
-  return RunSessionGhostSummary.fromJson(
+  return RunSessionRecordRaceSummary.fromJson(
     jsonDecode(value as String) as Map<String, dynamic>,
   );
 }

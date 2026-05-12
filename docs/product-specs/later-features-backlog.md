@@ -1,7 +1,7 @@
 # Later Features Backlog
 
 These items can make Runlini broader and richer, but they should wait until the
-core running, ghost, and analysis experience is reliable.
+core running, record race, and analysis experience is reliable.
 
 ## Safety and Sharing
 
@@ -42,4 +42,4 @@ core running, ghost, and analysis experience is reliable.
 ## Notes
 
 - Any later feature that adds field risk should stay behind reliability work.
-- Features in this file should not slow down the near-term ghost-running core.
+- Features in this file should not slow down the near-term record-race core.

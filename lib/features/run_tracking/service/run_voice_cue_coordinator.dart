@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:runlini/features/ghost_racer/service/ghost_race_event_engine.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/service/record_race_event_engine.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_formatter.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
@@ -29,26 +29,26 @@ class RunVoiceCueSnapshot {
     required this.playbackState,
     required this.metrics,
     required this.intervalFrame,
-    required this.ghostFrame,
+    required this.recordRaceFrame,
     required this.settings,
     required this.now,
-    this.isGhostRun = false,
+    this.isRecordRaceRun = false,
   });
 
   final RunPlaybackState playbackState;
   final LiveRunMetrics? metrics;
   final RunIntervalFrame? intervalFrame;
-  final GhostRaceFrame? ghostFrame;
+  final RecordRaceFrame? recordRaceFrame;
   final RunSettingsState settings;
   final DateTime now;
-  final bool isGhostRun;
+  final bool isRecordRaceRun;
 }
 
 class RunVoiceCueCoordinator {
   String? _activeSessionId;
   int _lastSpokenKm = 0;
   String? _lastIntervalStepKey;
-  final GhostRaceEventEngine _ghostEventEngine = GhostRaceEventEngine();
+  final RecordRaceEventEngine _recordRaceEventEngine = RecordRaceEventEngine();
 
   List<RunVoiceCue> cuesFor(RunVoiceCueSnapshot snapshot) {
     final playback = snapshot.playbackState;
@@ -74,30 +74,32 @@ class RunVoiceCueCoordinator {
       runVoiceCueVolumeMax,
     );
     final safeVolume = volume.toDouble();
-    final ghostSpeechEnabled =
-        snapshot.isGhostRun && snapshot.settings.ghostVoiceCueEnabled;
+    final recordRaceSpeechEnabled =
+        snapshot.isRecordRaceRun && snapshot.settings.recordRaceVoiceCueEnabled;
 
     final kmCue = _kilometerCue(
       metrics,
       snapshot.settings,
-      ghostFrame: ghostSpeechEnabled ? snapshot.ghostFrame : null,
+      recordRaceFrame: recordRaceSpeechEnabled
+          ? snapshot.recordRaceFrame
+          : null,
     );
 
-    if (snapshot.isGhostRun) {
-      final ghostEvents = _ghostEventEngine.eventsFor(
+    if (snapshot.isRecordRaceRun) {
+      final recordRaceEvents = _recordRaceEventEngine.eventsFor(
         sessionId: activeSessionId,
-        frame: snapshot.ghostFrame,
+        frame: snapshot.recordRaceFrame,
         isRunning: true,
         now: snapshot.now,
-        completionPending: playback.ghostCompletionPromptPending,
+        completionPending: playback.recordRaceCompletionPromptPending,
       );
-      if (ghostSpeechEnabled) {
-        final ghostCue = _highestPriorityGhostCue(
-          ghostEvents,
+      if (recordRaceSpeechEnabled) {
+        final recordRaceCue = _highestPriorityRecordRaceCue(
+          recordRaceEvents,
           volume: safeVolume,
         );
-        if (ghostCue != null) {
-          return [ghostCue];
+        if (recordRaceCue != null) {
+          return [recordRaceCue];
         }
       }
       if (kmCue != null) {
@@ -133,13 +135,13 @@ class RunVoiceCueCoordinator {
     _activeSessionId = null;
     _lastSpokenKm = 0;
     _lastIntervalStepKey = null;
-    _ghostEventEngine.reset();
+    _recordRaceEventEngine.reset();
   }
 
   String? _kilometerCue(
     LiveRunMetrics metrics,
     RunSettingsState settings, {
-    GhostRaceFrame? ghostFrame,
+    RecordRaceFrame? recordRaceFrame,
   }) {
     if (!settings.kmVoiceCueEnabled) {
       return null;
@@ -153,7 +155,7 @@ class RunVoiceCueCoordinator {
       kilometer: currentKm,
       averagePaceSecPerKm: metrics.averagePaceSecPerKm,
       elapsedMs: metrics.elapsedMs,
-      ghostGapMs: _ghostGapMsForSpeech(ghostFrame),
+      recordRaceGapMs: _recordRaceGapMsForSpeech(recordRaceFrame),
     );
   }
 
@@ -172,37 +174,37 @@ class RunVoiceCueCoordinator {
     return RunVoiceCueFormatter.intervalStepLabel(step);
   }
 
-  RunVoiceCue? _ghostCue(GhostRaceEvent event, {required double volume}) {
-    final gap = RunVoiceCueFormatter.ghostGapSpeech(
-      _ghostGapMsForSpeech(event.frame),
+  RunVoiceCue? _recordRaceCue(RecordRaceEvent event, {required double volume}) {
+    final gap = RunVoiceCueFormatter.recordRaceGapSpeech(
+      _recordRaceGapMsForSpeech(event.frame),
     );
     final text = switch (event.type) {
-      GhostRaceEventType.offRoute => '경로를 벗어났어요',
-      GhostRaceEventType.backOnRoute => '경로로 돌아왔어요',
-      GhostRaceEventType.overtake =>
-        gap == null ? '고스트를 추월했어요' : '고스트를 추월했어요. 지금은 $gap',
-      GhostRaceEventType.lostLead =>
-        gap == null ? '고스트에게 역전당했어요' : '고스트에게 역전당했어요. 지금은 $gap',
-      GhostRaceEventType.last500m => '마지막 500미터',
-      GhostRaceEventType.last200m => '마지막 200미터',
-      GhostRaceEventType.completed =>
-        RunVoiceCueFormatter.ghostCompletionFromGap(event.frame.timeGapMs),
+      RecordRaceEventType.offRoute => '경로를 벗어났어요',
+      RecordRaceEventType.backOnRoute => '경로로 돌아왔어요',
+      RecordRaceEventType.overtake =>
+        gap == null ? '기록 레이스를 추월했어요' : '기록 레이스를 추월했어요. 지금은 $gap',
+      RecordRaceEventType.lostLead =>
+        gap == null ? '기록 레이스에게 역전당했어요' : '기록 레이스에게 역전당했어요. 지금은 $gap',
+      RecordRaceEventType.last500m => '마지막 500미터',
+      RecordRaceEventType.last200m => '마지막 200미터',
+      RecordRaceEventType.completed =>
+        RunVoiceCueFormatter.recordRaceCompletionFromGap(event.frame.timeGapMs),
     };
     return RunVoiceCue(
       text: text,
       volume: volume,
-      priority: _ghostCuePriority(event.type),
+      priority: _recordRaceCuePriority(event.type),
     );
   }
 
-  RunVoiceCue? _highestPriorityGhostCue(
-    List<GhostRaceEvent> events, {
+  RunVoiceCue? _highestPriorityRecordRaceCue(
+    List<RecordRaceEvent> events, {
     required double volume,
   }) {
-    GhostRaceEvent? selected;
+    RecordRaceEvent? selected;
     var selectedPriority = 1 << 30;
     for (final event in events) {
-      final priority = _ghostEventPriority(event.type);
+      final priority = _recordRaceEventPriority(event.type);
       if (priority < selectedPriority) {
         selected = event;
         selectedPriority = priority;
@@ -211,40 +213,40 @@ class RunVoiceCueCoordinator {
     if (selected == null) {
       return null;
     }
-    return _ghostCue(selected, volume: volume);
+    return _recordRaceCue(selected, volume: volume);
   }
 
-  RunVoiceCuePriority _ghostCuePriority(GhostRaceEventType type) {
+  RunVoiceCuePriority _recordRaceCuePriority(RecordRaceEventType type) {
     return switch (type) {
-      GhostRaceEventType.offRoute ||
-      GhostRaceEventType.backOnRoute ||
-      GhostRaceEventType.completed => RunVoiceCuePriority.urgent,
-      GhostRaceEventType.overtake ||
-      GhostRaceEventType.lostLead ||
-      GhostRaceEventType.last200m ||
-      GhostRaceEventType.last500m => RunVoiceCuePriority.normal,
+      RecordRaceEventType.offRoute ||
+      RecordRaceEventType.backOnRoute ||
+      RecordRaceEventType.completed => RunVoiceCuePriority.urgent,
+      RecordRaceEventType.overtake ||
+      RecordRaceEventType.lostLead ||
+      RecordRaceEventType.last200m ||
+      RecordRaceEventType.last500m => RunVoiceCuePriority.normal,
     };
   }
 
-  int _ghostEventPriority(GhostRaceEventType type) {
+  int _recordRaceEventPriority(RecordRaceEventType type) {
     return switch (type) {
-      GhostRaceEventType.completed => 0,
-      GhostRaceEventType.offRoute || GhostRaceEventType.backOnRoute => 10,
-      GhostRaceEventType.overtake || GhostRaceEventType.lostLead => 20,
-      GhostRaceEventType.last200m => 30,
-      GhostRaceEventType.last500m => 31,
+      RecordRaceEventType.completed => 0,
+      RecordRaceEventType.offRoute || RecordRaceEventType.backOnRoute => 10,
+      RecordRaceEventType.overtake || RecordRaceEventType.lostLead => 20,
+      RecordRaceEventType.last200m => 30,
+      RecordRaceEventType.last500m => 31,
     };
   }
 
-  int? _ghostGapMsForSpeech(GhostRaceFrame? frame) {
+  int? _recordRaceGapMsForSpeech(RecordRaceFrame? frame) {
     if (frame == null || frame.isOffRoute || !frame.startConfirmed) {
       return null;
     }
     return switch (frame.status) {
-      GhostRaceStatus.ahead || GhostRaceStatus.behind => frame.timeGapMs,
-      GhostRaceStatus.level ||
-      GhostRaceStatus.offRoute ||
-      GhostRaceStatus.unavailable => null,
+      RecordRaceStatus.ahead || RecordRaceStatus.behind => frame.timeGapMs,
+      RecordRaceStatus.level ||
+      RecordRaceStatus.offRoute ||
+      RecordRaceStatus.unavailable => null,
     };
   }
 }

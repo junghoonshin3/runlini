@@ -6,13 +6,13 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'loads the Osaka Namba to Tobita ghost fixture as a run session',
+    'loads the Osaka Namba to Tobita recordRace fixture as a run session',
     () async {
       const loader = FakeRunFixtureLoader();
 
-      final session = await loader.loadOsakaNambaTobitaGhost();
+      final session = await loader.loadOsakaNambaTobitaRecordRace();
 
-      expect(session.id, 'fixture_osaka_namba_tobita_ghost');
+      expect(session.id, 'fixture_osaka_namba_tobita_record_race');
       expect(session.distanceM, 2909);
       expect(session.durationMs, 1047240);
       expect(session.averageCadenceSpm, 170);
@@ -37,16 +37,16 @@ void main() {
   );
 
   test(
-    'loads the Osaka Namba to Kanzakigawa ghost fixture with varied 7 minute pace',
+    'loads the Osaka Namba to Kanzakigawa recordRace fixture with varied 7 minute pace',
     () async {
       const loader = FakeRunFixtureLoader();
 
-      final session = await loader.loadOsakaNambaKanzakigawaGhost();
+      final session = await loader.loadOsakaNambaKanzakigawaRecordRace();
       final paces = session.points
           .map((RunPoint point) => point.paceSecPerKm!)
           .toList(growable: false);
 
-      expect(session.id, 'fixture_osaka_namba_kanzakigawa_ghost');
+      expect(session.id, 'fixture_osaka_namba_kanzakigawa_record_race');
       expect(session.distanceM, 7921);
       expect(session.durationMs, 3326820);
       expect(session.startedAt, DateTime.utc(2026, 4, 20, 7));
@@ -83,11 +83,11 @@ void main() {
       expect(sessions.first.id, 'fixture_morning_tempo');
       expect(
         sessions.map((session) => session.id),
-        contains('fixture_osaka_namba_tobita_ghost'),
+        contains('fixture_osaka_namba_tobita_record_race'),
       );
       expect(
         sessions.map((session) => session.id),
-        contains('fixture_osaka_namba_kanzakigawa_ghost'),
+        contains('fixture_osaka_namba_kanzakigawa_record_race'),
       );
     },
   );

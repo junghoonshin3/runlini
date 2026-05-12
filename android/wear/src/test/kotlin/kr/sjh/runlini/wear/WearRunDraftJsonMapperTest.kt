@@ -17,12 +17,12 @@ class WearRunDraftJsonMapperTest {
             sourceDeviceName = "Pixel Watch",
             caloriesKcal = 72.4,
             averageCadenceSpm = 171.8,
-            ghostSummary = WearRunGhostSummary(
+            recordRaceSummary = WearRunRecordRaceSummary(
                 result = "ahead",
                 timeGapMs = 12_000L,
                 distanceGapM = 32.0,
-                ghostSessionId = "ghost-1",
-                ghostLabel = "한강 5K",
+                recordRaceSessionId = "record-race-1",
+                recordRaceLabel = "한강 5K",
             ),
             points = listOf(
                 WearRunPoint(
@@ -41,7 +41,7 @@ class WearRunDraftJsonMapperTest {
 
         val json = JSONObject(WearRunDraftJsonMapper.toJson(draft))
         val point = json.getJSONArray("points").getJSONObject(0)
-        val ghost = json.getJSONObject("ghostSummary")
+        val recordRace = json.getJSONObject("recordRaceSummary")
 
         assertEquals("draft-1", json.getString("id"))
         assertEquals("wearOs", json.getString("platform"))
@@ -53,9 +53,9 @@ class WearRunDraftJsonMapperTest {
         assertEquals("Pixel Watch", json.getString("sourceDeviceName"))
         assertEquals(72.4, json.getDouble("caloriesKcal"), 0.01)
         assertEquals(171.8, json.getDouble("averageCadenceSpm"), 0.01)
-        assertEquals("ahead", ghost.getString("result"))
-        assertEquals(12_000L, ghost.getLong("timeGapMs"))
-        assertEquals("ghost-1", ghost.getString("ghostSessionId"))
+        assertEquals("ahead", recordRace.getString("result"))
+        assertEquals(12_000L, recordRace.getLong("timeGapMs"))
+        assertEquals("record-race-1", recordRace.getString("recordRaceSessionId"))
         assertEquals(37.1, point.getDouble("lat"), 0.0001)
         assertEquals(127.2, point.getDouble("lng"), 0.0001)
         assertEquals(3_000L, point.getLong("timestampRelMs"))

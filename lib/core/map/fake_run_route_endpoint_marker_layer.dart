@@ -1,4 +1,4 @@
-// 테스트용 지도 표면에 고스트 코스 시작과 종료 깃발을 그린다.
+// 테스트용 지도 표면에 기록 레이스 코스 시작과 종료 깃발을 그린다.
 import 'package:flutter/material.dart';
 import 'package:runlini/core/map/fake_run_map_painters.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
