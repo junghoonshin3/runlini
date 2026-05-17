@@ -1,5 +1,6 @@
-// Android 에뮬레이터에서 주요 앱 화면을 실제 위젯으로 점검하는 통합 테스트.
+// iOS와 Android에서 주요 앱 화면을 실제 위젯으로 점검하는 통합 테스트.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,7 +38,7 @@ import 'package:runlini/features/run_tracking/types/watch_record_race_config.dar
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('opens all primary app screens on an Android device', (
+  testWidgets('opens all primary app screens on a mobile device', (
     WidgetTester tester,
   ) async {
     final sessions = _sampleSessions();
@@ -79,7 +80,7 @@ void main() {
 
     await _tapBottomTab(tester, Icons.directions_run_rounded);
     await _expectScreen(tester, const Key('start-stop-button'), 'running-tab');
-    expect(find.byKey(const Key('android-map-config-error')), findsOneWidget);
+    _expectRunningMapSurface();
     expect(find.byKey(const Key('start-stop-button')), findsOneWidget);
     expect(find.byKey(const Key('current-location-button')), findsOneWidget);
     expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
@@ -143,11 +144,13 @@ void main() {
       const Key('shoe-management-screen'),
       'shoe-management',
     );
+    await _waitForRouteTransition(tester);
     expect(find.byKey(const Key('shoe-item-shoe-daily')), findsOneWidget);
     await _expectNoFrameworkException(tester, 'shoe management');
 
     await tester.tap(find.byKey(const Key('add-shoe-button')));
     await _expectScreen(tester, const Key('shoe-add-screen'), 'shoe-add');
+    await _waitForRouteTransition(tester);
     expect(find.byKey(const Key('shoe-brand-field')), findsOneWidget);
     expect(find.byKey(const Key('shoe-name-field')), findsOneWidget);
     await _expectNoFrameworkException(tester, 'shoe add');
@@ -157,9 +160,11 @@ void main() {
       const Key('shoe-management-screen'),
       'shoe-management-return',
     );
+    await _waitForRouteTransition(tester);
 
     await tester.tap(find.byKey(const Key('edit-shoe-shoe-daily')));
     await _expectScreen(tester, const Key('shoe-add-screen'), 'shoe-edit');
+    await _waitForRouteTransition(tester);
     expect(find.text('러닝화 수정'), findsWidgets);
     await _expectNoFrameworkException(tester, 'shoe edit');
     await _goBack(tester);
@@ -168,6 +173,7 @@ void main() {
       const Key('shoe-management-screen'),
       'shoe-management-after-edit',
     );
+    await _waitForRouteTransition(tester);
 
     await tester.tap(find.byKey(const Key('shoe-courses-shoe-daily')));
     await _expectScreen(
@@ -175,6 +181,7 @@ void main() {
       const Key('shoe-courses-screen'),
       'shoe-courses',
     );
+    await _waitForRouteTransition(tester);
     expect(find.byKey(const Key('shoe-course-session-today')), findsOneWidget);
     await _expectNoFrameworkException(tester, 'shoe courses');
     await _goBack(tester);
@@ -183,6 +190,7 @@ void main() {
       const Key('shoe-management-screen'),
       'shoe-management-after-courses',
     );
+    await _waitForRouteTransition(tester);
 
     await tester.tap(find.byKey(const Key('delete-shoe-shoe-daily')));
     await _expectScreen(
@@ -296,6 +304,19 @@ Future<void> _tapBottomTab(WidgetTester tester, IconData icon) async {
 Future<void> _goBack(WidgetTester tester) async {
   await tester.binding.handlePopRoute();
   await tester.pumpAndSettle(const Duration(milliseconds: 100));
+}
+
+Future<void> _waitForRouteTransition(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 350));
+}
+
+void _expectRunningMapSurface() {
+  if (Platform.isAndroid) {
+    expect(find.byKey(const Key('android-map-config-error')), findsOneWidget);
+    return;
+  }
+
+  expect(find.byKey(const Key('run-map')), findsOneWidget);
 }
 
 Future<void> _expectScreen(

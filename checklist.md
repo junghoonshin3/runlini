@@ -96,3 +96,14 @@
 - [x] 실패나 시각 결함이 있으면 최소 수정한다.
 - [x] `flutter analyze`와 관련 테스트를 실행한다.
 - [x] 검증 결과와 남은 리스크를 정리한다.
+
+## iOS 전체 UI 테스트
+
+- [x] iOS 디자인 기준과 프로젝트 실행 방법을 확인한다.
+- [x] iOS Simulator, runtime, Flutter device 연결 상태를 확인한다.
+- [x] 대표 iPhone Simulator를 부팅한다.
+- [x] iOS Simulator에서 전체 UI smoke test를 실행한다.
+- [x] 실패나 시각 결함이 있으면 실제 오류를 읽고 원인을 정리한다.
+- [x] 필요한 최소 수정 또는 테스트 보완을 적용한다.
+- [x] 관련 정적 검사나 focused test를 실행한다.
+- [x] 검증 결과와 남은 리스크를 정리한다.

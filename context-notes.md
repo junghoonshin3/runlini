@@ -77,3 +77,18 @@
 - 테스트 중 발견된 실패는 스크린샷 surface 변환, 스크롤 대상 선택, 라우트 전환 직후 탭 타이밍, Back tooltip 중복처럼 테스트 안정성 문제였다. 운영 UI 코드는 수정하지 않았다.
 - Google Maps 설정이 없는 테스트 환경에서는 러닝 탭의 지도 대신 `android-map-config-error` 상태를 검증하고, 실제 러닝 컨트롤과 기록 레이스 흐름은 그대로 연다.
 - 테스트 종료 후 앱 패키지가 에뮬레이터에서 제거되어 ADB 수동 캡처는 런처 화면만 확인됐다. 최종 근거는 에뮬레이터에서 실행된 integration test 로그와 `flutter analyze` 결과로 둔다.
+
+## 2026-05-17 iOS 전체 UI 테스트
+
+- 사용자는 iOS에서 전체 UI 테스트 진행을 요청했다.
+- 대표 검증 대상은 일반 iPhone 크기의 `iPhone 17 Simulator`로 둔다. 여러 Simulator가 있지만 사용자가 특정 기기를 지정하지 않았고, 전체 smoke 목적에는 일반 크기 iPhone이 가장 적합하다.
+- 샌드박스 내부 `xcrun simctl`과 `xcrun xctrace`는 CoreSimulatorService와 Instruments 캐시 접근 권한 문제로 실패했다. 승인된 샌드박스 외부 조회에서는 iOS 26.2 runtime과 여러 종료 상태 Simulator가 확인됐다.
+- `flutter devices`는 macOS와 Chrome만 표시했고, iOS 실기기 `iPhone (26.3.1)`은 offline으로 보인다.
+- `iPhone 17 Simulator` 부팅 후 `flutter devices`에서 iOS target으로 인식됐다.
+- 첫 iOS smoke test 실행은 CocoaPods에서 실패했다. 원인은 Firebase iOS SDK가 최소 iOS 15.0을 요구하는데 앱의 Podfile과 Runner target이 14.0으로 설정된 것이다.
+- 최소 수정으로 iOS deployment target을 15.0으로 올리고, smoke test의 Android 전용 지도 placeholder 기대값을 iOS에서는 `run-map`으로 검증하도록 분기한다.
+- 두 번째 iOS smoke test는 앱 실행과 주요 화면 탐색까지 진행됐고, 러닝화 관리 화면에서 `add-shoe-button` 탭이 실패했다. 로그상 버튼 중심 좌표가 화면 오른쪽 밖에 있어 iOS route 전환 애니메이션 중 너무 이르게 탭한 테스트 타이밍 문제로 판단한다.
+- 전역 `_expectScreen` 대기는 카운트다운처럼 짧게 사라지는 화면에 부작용이 있어 사용하지 않는다. 대신 러닝화 관리처럼 `Navigator.push` route 전환 직후 바로 탭하는 구간에만 350ms pump를 둔다.
+- 최종 iOS smoke test는 `iPhone 17 Simulator`에서 2개 테스트가 통과했다. 확인 화면은 기록 홈, 기록 상세, 러닝 탭, 기록 레이스 시트, 카운트다운, 완료 리뷰, 폐기 다이얼로그, 설정, 러닝화 관리/추가/수정/착용 기록/삭제 다이얼로그, 시작 체중 화면이다.
+- 직접 `flutter run`으로 iPhone 17 Simulator에 앱을 띄워 `/private/tmp/runlini-ios-home.png`를 캡처했다. 실제 로컬 상태에서는 시작 체중 입력 화면이 첫 화면으로 표시됐고 키보드와 저장 버튼이 iOS safe area 안에서 보인다.
+- 검증은 `flutter test -d 5CEFCD89-0A8C-47DE-B0FE-B6776C10F9EA integration_test/app_ui_smoke_test.dart`, `flutter analyze`, `flutter test test/features/settings/settings_tab_screen_test.dart`, `git diff --check`로 통과했다.
