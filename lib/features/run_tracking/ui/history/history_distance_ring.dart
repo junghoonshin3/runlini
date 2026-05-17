@@ -12,10 +12,12 @@ class HistoryDistanceRing extends StatelessWidget {
     super.key,
     required this.summary,
     required this.displaySettings,
+    this.size = 184,
   });
 
   final RunHistoryDistanceSummary summary;
   final RunDisplaySettings displaySettings;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +28,8 @@ class HistoryDistanceRing extends StatelessWidget {
     );
     return SizedBox(
       key: const Key('history-distance-progress-ring'),
-      width: 184,
-      height: 184,
+      width: size,
+      height: size,
       child: CustomPaint(
         painter: _RingPainter(progress: summary.progress),
         child: Center(
@@ -42,13 +44,19 @@ class HistoryDistanceRing extends StatelessWidget {
                 ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
               ),
               const SizedBox(height: 8),
-              Text(
-                distance,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.chalk,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    distance,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.chalk,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

@@ -46,7 +46,7 @@ class _HistoryDistanceProgressPanelState
     );
     return RunPanel(
       key: const Key('history-distance-progress-panel'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       borderColor: AppColors.voltGreen.withValues(alpha: 0.35),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,9 +62,10 @@ class _HistoryDistanceProgressPanelState
             child: HistoryDistanceRing(
               summary: summary,
               displaySettings: widget.displaySettings,
+              size: 156,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           _ProgressMeta(
             summary: summary,
             displaySettings: widget.displaySettings,
@@ -104,7 +105,7 @@ class _PeriodSelector extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 160),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 9),
                       decoration: BoxDecoration(
                         color: selected
                             ? AppColors.voltGreen
@@ -194,28 +195,18 @@ class _GoalChangeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: const Key('history-change-goals-button'),
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: AppColors.chalk.withValues(alpha: 0.35),
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '목표 변경',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.chalk,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+    return TextButton.icon(
+      key: const Key('history-change-goals-button'),
+      onPressed: onPressed,
+      icon: const Icon(Icons.tune_rounded, size: 18),
+      label: const Text('목표 변경'),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.chalk,
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -230,24 +221,28 @@ class _MetaPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.black,
-        border: Border.all(color: AppColors.chalk.withValues(alpha: 0.16)),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
           ),
           const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
         ],
       ),
     );

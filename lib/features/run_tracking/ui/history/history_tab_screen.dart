@@ -113,7 +113,7 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
             child: SingleChildScrollView(
               key: const Key('history-list'),
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: _withHistorySpacing(content),
@@ -201,7 +201,7 @@ String _selectedDateLabel(DateTime date) {
 List<Widget> _withHistorySpacing(List<Widget> children) {
   return [
     for (var index = 0; index < children.length; index += 1) ...[
-      if (index > 0) const SizedBox(height: 14),
+      if (index > 0) const SizedBox(height: 12),
       children[index],
     ],
   ];
@@ -219,14 +219,16 @@ class _HistoryHeader extends StatelessWidget {
           '기록',
           style: Theme.of(
             context,
-          ).textTheme.displayMedium?.copyWith(fontSize: 34),
+          ).textTheme.displayMedium?.copyWith(fontSize: 32),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
-          '뛰었던 기록을 한눈에 보고 다음 기록 레이스 기준선으로 고를 수 있게 정리해둡니다.',
+          '오늘 기록과 목표를 바로 확인합니다.',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Theme.of(
             context,
-          ).textTheme.bodyLarge?.copyWith(color: AppColors.muted),
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         ),
       ],
     );
