@@ -54,3 +54,14 @@
 - 기간 선택 버튼과 달력 주간, 월간 전환 버튼은 최소 44dp 높이를 보장해 모바일 터치 타깃을 안정화한다.
 - 390x844 위젯 렌더링 테스트에서 목표 패널, 달력, 오늘 기록 카드가 초기 뷰포트에 들어오는지 확인한다.
 - 검증은 focused history tests, `dart run tool/guardrails.dart`, `flutter analyze`, 전체 `flutter test`로 통과했다.
+
+## 2026-05-17 홈 화면 UI 개선
+
+- 사용자의 요청은 홈 화면 UI 개선이며, 현재 앱의 홈은 `RunliniHomeScreen`의 기본 `기록` 탭이다.
+- 이번 변경은 기존 네오브루탈리스트 다크 테마와 `AppColors` 토큰을 유지한다. 새 팔레트, 새 기능, 전면 리디자인은 하지 않는다.
+- Android 연결 확인 결과 `adb devices`에는 연결 대상이 없고, `flutter devices`에는 macOS와 Chrome만 잡힌다. `flutter emulators`에는 `Medium_Phone_API_36.0` Android 폰 AVD가 있다.
+- 개선 후보는 홈 헤더의 첫 화면 정보 위계, 하단 내비게이션의 선택 상태와 터치 안정성, 빈 기록 CTA의 폭과 상태 표현이다.
+- 최종 변경 범위는 홈 기록 탭 헤더에 오늘 거리, 횟수 요약 배지를 추가하고, 하단 내비게이션을 별도 위젯으로 분리해 안전 영역, 얇은 상단 구분선, 선택 아이콘 위계를 조정하는 것이다.
+- 390x844 위젯 테스트에서 홈 요약 배지, 목표 패널, 달력, 오늘 기록 카드가 깨지지 않고 렌더링되는지 확인한다.
+- Android 폰 AVD `Medium_Phone_API_36.0`에서 앱 실행과 스크린샷 캡처를 시도했다. 첫 홈 캡처에서는 텍스트 겹침이 없었고, 마지막 재실행은 에뮬레이터 스냅샷이 설정 탭 상태로 복원되어 홈 화면 재캡처까지는 이어지지 않았다.
+- 검증은 `flutter test test/features/run_tracking/history_home_mobile_layout_test.dart`, `flutter test test/features/dashboard/runlini_shell_test.dart`, `flutter analyze`, `git diff --check`로 통과했다.

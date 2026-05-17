@@ -42,6 +42,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('history-distance-progress-panel')), findsOne);
+    final todaySummaryBadge = find.byKey(
+      const Key('history-today-summary-badge'),
+    );
+    expect(todaySummaryBadge, findsOne);
+    expect(
+      find.descendant(of: todaySummaryBadge, matching: find.text('1.0 km')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: todaySummaryBadge, matching: find.text('1회')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('history-calendar-panel')), findsOne);
     expect(find.byKey(const Key('history-session-today-run')), findsOneWidget);
     expect(

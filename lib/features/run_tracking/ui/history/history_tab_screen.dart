@@ -9,7 +9,9 @@ import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
+import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_calendar_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_distance_progress_panel.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_no_runs_on_date_panel.dart';
@@ -59,8 +61,24 @@ class _HistoryTabScreenState extends ConsumerState<HistoryTabScreen> {
               )
               .toList(growable: false);
           final showRecovery = visibleSummaries.isEmpty;
+          final today = widget.now ?? DateTime.now();
+          final todaySummaries = visibleSummaries
+              .where(
+                (RunSessionSummary summary) =>
+                    _isSameDay(summary.startedAt, today),
+              )
+              .toList(growable: false);
+          final todayDistanceM = todaySummaries.fold<double>(
+            0,
+            (double total, RunSessionSummary summary) =>
+                total + summary.distanceM,
+          );
           final content = <Widget>[
-            const _HistoryHeader(),
+            _HistoryHeader(
+              todayDistanceM: todayDistanceM,
+              todayRunCount: todaySummaries.length,
+              displaySettings: displaySettings,
+            ),
             HistoryDistanceProgressPanel(
               sessions: visibleSummaries,
               displaySettings: displaySettings,
@@ -208,27 +226,128 @@ List<Widget> _withHistorySpacing(List<Widget> children) {
 }
 
 class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader();
+  const _HistoryHeader({
+    required this.todayDistanceM,
+    required this.todayRunCount,
+    required this.displaySettings,
+  });
+
+  final double todayDistanceM;
+  final int todayRunCount;
+  final RunDisplaySettings displaySettings;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '기록',
-          style: Theme.of(
-            context,
-          ).textTheme.displayMedium?.copyWith(fontSize: 32),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '오늘 기록과 목표를 바로 확인합니다.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final compact = constraints.maxWidth < 340;
+        final titleBlock = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '기록',
+              style: Theme.of(
+                context,
+              ).textTheme.displayMedium?.copyWith(fontSize: 32),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '오늘 기록과 목표를 바로 확인합니다.',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
+            ),
+          ],
+        );
+        final summary = _TodaySummaryBadge(
+          distanceM: todayDistanceM,
+          runCount: todayRunCount,
+          displaySettings: displaySettings,
+          expand: compact,
+        );
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              titleBlock,
+              const SizedBox(height: 10),
+              SizedBox(width: double.infinity, child: summary),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: titleBlock),
+            const SizedBox(width: 14),
+            summary,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _TodaySummaryBadge extends StatelessWidget {
+  const _TodaySummaryBadge({
+    required this.distanceM,
+    required this.runCount,
+    required this.displaySettings,
+    required this.expand,
+  });
+
+  final double distanceM;
+  final int runCount;
+  final RunDisplaySettings displaySettings;
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    final distance = formatRunDistance(distanceM, displaySettings);
+    return Container(
+      key: const Key('history-today-summary-badge'),
+      width: expand ? double.infinity : 116,
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.panel,
+        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.42)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '오늘',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.cyan,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              distance,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColors.chalk,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            '$runCount회',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+          ),
+        ],
+      ),
     );
   }
 }
