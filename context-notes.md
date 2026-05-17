@@ -65,3 +65,15 @@
 - 390x844 위젯 테스트에서 홈 요약 배지, 목표 패널, 달력, 오늘 기록 카드가 깨지지 않고 렌더링되는지 확인한다.
 - Android 폰 AVD `Medium_Phone_API_36.0`에서 앱 실행과 스크린샷 캡처를 시도했다. 첫 홈 캡처에서는 텍스트 겹침이 없었고, 마지막 재실행은 에뮬레이터 스냅샷이 설정 탭 상태로 복원되어 홈 화면 재캡처까지는 이어지지 않았다.
 - 검증은 `flutter test test/features/run_tracking/history_home_mobile_layout_test.dart`, `flutter test test/features/dashboard/runlini_shell_test.dart`, `flutter analyze`, `git diff --check`로 통과했다.
+
+## 2026-05-17 전체 화면 실제 UI 테스트
+
+- 사용자는 모든 화면을 실제 UI로 테스트하길 요청했다. 단순 위젯 테스트만으로 끝내지 않고 Android 에뮬레이터에서 실행되는 integration test를 추가한다.
+- 테스트 대상 화면은 기본 탭 3개, 기록 상세, 러닝 탭 지도와 컨트롤, 기록 레이스 선택 시트, 설정 탭, 러닝화 관리, 러닝화 추가와 수정, 러닝화별 기록, 삭제 확인 다이얼로그, 시작 체중 입력 화면이다.
+- 실제 앱 데이터만 사용하면 시작 체중, 상세, 러닝화 하위 화면처럼 조건부 화면을 안정적으로 열기 어렵다. 테스트에서는 실제 앱 위젯을 쓰되 provider override로 세션, 설정, 러닝화를 통제한다.
+- `adb devices`에는 연결된 Android 기기가 없고, `flutter devices`에는 macOS와 Chrome만 잡힌다. AVD는 이전 확인 기준 `Medium_Phone_API_36.0`를 사용한다.
+- 기존 작업트리의 `docs/exec-plans/active/interval-feature-lock-v1.md` 변경은 이번 테스트와 무관하므로 건드리지 않는다.
+- Android AVD `emulator-5554`에서 `flutter test -d emulator-5554 integration_test/app_ui_smoke_test.dart`로 전체 UI smoke test 2건이 통과했다.
+- 테스트 중 발견된 실패는 스크린샷 surface 변환, 스크롤 대상 선택, 라우트 전환 직후 탭 타이밍, Back tooltip 중복처럼 테스트 안정성 문제였다. 운영 UI 코드는 수정하지 않았다.
+- Google Maps 설정이 없는 테스트 환경에서는 러닝 탭의 지도 대신 `android-map-config-error` 상태를 검증하고, 실제 러닝 컨트롤과 기록 레이스 흐름은 그대로 연다.
+- 테스트 종료 후 앱 패키지가 에뮬레이터에서 제거되어 ADB 수동 캡처는 런처 화면만 확인됐다. 최종 근거는 에뮬레이터에서 실행된 integration test 로그와 `flutter analyze` 결과로 둔다.
