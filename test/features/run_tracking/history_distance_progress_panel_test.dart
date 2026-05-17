@@ -68,6 +68,33 @@ void main() {
     expect(find.text('1.86 mi'), findsOne);
   });
 
+  testWidgets('keeps period controls large enough on a mobile viewport', (
+    WidgetTester tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      _Host(
+        child: HistoryDistanceProgressPanel(
+          sessions: [_session('this-week', DateTime(2026, 4, 27), 3000)],
+          displaySettings: const RunDisplaySettings(),
+          distanceGoals: const RunDistanceGoalSettings(),
+          now: DateTime(2026, 4, 28, 12),
+        ),
+      ),
+    );
+
+    for (final key in const [
+      Key('history-period-week-button'),
+      Key('history-period-month-button'),
+      Key('history-period-year-button'),
+    ]) {
+      expect(tester.getSize(find.byKey(key)).height, greaterThanOrEqualTo(44));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('runs the change-goals callback', (WidgetTester tester) async {
     var tapped = false;
     await tester.pumpWidget(

@@ -47,3 +47,10 @@
 - 검증은 `dart run tool/guardrails.dart`, `flutter analyze`, focused widget tests, 전체 `flutter test`로 통과했다.
 - 실제 Android 기기 캡처는 연결된 Android 디바이스가 없어 수행하지 못했다.
 - Android 에뮬레이터 연결 후 확인하니 날짜별 빈 기록 패널이 텍스트 폭만 차지해 다른 홈 패널과 정렬이 어긋났다. `HistoryNoRunsOnDatePanel`은 전체 폭을 차지하도록 맞춘다.
+- 이번 요청의 대상은 홈 화면이며, 현재 앱의 홈은 `RunliniHomeScreen`의 기본 `기록` 탭이다.
+- 이번 패스는 이전 메인 화면 점검을 반복하되, 새 기능 추가 없이 홈 기록 탭의 모바일 사용성 문제만 최소 수정한다.
+- `adb devices`에는 연결된 Android 대상이 없고, `flutter devices`에는 macOS와 Chrome만 잡힌다. Android 실기기 캡처는 현재 불가능하다.
+- 홈 헤더의 보조 설명은 말줄임을 제거해 작은 폭이나 글자 크기 변경에서 정보가 잘리지 않게 한다.
+- 기간 선택 버튼과 달력 주간, 월간 전환 버튼은 최소 44dp 높이를 보장해 모바일 터치 타깃을 안정화한다.
+- 390x844 위젯 렌더링 테스트에서 목표 패널, 달력, 오늘 기록 카드가 초기 뷰포트에 들어오는지 확인한다.
+- 검증은 focused history tests, `dart run tool/guardrails.dart`, `flutter analyze`, 전체 `flutter test`로 통과했다.

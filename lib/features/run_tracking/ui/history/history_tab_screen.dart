@@ -224,8 +224,6 @@ class _HistoryHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           '오늘 기록과 목표를 바로 확인합니다.',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),

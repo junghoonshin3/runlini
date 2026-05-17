@@ -105,6 +105,8 @@ class _PeriodSelector extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 160),
+                      constraints: const BoxConstraints(minHeight: 44),
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(vertical: 9),
                       decoration: BoxDecoration(
                         color: selected

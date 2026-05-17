@@ -137,6 +137,8 @@ class _CalendarModeButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
+          constraints: const BoxConstraints(minWidth: 54, minHeight: 44),
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: selected ? AppColors.voltGreen : Colors.transparent,
