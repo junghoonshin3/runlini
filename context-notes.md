@@ -1,5 +1,29 @@
 # Context Notes
 
+## 2026-05-18 스토어 스크린샷 제작
+
+- 사용자는 App Store와 Google Play용 스크린샷 제작을 요청했다.
+- 실제 앱 캡처 PNG는 아직 없고, 사용자는 Android 에뮬레이터 기준으로 캡처와 편집기 구성을 진행해도 된다고 승인했다.
+- 앱 이름은 `Runlini`로 둔다.
+- 앱 아이콘은 `assets/branding/runlini_app_icon_1024.png`를 기본으로 쓰고, Play Store 보조 아이콘은 `assets/branding/runlini_play_store_icon_512.png`를 쓴다.
+- 스토어 대상은 처음 요청대로 App Store와 Google Play 둘 다로 둔다.
+- 초기 locale은 템플릿 기본값인 `en`을 사용하되, 편집기에서 나중에 한국어 등으로 바꿀 수 있게 둔다.
+- 스타일은 `docs/DESIGN.md`와 `docs/design-docs/design-identity.md`의 true black, volt green, electric red, oversized blunt typography, bordered surface 기준을 따른다.
+- 핵심 내러티브는 기록 레이스, 러닝 중 앞섬/뒤처짐 즉시 확인, 과거 경로 재사용, 기록 분석, Health sync와 워치 준비 흐름이다.
+- 앱 런타임 코드는 변경하지 않고, 마케팅 캡처 자산과 Next.js 편집기만 추가한다.
+- 템플릿 루트의 `README.md`와 `.gitignore`는 Flutter 프로젝트 파일과 충돌하므로 덮어쓰지 않는다.
+- Android `Medium_Phone_API_36.0` 에뮬레이터에서 `01.png` 기록 홈, `02.png` 러닝 시작 화면, `03.png` 설정 화면, `04.png` 기록 레이스 선택 시트, `05.png` 러닝 중 화면을 캡처했다.
+- 캡처 크기는 모두 1080x2400이다. 편집기 Android phone export canvas는 1080x1920이라 기기 프레임 안에서는 상단 기준 cover crop으로 보인다.
+- 템플릿 복사는 `README.md`와 `.gitignore`를 제외하고 수행했다.
+- `app-store-screenshots.json`과 `src/lib/defaults.ts`는 같은 Runlini 덱 내러티브를 가리키도록 맞췄다.
+- `bun`, `pnpm`, `yarn`은 없고 `npm`만 사용 가능하다.
+- `npm install`은 React RC peer dependency 해석 때문에 `.npmrc`의 `legacy-peer-deps=true`가 필요했다.
+- `next`는 audit의 critical 취약점 때문에 `15.5.18`로 올렸고, Next 내부 `postcss` advisory는 루트 `postcss`와 `overrides`를 `8.5.14`로 고정해 해결했다.
+- `next/font/google`은 빌드 중 Google Fonts 네트워크 fetch가 필요해서 제거하고 시스템 폰트 스택으로 대체했다.
+- `tailwind.config.ts`의 CommonJS `require`는 dev 서버 ESM 경로에서 실패해서 `tailwindcss-animate` ESM import로 바꿨다.
+- Next dev 서버가 React 19 RC와 devtools manifest 오류를 냈기 때문에 `react`, `react-dom`, `@types/react`, `@types/react-dom`을 안정 19.x로 올렸다.
+- 최종 확인은 `npm run build`, `npm audit --audit-level=moderate`, `curl` 루트와 `/api/project` HTTP 200, `git diff --check`, Android 캡처 PNG 치수 확인으로 통과했다.
+
 ## 2026-05-12
 
 - 사용자는 `고스트런`을 러닝앱 사용자에게 더 직관적인 이름으로 바꾸길 원했고,

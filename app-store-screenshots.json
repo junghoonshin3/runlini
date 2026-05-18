@@ -1,0 +1,252 @@
+{
+  "appName": "Runlini",
+  "themeId": "runlini-dark",
+  "locales": [
+    "en"
+  ],
+  "locale": "en",
+  "device": "android",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [
+      {
+        "id": "iphone-01-record-race",
+        "layout": "hero",
+        "label": {
+          "en": "RECORD RACE"
+        },
+        "headline": {
+          "en": "Race your\nown record."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/04.png"
+      },
+      {
+        "id": "iphone-02-live-clarity",
+        "layout": "device-bottom",
+        "label": {
+          "en": "LIVE CLARITY"
+        },
+        "headline": {
+          "en": "Know if\nyou're ahead."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/05.png",
+        "inverted": true
+      },
+      {
+        "id": "iphone-03-run-log",
+        "layout": "two-devices",
+        "label": {
+          "en": "RUN LOG"
+        },
+        "headline": {
+          "en": "Every route\nstays useful."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/01.png",
+        "screenshotSecondary": "/screenshots/apple/iphone/{locale}/04.png"
+      },
+      {
+        "id": "iphone-04-start-fast",
+        "layout": "device-top",
+        "label": {
+          "en": "ONE TAP START"
+        },
+        "headline": {
+          "en": "Open the map.\nStart fast."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/02.png"
+      },
+      {
+        "id": "iphone-05-run-ready",
+        "layout": "device-bottom",
+        "label": {
+          "en": "RUN READY"
+        },
+        "headline": {
+          "en": "Cues, goals\nand backup."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/03.png",
+        "inverted": true
+      }
+    ],
+    "android": [
+      {
+        "id": "android-01-record-race",
+        "layout": "hero",
+        "label": {
+          "en": "RECORD RACE"
+        },
+        "headline": {
+          "en": "Race your\nown record."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/04.png"
+      },
+      {
+        "id": "android-02-live-clarity",
+        "layout": "device-bottom",
+        "label": {
+          "en": "LIVE CLARITY"
+        },
+        "headline": {
+          "en": "Know if\nyou're ahead."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "inverted": true
+      },
+      {
+        "id": "android-03-run-log",
+        "layout": "two-devices",
+        "label": {
+          "en": "RUN LOG"
+        },
+        "headline": {
+          "en": "Every route\nstays useful."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/01.png",
+        "screenshotSecondary": "/screenshots/android/phone/{locale}/04.png"
+      },
+      {
+        "id": "android-04-start-fast",
+        "layout": "device-top",
+        "label": {
+          "en": "ONE TAP START"
+        },
+        "headline": {
+          "en": "Open the map.\nStart fast."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/02.png"
+      },
+      {
+        "id": "android-05-run-ready",
+        "layout": "device-bottom",
+        "label": {
+          "en": "RUN READY"
+        },
+        "headline": {
+          "en": "Cues, goals\nand backup."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/03.png",
+        "inverted": true
+      }
+    ],
+    "ipad": [
+      {
+        "id": "ipad-01-record-race",
+        "layout": "hero",
+        "label": {
+          "en": "RECORD RACE"
+        },
+        "headline": {
+          "en": "Race your\nown record."
+        },
+        "screenshot": "/screenshots/apple/ipad/{locale}/04.png"
+      },
+      {
+        "id": "ipad-02-live-clarity",
+        "layout": "device-bottom",
+        "label": {
+          "en": "LIVE CLARITY"
+        },
+        "headline": {
+          "en": "Know if\nyou're ahead."
+        },
+        "screenshot": "/screenshots/apple/ipad/{locale}/05.png",
+        "inverted": true
+      },
+      {
+        "id": "ipad-03-run-ready",
+        "layout": "device-top",
+        "label": {
+          "en": "RUN READY"
+        },
+        "headline": {
+          "en": "Cues, goals\nand backup."
+        },
+        "screenshot": "/screenshots/apple/ipad/{locale}/03.png"
+      }
+    ],
+    "android-7": [
+      {
+        "id": "android-7-01-record-race",
+        "layout": "hero",
+        "label": {
+          "en": "RECORD RACE"
+        },
+        "headline": {
+          "en": "Race your\nown record."
+        },
+        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/04.png"
+      },
+      {
+        "id": "android-7-02-live-clarity",
+        "layout": "device-bottom",
+        "label": {
+          "en": "LIVE CLARITY"
+        },
+        "headline": {
+          "en": "Know if\nyou're ahead."
+        },
+        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/05.png",
+        "inverted": true
+      },
+      {
+        "id": "android-7-03-run-ready",
+        "layout": "device-top",
+        "label": {
+          "en": "RUN READY"
+        },
+        "headline": {
+          "en": "Cues, goals\nand backup."
+        },
+        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/03.png"
+      }
+    ],
+    "android-10": [
+      {
+        "id": "android-10-01-record-race",
+        "layout": "hero",
+        "label": {
+          "en": "RECORD RACE"
+        },
+        "headline": {
+          "en": "Race your\nown record."
+        },
+        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/04.png"
+      },
+      {
+        "id": "android-10-02-live-clarity",
+        "layout": "device-bottom",
+        "label": {
+          "en": "LIVE CLARITY"
+        },
+        "headline": {
+          "en": "Know if\nyou're ahead."
+        },
+        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/05.png",
+        "inverted": true
+      },
+      {
+        "id": "android-10-03-run-ready",
+        "layout": "device-top",
+        "label": {
+          "en": "RUN READY"
+        },
+        "headline": {
+          "en": "Cues, goals\nand backup."
+        },
+        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/03.png"
+      }
+    ],
+    "feature-graphic": [
+      {
+        "id": "feature-graphic-01",
+        "layout": "feature-graphic",
+        "label": {},
+        "headline": {
+          "en": "Race your record.\nSee the gap live."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/05.png"
+      }
+    ]
+  }
+}
