@@ -92,3 +92,15 @@
 - 최종 iOS smoke test는 `iPhone 17 Simulator`에서 2개 테스트가 통과했다. 확인 화면은 기록 홈, 기록 상세, 러닝 탭, 기록 레이스 시트, 카운트다운, 완료 리뷰, 폐기 다이얼로그, 설정, 러닝화 관리/추가/수정/착용 기록/삭제 다이얼로그, 시작 체중 화면이다.
 - 직접 `flutter run`으로 iPhone 17 Simulator에 앱을 띄워 `/private/tmp/runlini-ios-home.png`를 캡처했다. 실제 로컬 상태에서는 시작 체중 입력 화면이 첫 화면으로 표시됐고 키보드와 저장 버튼이 iOS safe area 안에서 보인다.
 - 검증은 `flutter test -d 5CEFCD89-0A8C-47DE-B0FE-B6776C10F9EA integration_test/app_ui_smoke_test.dart`, `flutter analyze`, `flutter test test/features/settings/settings_tab_screen_test.dart`, `git diff --check`로 통과했다.
+
+## 2026-05-18 오늘의 기록 레이스 추천
+
+- 사용자는 변증법 검토 결과의 1번 기능인 `오늘의 기록 레이스 추천 카드` 구현을 진행하길 원했다.
+- 범위는 DB 변경 없이 기존 `RunSessionSummary` 목록에서 추천 후보 1개를 계산해 러닝 탭 시작 전 카드로 보여주는 것이다.
+- 추천 기준은 기록 레이스에 쓸 수 있는 정상 기록 중 오늘과 같은 요일의 기록을 우선하고, 없으면 가장 최근 정상 기록으로 둔다.
+- 추천 카드 탭은 새 선택 흐름을 만들지 않고 기존 `recordRaceSettingsProvider.selectSession`을 호출해 기록 레이스 선택 상태로 연결한다.
+- 기존 작업트리의 `docs/exec-plans/active/interval-feature-lock-v1.md` 수정은 이번 작업과 무관하므로 건드리지 않는다.
+- 구현은 `RunRecordRaceRecommendationService`, `runRecordRaceRecommendationProvider`, `RunRecordRaceRecommendationCard`로 나눴다.
+- 추천 카드는 기록 레이스가 아직 선택되지 않았고, 시작 전이며, 추천 가능한 기록이 있을 때만 러닝 탭에 표시된다.
+- 검증은 focused tests, `flutter analyze`, 전체 `flutter test`로 통과했다.
+- `dart run tool/guardrails.dart`는 이번 변경과 무관한 기존 `lib/features/run_tracking/ui/history/history_tab_screen.dart` 412라인 제한 위반으로 실패했다.

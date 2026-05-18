@@ -34,6 +34,7 @@ import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet.dart
 import 'package:runlini/features/run_tracking/ui/running/run_map_panel.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_record_race_completion_overlay.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_record_race_control_chip.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_record_race_recommendation_card.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_save_feedback.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_session_record_race_summary_mapper.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
@@ -182,6 +183,13 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                         workout: intervalWorkout,
                         onPressed: () => _handleIntervalButtonPressed(context),
                       ),
+              ),
+            if (!playbackState.hasActiveSession && !countdownState.isActive)
+              const Positioned(
+                left: 20,
+                right: 20,
+                bottom: 218,
+                child: RunRecordRaceRecommendationCard(),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
               const Positioned(

@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/features/record_race/service/record_race_completion_detector.dart';
 import 'package:runlini/features/record_race/service/record_race_gap_service.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/record_race/types/record_race_frame.dart';
+import 'package:runlini/features/run_tracking/service/run_record_race_recommendation_service.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_map_view_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
@@ -16,6 +19,27 @@ final recordRaceCompletionDetectorProvider =
     Provider<RecordRaceCompletionDetector>(
       (Ref ref) => const RecordRaceCompletionDetector(),
     );
+
+final runRecordRaceRecommendationServiceProvider =
+    Provider<RunRecordRaceRecommendationService>(
+      (Ref ref) => const RunRecordRaceRecommendationService(),
+    );
+
+final runRecordRaceRecommendationProvider =
+    FutureProvider<RunRecordRaceRecommendation?>((Ref ref) async {
+      final settings = ref.watch(recordRaceSettingsProvider);
+      if (settings.enabled) {
+        return null;
+      }
+
+      final summaries = await ref.watch(runSessionSummaryListProvider.future);
+      return ref
+          .watch(runRecordRaceRecommendationServiceProvider)
+          .recommend(
+            summaries: summaries,
+            now: ref.watch(runPlaybackClockProvider)(),
+          );
+    });
 
 final recordRaceFrameProvider = Provider<RecordRaceFrame?>((Ref ref) {
   final playbackInput = ref.watch(
