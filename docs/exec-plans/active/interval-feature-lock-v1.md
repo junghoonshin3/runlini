@@ -30,8 +30,6 @@ available for future reactivation.
 - Preserve stored interval settings and do not add a migration.
 - Keep interval sheet tests in place because the hidden implementation remains
   valid future code.
-- Do not commit because the project guide requires an explicit user request for
-  commits and the current worktree contains unrelated changes.
 
 ## Implementation Steps
 
@@ -53,7 +51,5 @@ available for future reactivation.
 
 ## Risks or Recovery
 
-- The worktree has many unrelated changes. Keep edits scoped and do not revert
-  unrelated files.
-- If broad `flutter test` fails because of unrelated dirty worktree changes,
-  run the focused interval and ghost tests and report the broader failure.
+- Remove the lock by setting `runIntervalFeatureLocked` to `false` and restoring
+  the conflict tests when interval configuration is reopened.
