@@ -68,6 +68,47 @@ void main() {
     );
     expect(find.text('기록 레이스 ON'), findsOneWidget);
   });
+
+  testWidgets(
+    'shows an empty recommendation state before any runnable record',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            disableStartupWeightPromptOverride,
+            staticMapStateOverride(
+              fallbackMapCenter: const MapCoordinate(
+                latitude: 37.0,
+                longitude: 127.0,
+              ),
+            ),
+            deviceLocationClientProvider.overrideWithValue(
+              FakeDeviceLocationClient(
+                lastKnownSample: sample(latitude: 37.55, longitude: 126.97),
+              ),
+            ),
+            locationStreamClientProvider.overrideWithValue(
+              const SilentLocationStreamClient(),
+            ),
+            runSessionRepositoryProvider.overrideWithValue(
+              FakeRunSessionRepository(),
+            ),
+          ],
+          child: const RunliniApp(),
+        ),
+      );
+      await tester.pump();
+      await openRunningTab(tester);
+      await pumpUntilFound(
+        tester,
+        find.byKey(const Key('record-race-recommendation-empty-card')),
+      );
+
+      expect(find.text('오늘 추천'), findsOneWidget);
+      expect(find.text('경로 있는 기록을 저장하면 추천할게요.'), findsOneWidget);
+      expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
+    },
+  );
 }
 
 RunSession _session({required String id, required DateTime startedAt}) {

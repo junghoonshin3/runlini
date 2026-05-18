@@ -17,12 +17,17 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(recordRaceSettingsProvider);
+    if (settings.enabled) {
+      return const SizedBox.shrink();
+    }
+
     final recommendationAsync = ref.watch(runRecordRaceRecommendationProvider);
     final displaySettings = ref.watch(runDisplaySettingsProvider);
     return recommendationAsync.maybeWhen(
       data: (recommendation) {
         if (recommendation == null) {
-          return const SizedBox.shrink();
+          return const _RunRecordRaceRecommendationUnavailableCard();
         }
         return _RunRecordRaceRecommendationCardBody(
           recommendation: recommendation,
@@ -30,7 +35,11 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
           onTap: () => _selectRecommendation(context, ref, recommendation),
         );
       },
-      orElse: () => const SizedBox.shrink(),
+      loading: () => const _RunRecordRaceRecommendationLoadingCard(),
+      error: (_, _) => const _RunRecordRaceRecommendationUnavailableCard(
+        message: '추천을 불러오지 못했어요.',
+      ),
+      orElse: () => const _RunRecordRaceRecommendationLoadingCard(),
     );
   }
 
@@ -59,6 +68,40 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
   }
 }
 
+class _RunRecordRaceRecommendationLoadingCard extends StatelessWidget {
+  const _RunRecordRaceRecommendationLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _RunRecordRaceRecommendationShell(
+      key: Key('record-race-recommendation-loading-card'),
+      accent: AppColors.muted,
+      title: '오늘 추천',
+      message: '기록을 확인하고 있어요.',
+      enabled: false,
+    );
+  }
+}
+
+class _RunRecordRaceRecommendationUnavailableCard extends StatelessWidget {
+  const _RunRecordRaceRecommendationUnavailableCard({
+    this.message = '경로 있는 기록을 저장하면 추천할게요.',
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RunRecordRaceRecommendationShell(
+      key: const Key('record-race-recommendation-empty-card'),
+      accent: AppColors.muted,
+      title: '오늘 추천',
+      message: message,
+      enabled: false,
+    );
+  }
+}
+
 class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
   const _RunRecordRaceRecommendationCardBody({
     required this.recommendation,
@@ -73,72 +116,13 @@ class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = recommendation.summary;
-    final textTheme = Theme.of(context).textTheme;
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const Key('record-race-recommendation-card'),
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-              decoration: BoxDecoration(
-                color: AppColors.black.withValues(alpha: 0.9),
-                border: Border.all(color: AppColors.voltGreen, width: 3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '오늘 추천',
-                          style: textTheme.labelLarge?.copyWith(
-                            color: AppColors.voltGreen,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _titleFor(recommendation.reason),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.titleMedium?.copyWith(
-                            color: AppColors.chalk,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _metricsFor(summary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.muted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: AppColors.voltGreen,
-                    size: 28,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    return _RunRecordRaceRecommendationShell(
+      key: const Key('record-race-recommendation-card'),
+      accent: AppColors.voltGreen,
+      title: '오늘 추천',
+      message: _titleFor(recommendation.reason),
+      detail: _metricsFor(summary),
+      onTap: onTap,
     );
   }
 
@@ -160,5 +144,99 @@ class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
       displaySettings,
     );
     return '$distance · $pace · ${summary.startedAt.month}/${summary.startedAt.day}';
+  }
+}
+
+class _RunRecordRaceRecommendationShell extends StatelessWidget {
+  const _RunRecordRaceRecommendationShell({
+    super.key,
+    required this.accent,
+    required this.title,
+    required this.message,
+    this.detail,
+    this.onTap,
+    this.enabled = true,
+  });
+
+  final Color accent;
+  final String title;
+  final String message;
+  final String? detail;
+  final VoidCallback? onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final foreground = enabled ? AppColors.chalk : AppColors.muted;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                color: AppColors.black.withValues(alpha: 0.9),
+                border: Border.all(color: accent, width: 3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: textTheme.labelLarge?.copyWith(
+                            color: accent,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          message,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleMedium?.copyWith(
+                            color: foreground,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        if (detail != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            detail!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (enabled) ...[
+                    const SizedBox(width: 12),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: AppColors.voltGreen,
+                      size: 28,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

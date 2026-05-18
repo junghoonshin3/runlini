@@ -104,3 +104,5 @@
 - 추천 카드는 기록 레이스가 아직 선택되지 않았고, 시작 전이며, 추천 가능한 기록이 있을 때만 러닝 탭에 표시된다.
 - 검증은 focused tests, `flutter analyze`, 전체 `flutter test`로 통과했다.
 - `dart run tool/guardrails.dart`는 이번 변경과 무관한 기존 `lib/features/run_tracking/ui/history/history_tab_screen.dart` 412라인 제한 위반으로 실패했다.
+- 사용자가 실제 앱에서 UI가 보이지 않는다고 지적했다. 원인은 추천 가능한 경로 기록이 없으면 카드가 완전히 숨겨지는 조건이었다.
+- 추천 가능한 기록이 없어도 러닝 탭 시작 전 `오늘 추천` 비활성 안내 카드를 보여주도록 바꿨다.
