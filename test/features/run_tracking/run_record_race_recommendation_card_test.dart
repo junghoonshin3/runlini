@@ -55,6 +55,10 @@ void main() {
       find.byKey(const Key('record-race-recommendation-card')),
     );
 
+    _expectTopCompactCard(
+      tester,
+      find.byKey(const Key('record-race-recommendation-card')),
+    );
     expect(find.text('오늘 추천'), findsOneWidget);
     expect(find.text('같은 요일 기록으로 달리기'), findsOneWidget);
     expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
@@ -104,11 +108,23 @@ void main() {
         find.byKey(const Key('record-race-recommendation-empty-card')),
       );
 
+      _expectTopCompactCard(
+        tester,
+        find.byKey(const Key('record-race-recommendation-empty-card')),
+      );
       expect(find.text('오늘 추천'), findsOneWidget);
       expect(find.text('경로 있는 기록을 저장하면 추천할게요.'), findsOneWidget);
       expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
     },
   );
+}
+
+void _expectTopCompactCard(WidgetTester tester, Finder finder) {
+  final top = tester.getTopLeft(finder).dy;
+  final height = tester.getSize(finder).height;
+
+  expect(top, lessThan(80));
+  expect(height, lessThanOrEqualTo(76));
 }
 
 RunSession _session({required String id, required DateTime startedAt}) {

@@ -165,6 +165,13 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
               ),
             ),
           if (mapControlsReady && !isReviewing) ...[
+            if (!playbackState.hasActiveSession && !countdownState.isActive)
+              const Positioned(
+                top: 12,
+                left: 20,
+                right: 20,
+                child: RunRecordRaceRecommendationCard(),
+              ),
             if (playbackState.hasActiveSession || !countdownState.isActive)
               Positioned(
                 left: 20,
@@ -183,13 +190,6 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                         workout: intervalWorkout,
                         onPressed: () => _handleIntervalButtonPressed(context),
                       ),
-              ),
-            if (!playbackState.hasActiveSession && !countdownState.isActive)
-              const Positioned(
-                left: 20,
-                right: 20,
-                bottom: 218,
-                child: RunRecordRaceRecommendationCard(),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
               const Positioned(

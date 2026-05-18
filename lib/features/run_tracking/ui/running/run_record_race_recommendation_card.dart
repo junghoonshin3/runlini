@@ -171,17 +171,17 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
     final foreground = enabled ? AppColors.chalk : AppColors.muted;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
+        constraints: const BoxConstraints(maxWidth: 340),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               decoration: BoxDecoration(
                 color: AppColors.black.withValues(alpha: 0.9),
-                border: Border.all(color: accent, width: 3),
+                border: Border.all(color: accent, width: 2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -193,30 +193,33 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: textTheme.labelLarge?.copyWith(
+                          style: textTheme.labelSmall?.copyWith(
                             color: accent,
                             fontWeight: FontWeight.w900,
+                            height: 1.0,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           message,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: textTheme.titleMedium?.copyWith(
+                          style: textTheme.bodyMedium?.copyWith(
                             color: foreground,
                             fontWeight: FontWeight.w900,
+                            height: 1.05,
                           ),
                         ),
                         if (detail != null) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             detail!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.bodySmall?.copyWith(
+                            style: textTheme.labelSmall?.copyWith(
                               color: AppColors.muted,
                               fontWeight: FontWeight.w700,
+                              height: 1.0,
                             ),
                           ),
                         ],
@@ -228,7 +231,7 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
                     const Icon(
                       Icons.arrow_forward_rounded,
                       color: AppColors.voltGreen,
-                      size: 28,
+                      size: 22,
                     ),
                   ],
                 ],
