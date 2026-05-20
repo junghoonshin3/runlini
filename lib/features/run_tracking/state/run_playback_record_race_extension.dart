@@ -9,7 +9,10 @@ mixin RunPlaybackRecordRaceTracking on Notifier<RunPlaybackState> {
     if (completedSummary == null) {
       return;
     }
-    if (!state.hasActiveSession || state.status != RunScreenStatus.running) {
+    final canPrompt =
+        state.hasActiveSession &&
+        (state.status == RunScreenStatus.running || state.isAutoPaused);
+    if (!canPrompt) {
       return;
     }
     if (state.recordRaceCompletionPromptDismissed ||

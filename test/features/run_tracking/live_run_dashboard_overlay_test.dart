@@ -103,6 +103,36 @@ void main() {
     expect(find.byKey(const Key('live-run-interval-step-label')), findsNothing);
   });
 
+  testWidgets('recordRace progress stays below 100 before completion', (
+    tester,
+  ) async {
+    await _pumpOverlay(
+      tester,
+      recordRace: _recordRaceFrame(routeProgress: 0.995),
+    );
+
+    await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-race-progress-value')), findsOneWidget);
+    expect(find.text('99%'), findsOneWidget);
+    expect(find.text('100%'), findsNothing);
+  });
+
+  testWidgets('recordRace progress shows 100 after completion', (tester) async {
+    await _pumpOverlay(
+      tester,
+      recordRace: _recordRaceFrame(routeProgress: 0.995),
+      recordRaceCompleted: true,
+    );
+
+    await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-race-progress-value')), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
+  });
+
   testWidgets('paused state keeps a compact paused marker', (tester) async {
     await _pumpOverlay(tester, metrics: _metrics(isPaused: true));
 
@@ -140,6 +170,7 @@ Future<void> _pumpOverlay(
   LiveRunMetrics? metrics,
   RecordRaceFrame? recordRace,
   RunIntervalFrame? intervalFrame,
+  bool recordRaceCompleted = false,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -151,6 +182,7 @@ Future<void> _pumpOverlay(
               sessionId: sessionId,
               metrics: metrics ?? _metrics(),
               displaySettings: const RunDisplaySettings(),
+              recordRaceCompleted: recordRaceCompleted,
               recordRace: recordRace,
               intervalFrame: intervalFrame,
               onAdvanceInterval: () {},
@@ -173,14 +205,17 @@ LiveRunMetrics _metrics({bool isPaused = false}) {
   );
 }
 
-RecordRaceFrame _recordRaceFrame({bool startConfirmed = true}) {
+RecordRaceFrame _recordRaceFrame({
+  bool startConfirmed = true,
+  double routeProgress = 0.5,
+}) {
   return RecordRaceFrame(
     status: RecordRaceStatus.ahead,
     timeGapMs: 12000,
     distanceGapM: 42,
     recordRaceMarkerPoint: const MapCoordinate(latitude: 0, longitude: 0),
     isOffRoute: false,
-    routeProgress: 0.5,
+    routeProgress: routeProgress,
     distanceToFinishM: 500,
     distanceFromRouteM: 4,
     totalRouteDistanceM: 1000,

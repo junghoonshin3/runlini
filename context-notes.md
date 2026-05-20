@@ -1,5 +1,19 @@
 # Context Notes
 
+## 2026-05-20 기록 레이스 완료 팝업 정책 반영
+
+- 사용자는 Agent Company 리서치·기획 토론 결론을 바탕으로 개발 구현을 요청했다.
+- 결정된 제품 정책은 기록 레이스 완료를 운동 종료가 아니라 기록 중 완료 이벤트로 다루는 것이다.
+- `record-race-run-completion-dialog`는 “기록 레이스 완료 결과 + 계속 달리기/러닝 종료 선택” 화면으로 정의한다.
+- 완료 판정 전에는 내부 진행률이 99.5% 이상이어도 화면에 100%를 표시하지 않는다.
+- 완료 확정 이후에는 100% 표시와 완료 팝업이 같은 완료 의미를 가져야 한다.
+- GPS 기반 실시간 결과는 최종 확정 표현을 피하고 `실시간 결과`로 표현한다.
+- finish 근처 자동 일시정지는 사용자의 수동 중단이 아니므로 기존 완료 안전 조건을 만족한 경우에만 완료 prompt 쓰기를 허용한다.
+- 수동 pause, off-route, 시작 미확정, finish 조건 미충족 상태는 완료로 인정하지 않는다.
+- 기존 dirty worktree의 `app-store-screenshots.json`, `src/lib/defaults.ts`, `.agents/`, `skills-lock.json` 변경은 이번 구현과 무관하므로 건드리지 않는다.
+- 구현 후 focused widget/provider 테스트와 `flutter analyze`가 통과했다.
+- 앱 화면 테스트는 위치 스트림 자체보다 provider 상태가 실제 `RunningTabScreen` 완료 팝업으로 이어지는지를 검증하도록 좁혔다. 완료 판정 계산과 자동 일시정지 허용은 provider 테스트가 담당한다.
+
 ## 2026-05-18 스토어 스크린샷 제작
 
 - 사용자는 App Store와 Google Play용 스크린샷 제작을 요청했다.

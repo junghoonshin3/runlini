@@ -157,6 +157,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 sessionId: playbackState.activeSessionId,
                 metrics: liveRunMetrics,
                 displaySettings: displaySettings,
+                recordRaceCompleted: recordRaceCompletionSummary != null,
                 recordRace: recordRaceFrame,
                 intervalFrame: intervalFrame,
                 onAdvanceInterval: ref
@@ -241,6 +242,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
               !isReviewing)
             Positioned.fill(
               child: RunRecordRaceCompletionOverlay(
+                summary: recordRaceCompletionSummary,
                 onContinue: () {
                   ref
                       .read(runPlaybackControllerProvider.notifier)

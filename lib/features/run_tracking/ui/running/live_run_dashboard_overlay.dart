@@ -13,6 +13,7 @@ class LiveRunDashboardOverlay extends StatefulWidget {
     required this.metrics,
     required this.displaySettings,
     required this.onAdvanceInterval,
+    this.recordRaceCompleted = false,
     this.recordRace,
     this.intervalFrame,
   });
@@ -20,6 +21,7 @@ class LiveRunDashboardOverlay extends StatefulWidget {
   final String? sessionId;
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
+  final bool recordRaceCompleted;
   final RecordRaceFrame? recordRace;
   final RunIntervalFrame? intervalFrame;
   final VoidCallback onAdvanceInterval;
@@ -46,6 +48,7 @@ class _LiveRunDashboardOverlayState extends State<LiveRunDashboardOverlay> {
         ? LiveRunDashboardExpanded(
             metrics: widget.metrics,
             displaySettings: widget.displaySettings,
+            recordRaceCompleted: widget.recordRaceCompleted,
             recordRace: widget.recordRace,
             intervalFrame: widget.intervalFrame,
             onAdvanceInterval: widget.onAdvanceInterval,

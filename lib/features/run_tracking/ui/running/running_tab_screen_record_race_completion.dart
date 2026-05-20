@@ -22,7 +22,10 @@ extension _RunningTabRecordRaceCompletion on _RunningTabScreenState {
       );
       return;
     }
-    if (playbackState.status != RunScreenStatus.running) {
+    final canEvaluateCompletion =
+        playbackState.status == RunScreenStatus.running ||
+        playbackState.isAutoPaused;
+    if (!canEvaluateCompletion) {
       _recordRaceCompletionCandidateCount = 0;
       _debugLogRecordRaceCompletionBlocker(
         frame: frame,

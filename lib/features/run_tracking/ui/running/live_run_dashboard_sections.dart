@@ -104,12 +104,14 @@ class LiveRunDashboardExpanded extends StatelessWidget {
     required this.metrics,
     required this.displaySettings,
     required this.onAdvanceInterval,
+    this.recordRaceCompleted = false,
     this.recordRace,
     this.intervalFrame,
   });
 
   final LiveRunMetrics metrics;
   final RunDisplaySettings displaySettings;
+  final bool recordRaceCompleted;
   final RecordRaceFrame? recordRace;
   final RunIntervalFrame? intervalFrame;
   final VoidCallback onAdvanceInterval;
@@ -187,6 +189,7 @@ class LiveRunDashboardExpanded extends StatelessWidget {
           LiveRunDashboardRecordRaceExpanded(
             frame: recordRace!,
             displaySettings: displaySettings,
+            completed: recordRaceCompleted,
           ),
         ],
       ],
