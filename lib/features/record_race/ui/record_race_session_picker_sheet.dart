@@ -157,7 +157,7 @@ class _RecordRaceSessionPickerSheetState
                               sessionAsync: ref.watch(
                                 runSessionByIdProvider(summary.id),
                               ),
-                              badgeLabel: '경로 가능',
+                              badgeLabel: '코스 있음',
                               onSelect: () =>
                                   Navigator.of(context).pop(summary),
                             );
@@ -165,7 +165,7 @@ class _RecordRaceSessionPickerSheetState
                           return CollapsedRecordRaceSessionCard(
                             key: Key('record-race-session-item-${summary.id}'),
                             summary: summary,
-                            badgeLabel: '경로 가능',
+                            badgeLabel: '코스 있음',
                             onTap: () {
                               setState(() => _expandedSummaryId = summary.id);
                             },
