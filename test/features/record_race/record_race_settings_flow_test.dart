@@ -34,11 +34,11 @@ void main() {
       find.byKey(const Key('record-race-control-chip-skeleton')),
       findsOneWidget,
     );
-    expect(find.text('기록 레이스 OFF'), findsNothing);
+    expect(find.text('경쟁레이스 선택'), findsNothing);
   });
 
   testWidgets(
-    'selects and clears a recordRace session from the running tab chip',
+    'selects changes and clears a recordRace session from the selector',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -60,7 +60,7 @@ void main() {
         tester,
         find.byKey(const Key('record-race-control-chip')),
       );
-      await pumpUntilFound(tester, find.text('기록 레이스 OFF'));
+      await pumpUntilFound(tester, find.text('경쟁레이스 선택'));
 
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
@@ -95,7 +95,7 @@ void main() {
           const Key('record-race-session-select-fixture_morning_tempo'),
         ),
       );
-      await pumpUntilFound(tester, find.text('기록 레이스 ON'));
+      await pumpUntilFound(tester, find.textContaining('경쟁레이스 ·'));
       await pumpUntilFound(
         tester,
         find.byKey(const Key('record-race-polyline-layer')),
@@ -105,13 +105,36 @@ void main() {
         find.byKey(const Key('record-race-polyline-layer')),
         findsOneWidget,
       );
-      expect(find.text('기록 레이스 ON'), findsOneWidget);
+      expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
+      expect(find.byKey(const Key('record-race-clear-button')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('record-race-control-chip')));
+      await pumpUntilFound(
+        tester,
+        find.byKey(const Key('record-race-session-sheet')),
+      );
+      expect(
+        find.byKey(const Key('record-race-polyline-layer')),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(
+        find.byKey(
+          const Key('record-race-session-select-fixture_morning_tempo'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(
+          const Key('record-race-session-select-fixture_morning_tempo'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('record-race-clear-button')));
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byKey(const Key('record-race-polyline-layer')), findsNothing);
-      expect(find.text('기록 레이스 OFF'), findsOneWidget);
+      expect(find.text('경쟁레이스 선택'), findsOneWidget);
     },
   );
 
@@ -211,7 +234,7 @@ void main() {
     expect(tester.getTopLeft(handleFinder).dy, initialTop);
   });
 
-  testWidgets('shows a disabled chip when there are no records', (
+  testWidgets('hides the selector when there are no records', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -230,19 +253,12 @@ void main() {
     );
     await tester.pump();
     await openRunningTab(tester);
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('record-race-control-chip')),
-    );
-    await pumpUntilFound(tester, find.text('기록 레이스 OFF'));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-    expect(find.text('기록 레이스 OFF'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('record-race-control-chip')));
-    await tester.pump(const Duration(milliseconds: 300));
-
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+    expect(find.text('경쟁레이스 선택'), findsNothing);
     expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
   });
 

@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('record-race-session-sheet')), findsOneWidget);
-    expect(find.text('기록 레이스 OFF'), findsOneWidget);
+    expect(find.text('경쟁레이스 선택'), findsOneWidget);
     expect(
       find.byKey(const Key('record-race-session-recommendation-card')),
       findsOneWidget,
@@ -87,7 +87,7 @@ void main() {
       findsNothing,
     );
     expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
-    expect(find.text('기록 레이스 ON'), findsOneWidget);
+    expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
   });
 
   testWidgets(
@@ -131,7 +131,7 @@ void main() {
       );
       expect(find.text('오늘 추천'), findsOneWidget);
       expect(find.text('경로 있는 기록을 저장하면 추천할게요.'), findsOneWidget);
-      expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
+      expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     },
   );
 }

@@ -40,7 +40,7 @@ void main() {
       findsNothing,
     );
     expect(repository.settings.intervalWorkout.enabled, isTrue);
-    expect(find.text('기록 레이스 ON'), findsOneWidget);
+    expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
   });
 
   testWidgets('locked interval button keeps a selected recordRace on', (
@@ -55,7 +55,7 @@ void main() {
       find.byKey(const Key('record-race-session-sheet')),
     );
     await _selectFirstRecordRace(tester);
-    await pumpUntilFound(tester, find.text('기록 레이스 ON'));
+    await pumpUntilFound(tester, find.textContaining('경쟁레이스 ·'));
 
     await tester.tap(find.byKey(const Key('run-interval-button')));
     await tester.pumpAndSettle();
@@ -66,7 +66,7 @@ void main() {
       findsNothing,
     );
     expect(find.byKey(const Key('run-interval-sheet-scroll')), findsNothing);
-    expect(find.text('기록 레이스 ON'), findsOneWidget);
+    expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
   });
 
   testWidgets('start ignores locked stale interval state before countdown', (
