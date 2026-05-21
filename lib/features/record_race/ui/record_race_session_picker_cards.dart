@@ -13,10 +13,12 @@ class CollapsedRecordRaceSessionCard extends StatelessWidget {
     super.key,
     required this.summary,
     required this.onTap,
+    this.badgeLabel,
   });
 
   final RunSessionSummary summary;
   final VoidCallback onTap;
+  final String? badgeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -38,12 +40,27 @@ class CollapsedRecordRaceSessionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      formatRecordRacePickerDate(summary.startedAt),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.chalk,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            formatRecordRacePickerDate(summary.startedAt),
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: AppColors.chalk,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ),
+                        if (badgeLabel != null) ...[
+                          const SizedBox(width: 8),
+                          _RecordRaceBadge(
+                            label: badgeLabel!,
+                            color: AppColors.muted,
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -74,11 +91,15 @@ class ExpandedRecordRaceSessionCard extends StatelessWidget {
     required this.summary,
     required this.sessionAsync,
     required this.onSelect,
+    this.badgeLabel,
+    this.reasonLabel,
   });
 
   final RunSessionSummary summary;
   final AsyncValue<RunSession?> sessionAsync;
   final VoidCallback onSelect;
+  final String? badgeLabel;
+  final String? reasonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +114,29 @@ class ExpandedRecordRaceSessionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (badgeLabel != null || reasonLabel != null) ...[
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (badgeLabel != null)
+                  _RecordRaceBadge(
+                    label: badgeLabel!,
+                    color: AppColors.voltGreen,
+                  ),
+                if (reasonLabel != null)
+                  Text(
+                    reasonLabel!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.chalk,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           Text(
             formatRecordRacePickerDate(summary.startedAt),
             style: Theme.of(context).textTheme.titleLarge,
@@ -158,6 +202,34 @@ class _RecordRaceMetric extends StatelessWidget {
         const SizedBox(height: 5),
         Text(value, style: Theme.of(context).textTheme.bodyLarge),
       ],
+    );
+  }
+}
+
+class _RecordRaceBadge extends StatelessWidget {
+  const _RecordRaceBadge({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: color, width: 2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w900,
+            height: 1.0,
+          ),
+        ),
+      ),
     );
   }
 }

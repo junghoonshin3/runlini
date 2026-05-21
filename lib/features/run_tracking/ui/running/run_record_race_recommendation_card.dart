@@ -4,13 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/run_tracking/service/run_record_race_recommendation_service.dart';
-import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_record_race_picker_flow.dart';
 
 class RunRecordRaceRecommendationCard extends ConsumerWidget {
   const RunRecordRaceRecommendationCard({super.key});
@@ -32,7 +31,11 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
         return _RunRecordRaceRecommendationCardBody(
           recommendation: recommendation,
           displaySettings: displaySettings,
-          onTap: () => _selectRecommendation(context, ref, recommendation),
+          onTap: () => openRecordRacePicker(
+            context: context,
+            ref: ref,
+            recommendation: recommendation,
+          ),
         );
       },
       loading: () => const _RunRecordRaceRecommendationLoadingCard(),
@@ -41,30 +44,6 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
       ),
       orElse: () => const _RunRecordRaceRecommendationLoadingCard(),
     );
-  }
-
-  Future<void> _selectRecommendation(
-    BuildContext context,
-    WidgetRef ref,
-    RunRecordRaceRecommendation recommendation,
-  ) async {
-    final runSettings =
-        ref.read(runSettingsControllerProvider).value ??
-        const RunSettingsState();
-    final intervalWorkout = runSettings.intervalWorkout;
-    if (isRunIntervalEnabledForRuntime(intervalWorkout)) {
-      final confirmed = await confirmDisableIntervalForRecordRace(context);
-      if (!context.mounted || !confirmed) {
-        return;
-      }
-      await ref
-          .read(runSettingsControllerProvider.notifier)
-          .setIntervalWorkout(intervalWorkout.copyWith(enabled: false));
-    }
-
-    ref
-        .read(recordRaceSettingsProvider.notifier)
-        .selectSession(recommendation.summary);
   }
 }
 
@@ -127,10 +106,7 @@ class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
   }
 
   String _titleFor(RunRecordRaceRecommendationReason reason) {
-    return switch (reason) {
-      RunRecordRaceRecommendationReason.sameWeekday => '같은 요일 기록으로 달리기',
-      RunRecordRaceRecommendationReason.latest => '최근 기록으로 달리기',
-    };
+    return recordRaceRecommendationReasonLabel(reason);
   }
 
   String _metricsFor(RunSessionSummary summary) {

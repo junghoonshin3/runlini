@@ -13,7 +13,7 @@ import 'package:runlini/features/run_tracking/types/run_session.dart';
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
-  testWidgets('shows a recommendation and selects it as record race', (
+  testWidgets('opens the picker before selecting a recommendation', (
     WidgetTester tester,
   ) async {
     final now = DateTime(2026, 5, 18, 7);
@@ -66,10 +66,27 @@ void main() {
     await tester.tap(find.byKey(const Key('record-race-recommendation-card')));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('record-race-session-sheet')), findsOneWidget);
+    expect(find.text('기록 레이스 OFF'), findsOneWidget);
+    expect(
+      find.byKey(const Key('record-race-session-recommendation-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('record-race-session-select-same-weekday')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('record-race-session-select-same-weekday')),
+    );
+    await tester.pumpAndSettle();
+
     expect(
       find.byKey(const Key('record-race-recommendation-card')),
       findsNothing,
     );
+    expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
     expect(find.text('기록 레이스 ON'), findsOneWidget);
   });
 

@@ -1,5 +1,17 @@
 # Context Notes
 
+## 2026-05-21 경쟁레이스 기록선택화면 추천 중심 개편 구현
+
+- 사용자는 확정된 계획을 구현하길 요청했다.
+- 확정 결정은 러닝 탭 `오늘 추천` 카드 탭 시 즉시 선택하지 않고 기록선택 시트를 열어, 시트 안 CTA로 확정하는 것이다.
+- 후보 카드 접힘 상태에는 작은 route shape 썸네일을 넣지 않고, 경로 가능 배지와 주요 지표만 둔다.
+- 경로 부족 기록은 후보 목록에서 숨긴다.
+- MVP에서는 현재 추천 로직인 같은 요일 우선, 없으면 최근 기록을 유지한다.
+- 기존 작업트리의 `app-store-screenshots.json`, `src/lib/defaults.ts`, `.agent-company/`, `.agents/`, `skills-lock.json` 변경은 이번 구현과 무관하므로 건드리지 않는다.
+- 구현은 `openRecordRacePicker` 공용 흐름을 추가해 추천 카드와 기록 레이스 칩이 같은 시트와 선택 확정 로직을 쓰도록 했다.
+- `RecordRaceSessionPickerSheet`는 추천 기록을 상단 추천 카드로 보여주고, 선택 가능한 경로 기록만 후보로 노출한다.
+- 검증은 focused record race picker/recommendation/flow tests, `flutter analyze`, `git diff --check`로 통과했다.
+
 ## 2026-05-21 경쟁레이스 기록선택화면 개편 방향 논의
 
 - 사용자는 경쟁레이스 기록선택화면을 어떻게 개편하면 좋을지 리서치 담당자, UI/UX 디자이너, 서비스 기획자의 의견을 취합해 듣길 원한다.

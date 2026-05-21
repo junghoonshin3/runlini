@@ -11,6 +11,37 @@ import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets('opens with the recommended session expanded', (
+    WidgetTester tester,
+  ) async {
+    final sessions = sampleRunSessions();
+    final recommended = RunSessionSummary.fromSession(sessions.last);
+
+    await _pumpSheet(
+      tester,
+      sessions,
+      recommendedSummary: recommended,
+      recommendationReason: '같은 요일 기록으로 달리기',
+    );
+
+    expect(
+      find.byKey(const Key('record-race-session-recommendation-card')),
+      findsOneWidget,
+    );
+    expect(find.text('오늘 추천'), findsOneWidget);
+    expect(find.text('같은 요일 기록으로 달리기'), findsOneWidget);
+    expect(
+      find.byKey(
+        const Key('record-race-session-select-fixture_han_river_push'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('record-race-session-select-fixture_morning_tempo')),
+      findsNothing,
+    );
+  });
+
   testWidgets('opens with the latest session expanded', (
     WidgetTester tester,
   ) async {
@@ -60,7 +91,7 @@ void main() {
     );
   });
 
-  testWidgets('shows route fallback when expanded session has too few points', (
+  testWidgets('hides sessions with too few points from selection', (
     WidgetTester tester,
   ) async {
     final session = _singlePointSession();
@@ -68,14 +99,23 @@ void main() {
     await _pumpSheet(tester, [session]);
 
     expect(
-      find.byKey(const Key('record-race-route-shape-fallback')),
+      find.byKey(const Key('record-race-session-empty-state')),
       findsOneWidget,
     );
-    expect(find.text('경로 데이터가 부족해요.'), findsOneWidget);
+    expect(find.text('경로가 있는 러닝 기록을 저장하면 기록 레이스를 시작할 수 있어요.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('record-race-session-select-single-point-run')),
+      findsNothing,
+    );
   });
 }
 
-Future<void> _pumpSheet(WidgetTester tester, List<RunSession> sessions) async {
+Future<void> _pumpSheet(
+  WidgetTester tester,
+  List<RunSession> sessions, {
+  RunSessionSummary? recommendedSummary,
+  String? recommendationReason,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -89,6 +129,8 @@ Future<void> _pumpSheet(WidgetTester tester, List<RunSession> sessions) async {
             summaries: sessions
                 .map(RunSessionSummary.fromSession)
                 .toList(growable: false),
+            recommendedSummary: recommendedSummary,
+            recommendationReason: recommendationReason,
           ),
         ),
       ),

@@ -4,13 +4,9 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/record_race/types/record_race_settings_state.dart';
-import 'package:runlini/features/record_race/ui/record_race_session_picker_sheet.dart';
-import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
-import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
-import 'package:runlini/features/run_tracking/types/run_settings.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_record_race_picker_flow.dart';
 
 class RunRecordRaceControlChip extends ConsumerWidget {
   const RunRecordRaceControlChip({super.key});
@@ -64,40 +60,11 @@ class RunRecordRaceControlChip extends ConsumerWidget {
     WidgetRef ref,
     List<RunSessionSummary> summaries,
   ) async {
-    final selectedSummary = await showModalBottomSheet<RunSessionSummary>(
+    await openRecordRacePicker(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useSafeArea: true,
-      sheetAnimationStyle: const AnimationStyle(
-        duration: Duration(milliseconds: 140),
-        reverseDuration: Duration(milliseconds: 80),
-      ),
-      builder: (BuildContext context) {
-        return RecordRaceSessionPickerSheet(summaries: summaries);
-      },
+      ref: ref,
+      summaries: summaries,
     );
-    if (!context.mounted || selectedSummary == null) {
-      return;
-    }
-
-    final runSettings =
-        ref.read(runSettingsControllerProvider).value ??
-        const RunSettingsState();
-    final intervalWorkout = runSettings.intervalWorkout;
-    if (isRunIntervalEnabledForRuntime(intervalWorkout)) {
-      final confirmed = await confirmDisableIntervalForRecordRace(context);
-      if (!context.mounted || !confirmed) {
-        return;
-      }
-      await ref
-          .read(runSettingsControllerProvider.notifier)
-          .setIntervalWorkout(intervalWorkout.copyWith(enabled: false));
-    }
-
-    ref
-        .read(recordRaceSettingsProvider.notifier)
-        .selectSession(selectedSummary);
   }
 }
 
