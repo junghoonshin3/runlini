@@ -43,15 +43,11 @@ class RecordRaceCompletionDetector {
     final totalDistance = frame.totalRouteDistanceM;
     if (!frame.startConfirmed ||
         frame.status == RecordRaceStatus.unavailable ||
-        frame.isOffRoute ||
         !totalDistance.isFinite ||
         totalDistance <= 0) {
       return false;
     }
     if (runnerDistanceM < totalDistance * minimumRunnerDistanceRatio) {
-      return false;
-    }
-    if (frame.distanceFromRouteM > offRouteThresholdM) {
       return false;
     }
 
@@ -62,6 +58,17 @@ class RecordRaceCompletionDetector {
     final finishPointCandidate =
         frame.distanceToFinishPointM <= finishPointRadiusM &&
         frame.distanceToFinishM <= finishProjectionWindowM;
+    final isOffRoute =
+        frame.isOffRoute ||
+        frame.status == RecordRaceStatus.offRoute ||
+        frame.distanceFromRouteM > offRouteThresholdM;
+    final offRouteFinishCandidate =
+        finishPointCandidate ||
+        (progressCandidate &&
+            frame.distanceToFinishPointM <= finishProjectionWindowM);
+    if (isOffRoute && !offRouteFinishCandidate) {
+      return false;
+    }
     return progressCandidate || finishPointCandidate;
   }
 

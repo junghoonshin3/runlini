@@ -31,8 +31,7 @@ class WearRecordRaceCompletionDetector(
             !frame.startConfirmed ||
             frame.status == WearRecordRaceStatus.Unavailable ||
             totalDistance <= 0.0 ||
-            !totalDistance.isFinite() ||
-            frame.distanceFromRouteM > offRouteThresholdM
+            !totalDistance.isFinite()
         ) {
             return false
         }
@@ -47,6 +46,15 @@ class WearRecordRaceCompletionDetector(
         val finishPointCandidate =
             frame.distanceToFinishPointM <= finishPointRadiusM &&
                 frame.distanceToFinishM <= finishProjectionWindowM
+        val isOffRoute =
+            frame.status == WearRecordRaceStatus.OffRoute ||
+                frame.distanceFromRouteM > offRouteThresholdM
+        val offRouteFinishCandidate =
+            finishPointCandidate ||
+                (progressCandidate && frame.distanceToFinishPointM <= finishProjectionWindowM)
+        if (isOffRoute && !offRouteFinishCandidate) {
+            return false
+        }
         return progressCandidate || finishPointCandidate
     }
 

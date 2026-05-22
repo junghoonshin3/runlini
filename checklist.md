@@ -1,5 +1,17 @@
 # Checklist
 
+## 경쟁레이스 완료 판정 finish corridor 우선 정책 구현
+
+- [x] Agent Company 구현 회의를 시작하고 역할별 검토를 병렬 요청한다.
+- [x] 현재 Dart와 Wear 완료 판정 코드와 테스트를 확인한다.
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Dart `RecordRaceCompletionDetector`의 하드 차단과 finish 후보 판정 순서를 조정한다.
+- [x] Wear `WearRecordRaceCompletionDetector`도 같은 정책으로 맞춘다.
+- [x] Dart와 Kotlin detector 테스트를 추가하거나 갱신한다.
+- [x] focused tests와 `flutter analyze`를 실행한다.
+- [x] Agent Company 회의를 닫고 결정 기록을 남긴다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## 경쟁레이스 진행률 99% 고정 정책 폐기
 
 - [x] 99% 고정 표시 정책 참조 위치를 확인한다.

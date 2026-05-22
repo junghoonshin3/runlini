@@ -1,5 +1,20 @@
 # Context Notes
 
+## 2026-05-22 경쟁레이스 완료 판정 finish corridor 우선 정책 구현
+
+- 사용자는 기존 기획과 리서치 결론을 토대로 경쟁레이스 완료 판정 구현을 진행하라고 승인했다.
+- 구현 목표는 사용자 본인의 전체 경쟁레이스 완료 확정 이벤트에만 완료 팝업을 띄우는 것이다.
+- 99% 진행률 고정 표시 정책은 폐기된 상태를 유지한다.
+- 현재 Dart `RecordRaceCompletionDetector`는 `frame.isOffRoute`를 finish 후보 계산 전 하드 차단한다.
+- 현재 Wear `WearRecordRaceCompletionDetector`는 `distanceFromRouteM > 35`를 finish 후보 계산 전 하드 차단한다.
+- 새 정책은 `startConfirmed`, unavailable, 유효하지 않은 total distance, 최소 runner distance 비율 미달은 하드 차단으로 유지한다.
+- 그 뒤 detector 입력값 기준 finish corridor 후보를 계산하고, finish corridor가 성립하면 마지막 GPS off-route 흔들림보다 완료 후보를 우선한다.
+- finish corridor가 성립하지 않는 일반 구간에서는 기존 off-route 차단을 유지한다.
+- 구현 범위는 Dart detector, Wear detector, 양쪽 테스트로 제한하고 진행률 UI, gap 계산, 일반 기록 종료 정책, 팝업 중복 상태 관리는 바꾸지 않는다.
+- 구현 결과 off-route 상태라도 finish point radius 안이거나 route progress 완료 후보이면서 finish point가 projection window 안이면 완료 후보를 유지한다.
+- off-route 상태에서 route progress와 남은 거리가 완료처럼 보여도 finish point가 projection window 밖이면 완료 후보를 차단한다.
+- 검증은 `flutter test test/features/record_race/record_race_completion_detector_test.dart test/features/record_race/record_race_event_engine_test.dart test/features/run_tracking/run_record_race_provider_loop_test.dart test/features/run_tracking/run_playback_record_race_completion_providers_test.dart`, `./gradlew :wear:testDebugUnitTest --tests kr.sjh.runlini.wear.WearRecordRaceCompletionDetectorTest --tests kr.sjh.runlini.wear.WearRecordRaceEventEngineTest`, `flutter analyze`로 통과했다.
+
 ## 2026-05-22 경쟁레이스 진행률 99% 고정 정책 폐기
 
 - 사용자는 경쟁레이스 진행률을 완료 전 99%로 고정하는 정책 폐기를 명시했다.

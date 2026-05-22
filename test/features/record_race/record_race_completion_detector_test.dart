@@ -22,14 +22,15 @@ void main() {
     expect(second.isComplete, isTrue);
   });
 
-  test('does not complete off route', () {
+  test('blocks off-route projected finish outside finish point corridor', () {
     final decision = detector.evaluate(
       frame: _frame(
         status: RecordRaceStatus.offRoute,
         isOffRoute: true,
-        routeProgress: 0.99,
-        distanceToFinishM: 8,
-        distanceFromRouteM: 40,
+        routeProgress: 1,
+        distanceToFinishM: 0,
+        distanceFromRouteM: 80,
+        distanceToFinishPointM: 500,
       ),
       runnerDistanceM: 980,
       previousCandidateCount: 1,
@@ -38,6 +39,45 @@ void main() {
     expect(decision.isCandidate, isFalse);
     expect(decision.candidateCount, 0);
   });
+
+  test('accepts finish point corridor despite final off-route wobble', () {
+    final decision = detector.evaluate(
+      frame: _frame(
+        status: RecordRaceStatus.offRoute,
+        isOffRoute: true,
+        routeProgress: 0.99,
+        distanceToFinishM: 8,
+        distanceFromRouteM: 40,
+        distanceToFinishPointM: 12,
+      ),
+      runnerDistanceM: 980,
+      previousCandidateCount: 1,
+    );
+
+    expect(decision.isCandidate, isTrue);
+    expect(decision.isComplete, isTrue);
+  });
+
+  test(
+    'accepts projected finish near finish window despite off-route wobble',
+    () {
+      final decision = detector.evaluate(
+        frame: _frame(
+          status: RecordRaceStatus.offRoute,
+          isOffRoute: true,
+          routeProgress: 1,
+          distanceToFinishM: 0,
+          distanceFromRouteM: 40,
+          distanceToFinishPointM: 80,
+        ),
+        runnerDistanceM: 980,
+        previousCandidateCount: 1,
+      );
+
+      expect(decision.isCandidate, isTrue);
+      expect(decision.isComplete, isTrue);
+    },
+  );
 
   test('does not complete before recordRace start is confirmed', () {
     final decision = detector.evaluate(

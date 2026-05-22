@@ -27,13 +27,14 @@ class WearRecordRaceCompletionDetectorTest {
     }
 
     @Test
-    fun resetsCandidateCountWhenOffRoute() {
+    fun blocksOffRouteProjectedFinishOutsideFinishPointCorridor() {
         val decision = detector.evaluate(
             frame = frame(
                 status = WearRecordRaceStatus.OffRoute,
-                distanceFromRouteM = 40.0,
-                routeProgress = 0.99,
-                distanceToFinishM = 8.0,
+                distanceFromRouteM = 80.0,
+                routeProgress = 1.0,
+                distanceToFinishM = 0.0,
+                distanceToFinishPointM = 500.0,
             ),
             runnerDistanceM = 980.0,
             previousCandidateCount = 1,
@@ -41,6 +42,42 @@ class WearRecordRaceCompletionDetectorTest {
 
         assertFalse(decision.isCandidate)
         assertEquals(0, decision.candidateCount)
+    }
+
+    @Test
+    fun acceptsFinishPointCorridorDespiteFinalOffRouteWobble() {
+        val decision = detector.evaluate(
+            frame = frame(
+                status = WearRecordRaceStatus.OffRoute,
+                distanceFromRouteM = 40.0,
+                routeProgress = 0.99,
+                distanceToFinishM = 8.0,
+                distanceToFinishPointM = 12.0,
+            ),
+            runnerDistanceM = 980.0,
+            previousCandidateCount = 1,
+        )
+
+        assertTrue(decision.isCandidate)
+        assertTrue(decision.isComplete)
+    }
+
+    @Test
+    fun acceptsProjectedFinishNearFinishWindowDespiteOffRouteWobble() {
+        val decision = detector.evaluate(
+            frame = frame(
+                status = WearRecordRaceStatus.OffRoute,
+                distanceFromRouteM = 40.0,
+                routeProgress = 1.0,
+                distanceToFinishM = 0.0,
+                distanceToFinishPointM = 80.0,
+            ),
+            runnerDistanceM = 980.0,
+            previousCandidateCount = 1,
+        )
+
+        assertTrue(decision.isCandidate)
+        assertTrue(decision.isComplete)
     }
 
     @Test
