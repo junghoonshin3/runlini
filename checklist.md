@@ -1,5 +1,18 @@
 # Checklist
 
+## Google Play 릴리즈 준비
+
+- [x] Agent Company 릴리즈 준비 회의를 시작하고 역할별 점검을 병렬 요청한다.
+- [x] 공식 Google Play 요구사항을 확인한다.
+- [x] Android target SDK, signing, version, permission 설정을 확인한다.
+- [x] Play Console App content와 Data safety에 필요한 항목을 정리한다.
+- [x] 내부 테스트와 비공개 테스트 전략을 정리한다.
+- [x] release app bundle 빌드 가능 여부를 확인한다.
+- [x] Google Play 제출 준비 문서를 작성한다.
+- [x] 출시 전 focused tests와 정적 검사를 실행한다.
+- [x] 릴리즈 회의를 닫고 결정 기록을 남긴다.
+- [x] 실제 업로드 전 사용자 확인 질문과 다음 액션을 정리한다.
+
 ## 설정탭 정보 구조 정리 구현
 
 - [x] Agent Company 구현 회의를 시작하고 역할별 검토를 병렬 요청한다.

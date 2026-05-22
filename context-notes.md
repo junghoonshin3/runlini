@@ -1,5 +1,27 @@
 # Context Notes
 
+## 2026-05-22 Google Play 릴리즈 준비
+
+- 사용자는 Runlini를 Google Play Store에 올리고 싶다고 했고, 릴리즈 담당자 중심 Agent Company 진행을 승인했다.
+- 실제 Play Console 업로드, 게시, credential 변경은 이번 작업에서 하지 않는다.
+- 2026-05-22 기준 공식 요구사항은 새 앱과 업데이트가 Android 15, API 35 이상을 target 해야 하며, Android 15 이상 대상 제출은 16KB page size 지원 리스크도 확인해야 한다.
+- 신규 개인 개발자 계정이 2023-11-13 이후 생성됐다면 production access 전 12명 이상 테스터가 14일 연속 closed test에 opt-in 해야 한다.
+- Runlini는 위치, Health, Wear, 운동 기록 데이터를 다루므로 Play Console App content, Data safety, 개인정보처리방침, 민감 권한 설명이 출시 gate다.
+- 이번 로컬 점검은 Android build config, signing, app bundle 빌드, 테스트 전략, 스토어 등록 준비 항목을 확인하는 데 집중한다.
+- 기존 작업트리의 미커밋 변경은 사용자 작업으로 보고 되돌리지 않는다.
+- 로컬 확인 결과 phone 앱은 `compileSdk = 36`, `targetSdk = 36`, `minSdk = 26`, `applicationId = "kr.sjh.runlini"`이고, `pubspec.yaml` 기준 버전은 `1.0.0+1`이다.
+- 로컬 확인 결과 wear 모듈은 `compileSdk = 36`, `targetSdk = 36`, `minSdk = 30`, `applicationId = "kr.sjh.runlini"`, `versionCode = 36010001`, `versionName = "1.0.0"`이다.
+- `android/app/build.gradle.kts`의 release build는 현재 `signingConfigs.getByName("debug")`를 사용하므로, 현재 상태 그대로는 Play 제출 전 차단 항목이다.
+- `flutter build appbundle --release`는 Agent Company 아키텍트 점검에서 통과했고 `build/app/outputs/bundle/release/app-release.aab`가 생성되어 있다. 단, debug signing 상태라 제출용 산출물로 보지 않는다.
+- AAB 내부 네이티브 라이브러리는 아키텍트가 `llvm-readelf`로 LOAD alignment를 확인했고, 제출 전에는 `bundletool` 또는 Play pre-launch 기준으로 split APK 16KB page size 검증을 추가해야 한다.
+- `android/local.properties`에는 `GOOGLE_MAPS_API_KEY`, Flutter version fields, SDK 경로가 있고, `android/app/google-services.json`과 `android/wear/google-services.json`이 존재한다.
+- 개인정보처리방침 파일이나 URL은 저장소에서 확인되지 않았다. Play 제출 전 공개 URL과 지원 이메일을 확정해야 한다.
+- 제출 준비 문서는 `docs/release/google-play-release-readiness.md`에 남긴다.
+- 검증은 `flutter analyze`, `flutter test`, `flutter build appbundle --release`, `./gradlew :app:testDebugUnitTest :wear:testDebugUnitTest`, `git diff --check`로 통과했다.
+- `flutter build appbundle --release`는 최초 sandbox 안에서 Flutter SDK cache 파일 쓰기 제한으로 실패했고, 승인된 escalated 실행에서 통과했다.
+- Agent Company 회의 `20260522T084115Z-google-play-릴리즈-준비-회의-13eddb`는 모든 참여자의 조건부 합의로 닫았다.
+- 결정 `20260522T084935Z-decision-aeb496`은 지금 바로 Play 제출하지 않고, release signing과 정책 입력값을 먼저 닫은 뒤 internal testing부터 시작한다는 내용이다.
+
 ## 2026-05-22 설정탭 정보 구조 정리 구현
 
 - 사용자는 이전 Agent Company 설정탭 변경 계획대로 개발 진행을 승인했다.
