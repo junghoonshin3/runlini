@@ -1,6 +1,7 @@
 // 기록 레이스 선택 시트 실행과 선택 확정을 조율한다
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/record_race/ui/record_race_session_picker_sheet.dart';
 import 'package:runlini/features/run_tracking/service/run_record_race_recommendation_service.dart';
@@ -32,9 +33,15 @@ Future<void> openRecordRacePicker({
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     useSafeArea: true,
-    sheetAnimationStyle: const AnimationStyle(
-      duration: Duration(milliseconds: 140),
-      reverseDuration: Duration(milliseconds: 80),
+    sheetAnimationStyle: AnimationStyle(
+      duration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.shortTransition,
+      ),
+      reverseDuration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.fastTransition,
+      ),
     ),
     builder: (BuildContext context) {
       return RecordRaceSessionPickerSheet(

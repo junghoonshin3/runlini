@@ -1,5 +1,17 @@
 # Checklist
 
+## Runlini 애니메이션 적용 v1
+
+- [x] 애니메이션 정책 문서와 실행 계획을 추가한다.
+- [x] 공통 `RunliniMotion` 기준을 추가한다.
+- [x] 스켈레톤 shimmer와 카운트다운이 공통 모션과 reduce-motion 기준을 쓰게 한다.
+- [x] 러닝 탭 시작 전후, 라이브 대시보드, pause/resume/stop 상태 전환에 공통 모션을 적용한다.
+- [x] 기록 레이스 선택 시트의 카드 확장과 route preview 로딩 전환을 정리한다.
+- [x] 기록 홈, 히스토리 달력, 상세 route preview, 설정 sync status 로딩 전환에 공통 모션을 적용한다.
+- [x] focused widget tests를 보강하고 실행한다.
+- [x] `dart run tool/guardrails.dart`, `flutter analyze`, `flutter test`를 실행한다.
+- [x] 변경을 논리 단위로 커밋한다.
+
 ## 경쟁레이스 기록선택화면 추천 중심 개편 구현
 
 - [x] 실행 계획과 컨텍스트 노트를 갱신한다.

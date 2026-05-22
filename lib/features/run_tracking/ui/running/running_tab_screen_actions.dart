@@ -186,6 +186,18 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     ref.read(runMapRecenterTickProvider.notifier).trigger();
   }
 
+  void _handleIntervalButtonPressed(BuildContext context) {
+    if (!runIntervalFeatureLocked) {
+      showRunIntervalSheet(context, ref);
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(content: Text(runIntervalFeatureLockedMessage)),
+    );
+  }
+
   Future<void> _handleSaveFinishedRun() async {
     await saveFinishedRunWithFeedback(context, ref);
   }
@@ -196,4 +208,12 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     }
     await ref.read(runPlaybackControllerProvider.notifier).discardFinishedRun();
   }
+}
+
+Widget _runControlTransition(Widget child, Animation<double> animation) {
+  final scale = Tween<double>(begin: 0.96, end: 1).animate(animation);
+  return FadeTransition(
+    opacity: animation,
+    child: ScaleTransition(scale: scale, child: child),
+  );
 }

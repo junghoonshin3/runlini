@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 
 class RunPauseResumeButton extends StatelessWidget {
   const RunPauseResumeButton({
@@ -25,9 +26,19 @@ class RunPauseResumeButton extends StatelessWidget {
           ),
         ),
         onPressed: onPressed,
-        icon: Icon(
-          isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-          size: 32,
+        icon: AnimatedSwitcher(
+          duration: RunliniMotion.enabledDuration(
+            context,
+            RunliniMotion.shortTransition,
+          ),
+          switchInCurve: RunliniMotion.enterCurve,
+          switchOutCurve: RunliniMotion.exitCurve,
+          transitionBuilder: _buttonTransition,
+          child: Icon(
+            isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+            key: ValueKey<bool>(isPaused),
+            size: 32,
+          ),
         ),
         tooltip: isPaused ? 'Resume run' : 'Pause run',
       ),
@@ -65,16 +76,34 @@ class RunStartStopButton extends StatelessWidget {
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ),
         onPressed: onPressed,
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Text(showsStopAction ? 'STOP' : 'START'),
+        child: AnimatedSwitcher(
+          duration: RunliniMotion.enabledDuration(
+            context,
+            RunliniMotion.shortTransition,
+          ),
+          switchInCurve: RunliniMotion.enterCurve,
+          switchOutCurve: RunliniMotion.exitCurve,
+          transitionBuilder: _buttonTransition,
+          child: FittedBox(
+            key: ValueKey<bool>(showsStopAction),
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Text(showsStopAction ? 'STOP' : 'START'),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+Widget _buttonTransition(Widget child, Animation<double> animation) {
+  final scale = Tween<double>(begin: 0.92, end: 1).animate(animation);
+  return FadeTransition(
+    opacity: animation,
+    child: ScaleTransition(scale: scale, child: child),
+  );
 }
 
 class RunCurrentLocationButton extends StatelessWidget {

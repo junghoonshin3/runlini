@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/service/run_history_calendar_summary_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -33,8 +34,6 @@ class HistoryCalendarPanel extends StatefulWidget {
 }
 
 class _HistoryCalendarPanelState extends State<HistoryCalendarPanel> {
-  static const _calendarAnimationDuration = Duration(milliseconds: 220);
-  static const _calendarAnimationCurve = Curves.easeOutCubic;
   static const _minimumSwipeVelocity = 250.0;
   static const _minimumSwipeDistance = 72.0;
 
@@ -77,6 +76,58 @@ class _HistoryCalendarPanelState extends State<HistoryCalendarPanel> {
     final visibleDates = _isExpanded
         ? _monthGridDates(_focusedMonth)
         : _weekDates(_focusedWeekAnchor);
+    final calendarGrid = GridView.count(
+      key: ValueKey<String>(
+        '${_isExpanded ? 'month' : 'week'}-${_focusedMonth.year}-'
+        '${_focusedMonth.month}-${_dateKey(_focusedWeekAnchor)}',
+      ),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 7,
+      mainAxisSpacing: 6,
+      crossAxisSpacing: 4,
+      childAspectRatio: 0.68,
+      children: [
+        for (final date in visibleDates)
+          HistoryDayProgressCell(
+            key: Key('history-calendar-day-${_dateKey(date)}'),
+            date: date,
+            summary: summaries[widget.calculator.localDate(date)],
+            dayGoalM: dayGoalM,
+            displaySettings: widget.displaySettings,
+            isSelected: _sameDay(date, widget.selectedDate),
+            isToday: _sameDay(date, widget.now ?? DateTime.now()),
+            isOutsideMonth: !_sameMonth(date, _focusedMonth),
+            onTap: () => _selectDate(date),
+          ),
+      ],
+    );
+    final calendarBody = RunliniMotion.reduceMotion(context)
+        ? calendarGrid
+        : AnimatedSize(
+            duration: RunliniMotion.standardTransition,
+            curve: RunliniMotion.enterCurve,
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: RunliniMotion.standardTransition,
+              switchInCurve: RunliniMotion.enterCurve,
+              switchOutCurve: RunliniMotion.exitCurve,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                final horizontalOffset = _slideDirection == 0
+                    ? 0.0
+                    : 0.08 * _slideDirection;
+                final offset = Tween<Offset>(
+                  begin: Offset(horizontalOffset, 0.02),
+                  end: Offset.zero,
+                ).animate(animation);
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(position: offset, child: child),
+                );
+              },
+              child: calendarGrid,
+            ),
+          );
     return RunPanel(
       key: const Key('history-calendar-panel'),
       padding: const EdgeInsets.all(14),
@@ -111,55 +162,7 @@ class _HistoryCalendarPanelState extends State<HistoryCalendarPanel> {
               _dragDistanceX += details.primaryDelta ?? 0;
             },
             onHorizontalDragEnd: _handleHorizontalDragEnd,
-            child: AnimatedSize(
-              duration: _calendarAnimationDuration,
-              curve: _calendarAnimationCurve,
-              alignment: Alignment.topCenter,
-              child: AnimatedSwitcher(
-                duration: _calendarAnimationDuration,
-                switchInCurve: _calendarAnimationCurve,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  final horizontalOffset = _slideDirection == 0
-                      ? 0.0
-                      : 0.08 * _slideDirection;
-                  final offset = Tween<Offset>(
-                    begin: Offset(horizontalOffset, 0.02),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(position: offset, child: child),
-                  );
-                },
-                child: GridView.count(
-                  key: ValueKey<String>(
-                    '${_isExpanded ? 'month' : 'week'}-${_focusedMonth.year}-'
-                    '${_focusedMonth.month}-${_dateKey(_focusedWeekAnchor)}',
-                  ),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 4,
-                  childAspectRatio: 0.68,
-                  children: [
-                    for (final date in visibleDates)
-                      HistoryDayProgressCell(
-                        key: Key('history-calendar-day-${_dateKey(date)}'),
-                        date: date,
-                        summary: summaries[widget.calculator.localDate(date)],
-                        dayGoalM: dayGoalM,
-                        displaySettings: widget.displaySettings,
-                        isSelected: _sameDay(date, widget.selectedDate),
-                        isToday: _sameDay(date, widget.now ?? DateTime.now()),
-                        isOutsideMonth: !_sameMonth(date, _focusedMonth),
-                        onTap: () => _selectDate(date),
-                      ),
-                  ],
-                ),
-              ),
-            ),
+            child: calendarBody,
           ),
           if (widget.selectedDate != null && !isSelectedToday) ...[
             const SizedBox(height: 12),

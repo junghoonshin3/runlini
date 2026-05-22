@@ -54,6 +54,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('save-run-button')));
     await tester.pump();
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('record-race-control-chip')),
+    );
 
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);

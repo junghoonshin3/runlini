@@ -1,5 +1,19 @@
 # Context Notes
 
+## 2026-05-22 Runlini 애니메이션 적용 v1
+
+- 사용자는 이전 에이전트가 작성한 Runlini 애니메이션 적용 계획 v1을 fresh context에서 구현하길 요청했다.
+- 이번 작업의 제품 기준은 “달리는 중 즉시 읽힘”이며, 애니메이션은 장식이 아니라 상태 변화, 로딩, 화면 전환을 명확히 하는 용도에 한정한다.
+- 스플래시는 계속 정적으로 두고 Lottie, 새 패키지, 전역 라우트 전환 커스터마이징은 추가하지 않는다.
+- 새 공통 모션 기준은 앱 UI 공통 계층의 내부 Dart 파일로 두고, 새 파일 첫 줄에는 프로젝트 규칙에 따라 한국어 역할 주석을 넣는다.
+- 기존 작업트리의 `app-store-screenshots.json`, `src/lib/defaults.ts`, `.agent-company/`, `.agents/`, `skills-lock.json` 변경은 이번 요청과 무관하므로 건드리지 않는다.
+- `checklist.md`와 `context-notes.md` 자체도 이미 수정된 상태였으므로 기존 내용을 보존하고 이번 섹션만 맨 위에 추가한다.
+- 구현 범위는 `RunliniMotion` 공통 기준, skeleton shimmer reduce-motion, 카운트다운 fallback, 러닝 탭 컨트롤 전환, 기록 레이스 선택 시트, 히스토리와 상세, 설정 상태 전환이다.
+- `AnimatedSize`는 reduce-motion에서 `Duration.zero`만 주면 일부 widget test에서 layout mutation 예외가 나므로, 접힘과 달력 본문은 애니메이션 위젯 자체를 우회한다.
+- skeleton shimmer는 무한 `repeat` 대신 짧은 정지 간격이 있는 반복 sweep으로 구현했다. 화면에서는 반복 로딩으로 보이고, widget test의 `pumpAndSettle`은 안정적으로 종료된다.
+- 검증은 `dart run tool/guardrails.dart`, `flutter analyze`, focused widget tests, 전체 `flutter test`로 통과했다.
+- Android 실기기 `5200024fee2b2571`에는 debug app 설치와 launch까지 확인했다. ADB screenshot은 파일로 저장됐지만 프레임이 검은 화면이라 실제 UI 시각 확인은 완료 증거로 쓰지 않는다.
+
 ## 2026-05-21 경쟁레이스 기록선택화면 추천 중심 개편 구현
 
 - 사용자는 확정된 계획을 구현하길 요청했다.

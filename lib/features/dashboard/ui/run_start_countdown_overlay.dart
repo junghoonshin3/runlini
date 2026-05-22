@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 
 class RunStartCountdownOverlay extends StatelessWidget {
   const RunStartCountdownOverlay({super.key, required this.remainingSeconds});
@@ -46,19 +47,17 @@ class _AnimatedCountdownNumber extends StatefulWidget {
 
 class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
     with SingleTickerProviderStateMixin {
-  static const Duration _animationDuration = Duration(seconds: 1);
-
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: _animationDuration,
-  )..forward();
+    duration: RunliniMotion.countdownStep,
+  );
 
   late final Animation<double> _opacity = TweenSequence<double>([
     TweenSequenceItem<double>(
       tween: Tween<double>(
         begin: 0,
         end: 1,
-      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+      ).chain(CurveTween(curve: RunliniMotion.enterCurve)),
       weight: 18,
     ),
     TweenSequenceItem<double>(tween: ConstantTween<double>(1), weight: 56),
@@ -66,7 +65,7 @@ class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
       tween: Tween<double>(
         begin: 1,
         end: 0,
-      ).chain(CurveTween(curve: Curves.easeInCubic)),
+      ).chain(CurveTween(curve: RunliniMotion.exitCurve)),
       weight: 26,
     ),
   ]).animate(_controller);
@@ -76,7 +75,7 @@ class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
       tween: Tween<double>(
         begin: 0.82,
         end: 1,
-      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+      ).chain(CurveTween(curve: RunliniMotion.enterCurve)),
       weight: 18,
     ),
     TweenSequenceItem<double>(tween: ConstantTween<double>(1), weight: 56),
@@ -84,10 +83,23 @@ class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
       tween: Tween<double>(
         begin: 1,
         end: 0.94,
-      ).chain(CurveTween(curve: Curves.easeInCubic)),
+      ).chain(CurveTween(curve: RunliniMotion.exitCurve)),
       weight: 26,
     ),
   ]).animate(_controller);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (RunliniMotion.reduceMotion(context)) {
+      _controller.stop();
+      _controller.value = 1;
+      return;
+    }
+    if (_controller.status == AnimationStatus.dismissed) {
+      _controller.forward();
+    }
+  }
 
   @override
   void dispose() {
@@ -102,14 +114,19 @@ class _AnimatedCountdownNumberState extends State<_AnimatedCountdownNumber>
       fontSize: 168,
       fontWeight: FontWeight.w900,
     );
+    final label = Text(
+      '${widget.remainingSeconds}',
+      key: const Key('run-start-countdown-label'),
+      style: textStyle,
+    );
+
+    if (RunliniMotion.reduceMotion(context)) {
+      return label;
+    }
 
     return AnimatedBuilder(
       animation: _controller,
-      child: Text(
-        '${widget.remainingSeconds}',
-        key: const Key('run-start-countdown-label'),
-        style: textStyle,
-      ),
+      child: label,
       builder: (BuildContext context, Widget? child) {
         return Opacity(
           opacity: _opacity.value,

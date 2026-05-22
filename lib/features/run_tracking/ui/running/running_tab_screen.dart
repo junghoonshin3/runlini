@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
 import 'package:runlini/core/performance/startup_trace.dart';
@@ -171,33 +172,45 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 top: 12,
                 left: 20,
                 right: 20,
-                child: RunRecordRaceRecommendationCard(),
+                child: RunliniFadeUp(child: RunRecordRaceRecommendationCard()),
               ),
             if (playbackState.hasActiveSession || !countdownState.isActive)
               Positioned(
                 left: 20,
                 bottom: 28,
-                child: playbackState.hasActiveSession
-                    ? RunPauseResumeButton(
-                        isPaused:
-                            playbackState.status == RunScreenStatus.paused,
-                        onPressed: () async {
-                          await _handlePauseResumePressed(
-                            playbackState: playbackState,
-                          );
-                        },
-                      )
-                    : RunIntervalButton(
-                        workout: intervalWorkout,
-                        onPressed: () => _handleIntervalButtonPressed(context),
-                      ),
+                child: AnimatedSwitcher(
+                  duration: RunliniMotion.enabledDuration(
+                    context,
+                    RunliniMotion.shortTransition,
+                  ),
+                  switchInCurve: RunliniMotion.enterCurve,
+                  switchOutCurve: RunliniMotion.exitCurve,
+                  transitionBuilder: _runControlTransition,
+                  child: playbackState.hasActiveSession
+                      ? RunPauseResumeButton(
+                          key: const ValueKey<String>('pause-resume-control'),
+                          isPaused:
+                              playbackState.status == RunScreenStatus.paused,
+                          onPressed: () async {
+                            await _handlePauseResumePressed(
+                              playbackState: playbackState,
+                            );
+                          },
+                        )
+                      : RunIntervalButton(
+                          key: const ValueKey<String>('interval-control'),
+                          workout: intervalWorkout,
+                          onPressed: () =>
+                              _handleIntervalButtonPressed(context),
+                        ),
+                ),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
               const Positioned(
                 left: 20,
                 right: 20,
                 bottom: 156,
-                child: RunRecordRaceControlChip(),
+                child: RunliniFadeUp(child: RunRecordRaceControlChip()),
               ),
             Positioned(
               right: 20,
@@ -278,17 +291,5 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
         metrics == null ||
         metrics.isPaused ||
         !snapshot.settings.voiceCueEnabled;
-  }
-
-  void _handleIntervalButtonPressed(BuildContext context) {
-    if (!runIntervalFeatureLocked) {
-      showRunIntervalSheet(context, ref);
-      return;
-    }
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      const SnackBar(content: Text(runIntervalFeatureLockedMessage)),
-    );
   }
 }

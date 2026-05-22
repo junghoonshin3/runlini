@@ -1,6 +1,9 @@
 // Runlini 공통 스켈레톤 로딩 컴포넌트
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 
 class RunliniSkeletonBox extends StatefulWidget {
   const RunliniSkeletonBox({
@@ -23,36 +26,62 @@ class RunliniSkeletonBox extends StatefulWidget {
 class _RunliniSkeletonBoxState extends State<RunliniSkeletonBox>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  Timer? _repeatTimer;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: RunliniMotion.skeletonShimmer,
     );
+    _controller.addStatusListener((AnimationStatus status) {
+      if (status == AnimationStatus.completed) {
+        _scheduleNextShimmer();
+      }
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!MediaQuery.disableAnimationsOf(context) &&
-        _controller.status == AnimationStatus.dismissed) {
-      _controller.forward();
+    if (RunliniMotion.reduceMotion(context)) {
+      _repeatTimer?.cancel();
+      _controller.stop();
+      _controller.value = 0;
+      return;
+    }
+    if (!_controller.isAnimating &&
+        _controller.status != AnimationStatus.forward) {
+      _controller.forward(from: 0);
     }
   }
 
   @override
   void dispose() {
+    _repeatTimer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _scheduleNextShimmer() {
+    _repeatTimer?.cancel();
+    if (!mounted || RunliniMotion.reduceMotion(context)) {
+      return;
+    }
+    _repeatTimer = Timer(RunliniMotion.shortTransition, () {
+      if (!mounted || RunliniMotion.reduceMotion(context)) {
+        return;
+      }
+      _controller.forward(from: 0);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final base = widget.baseColor ?? AppColors.graphite;
     final radius = BorderRadius.circular(widget.borderRadius);
-    if (MediaQuery.disableAnimationsOf(context)) {
+    if (RunliniMotion.reduceMotion(context)) {
       return _SkeletonSurface(
         width: widget.width,
         height: widget.height,

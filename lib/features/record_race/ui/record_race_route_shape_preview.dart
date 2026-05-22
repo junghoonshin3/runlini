@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
+import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
 import 'package:runlini/features/run_tracking/service/pace_colored_route_segment_builder.dart';
@@ -34,16 +36,23 @@ class RecordRaceRouteShapePreview extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(3),
-        child: _body(context),
+        child: AnimatedSwitcher(
+          duration: RunliniMotion.enabledDuration(
+            context,
+            RunliniMotion.shortTransition,
+          ),
+          switchInCurve: RunliniMotion.enterCurve,
+          switchOutCurve: RunliniMotion.exitCurve,
+          child: _body(context),
+        ),
       ),
     );
   }
 
   Widget _body(BuildContext context) {
     if (isLoading) {
-      return const _RouteShapeMessage(
+      return const _RouteShapeSkeleton(
         key: Key('record-race-route-shape-loading'),
-        message: '경로를 불러오는 중',
       );
     }
     if (errorMessage != null) {
@@ -75,6 +84,41 @@ class RecordRaceRouteShapePreview extends StatelessWidget {
       key: const Key('record-race-route-shape-layer'),
       painter: _RecordRaceRouteShapePainter(routeSegments),
       child: const SizedBox.expand(),
+    );
+  }
+}
+
+class _RouteShapeSkeleton extends StatelessWidget {
+  const _RouteShapeSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: AppColors.black,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: RunliniSkeletonBox(height: 118, borderRadius: 5),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 156,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RunliniSkeletonText(width: 132, height: 14),
+                    SizedBox(height: 10),
+                    RunliniSkeletonText(width: 88, height: 14),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

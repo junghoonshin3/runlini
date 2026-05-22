@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/types/run_history_distance_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -30,8 +31,19 @@ class HistoryDistanceRing extends StatelessWidget {
       key: const Key('history-distance-progress-ring'),
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _RingPainter(progress: summary.progress),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: summary.progress),
+        duration: RunliniMotion.enabledDuration(
+          context,
+          RunliniMotion.standardTransition,
+        ),
+        curve: RunliniMotion.enterCurve,
+        builder: (BuildContext context, double progress, Widget? child) {
+          return CustomPaint(
+            painter: _RingPainter(progress: progress),
+            child: child,
+          );
+        },
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

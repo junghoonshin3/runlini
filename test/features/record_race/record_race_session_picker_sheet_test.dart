@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:runlini/features/record_race/ui/record_race_route_shape_preview.dart';
 import 'package:runlini/features/record_race/ui/record_race_session_picker_sheet.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
@@ -11,6 +12,25 @@ import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets('route preview loading renders a local skeleton', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: RecordRaceRouteShapePreview(points: null, isLoading: true),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('record-race-route-shape-loading')),
+      findsOneWidget,
+    );
+    expect(find.text('경로를 불러오는 중'), findsNothing);
+  });
+
   testWidgets('opens with the recommended session expanded', (
     WidgetTester tester,
   ) async {

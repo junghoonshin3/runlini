@@ -103,6 +103,40 @@ void main() {
     expect(find.byKey(const Key('live-run-interval-step-label')), findsNothing);
   });
 
+  testWidgets('toggle swaps dashboard layout immediately with reduce motion', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 360,
+                child: LiveRunDashboardOverlay(
+                  sessionId: 'run-a',
+                  metrics: _metrics(),
+                  displaySettings: const RunDisplaySettings(),
+                  onAdvanceInterval: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('live-run-dashboard-expanded')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('recordRace progress stays below 100 before completion', (
     tester,
   ) async {

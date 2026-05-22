@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/types/run_history_day_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
@@ -39,7 +40,10 @@ class HistoryDayProgressCell extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: RunliniMotion.enabledDuration(
+              context,
+              RunliniMotion.shortTransition,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
             decoration: BoxDecoration(
               color: isSelected

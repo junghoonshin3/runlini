@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/service/run_history_distance_summary_calculator.dart';
 import 'package:runlini/features/run_tracking/types/run_history_distance_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
@@ -104,7 +105,10 @@ class _PeriodSelector extends StatelessWidget {
                     onTap: () => onSelected(period),
                     borderRadius: BorderRadius.circular(8),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
+                      duration: RunliniMotion.enabledDuration(
+                        context,
+                        RunliniMotion.shortTransition,
+                      ),
                       constraints: const BoxConstraints(minHeight: 44),
                       alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(vertical: 9),

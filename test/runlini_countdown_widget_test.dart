@@ -5,11 +5,36 @@ import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets('countdown number is static when animations are disabled', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: Scaffold(body: RunStartCountdownOverlay(remainingSeconds: 3)),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('3'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('run-start-countdown-number')),
+        matching: find.byType(Opacity),
+      ),
+      findsNothing,
+    );
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
   testWidgets(
     'start shows countdown immediately without Health permission preflight',
     (WidgetTester tester) async {

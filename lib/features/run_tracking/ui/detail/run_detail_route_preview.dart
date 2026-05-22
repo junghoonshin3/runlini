@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/app/ui/runlini_skeleton.dart';
 import 'package:runlini/core/map/fake_run_map_surface.dart';
 import 'package:runlini/core/map/map_config_client.dart';
@@ -69,47 +70,56 @@ class _RoutePreviewBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    late final Widget preview;
     if (routePoints.length < 2) {
-      return const _RoutePreviewFallback(message: '경로 데이터가 부족해요.');
-    }
-    if (debugForceLoading) {
-      return const _RoutePreviewSkeleton();
-    }
-
-    if (!debugUseConfiguredMap &&
+      preview = const _RoutePreviewFallback(message: '경로 데이터가 부족해요.');
+    } else if (debugForceLoading) {
+      preview = const _RoutePreviewSkeleton();
+    } else if (!debugUseConfiguredMap &&
         (_isFlutterTest || (!Platform.isAndroid && !Platform.isIOS))) {
-      return FakeRunMapSurface(
-        mapCenter: centerOfRoute(routePoints),
-        currentRunnerPolylinePoints: routePoints,
-        currentRunnerPolylineSegments: routeSegments,
-        recordRacePolylinePoints: const <MapCoordinate>[],
-        recordRacePolylineSegments: const [],
+      preview = KeyedSubtree(
+        key: const ValueKey<String>('route-preview-fake-map'),
+        child: FakeRunMapSurface(
+          mapCenter: centerOfRoute(routePoints),
+          currentRunnerPolylinePoints: routePoints,
+          currentRunnerPolylineSegments: routeSegments,
+          recordRacePolylinePoints: const <MapCoordinate>[],
+          recordRacePolylineSegments: const [],
+        ),
       );
-    }
-
-    if (Platform.isIOS) {
-      return AppleDetailRouteMap(
+    } else if (Platform.isIOS) {
+      preview = AppleDetailRouteMap(
         routePoints: routePoints,
         routeSegments: routeSegments,
       );
+    } else {
+      final configuredAsync = ref.watch(androidGoogleMapsConfiguredProvider);
+      preview = configuredAsync.when(
+        data: (configured) {
+          if (!configured) {
+            return const _RoutePreviewFallback(
+              message: 'Google Maps 키가 설정되지 않았어요.',
+            );
+          }
+          return GoogleDetailRouteMap(
+            routePoints: routePoints,
+            routeSegments: routeSegments,
+          );
+        },
+        loading: () => const _RoutePreviewSkeleton(),
+        error: (_, _) =>
+            const _RoutePreviewFallback(message: '지도 설정을 확인하지 못했어요.'),
+      );
     }
 
-    final configuredAsync = ref.watch(androidGoogleMapsConfiguredProvider);
-    return configuredAsync.when(
-      data: (configured) {
-        if (!configured) {
-          return const _RoutePreviewFallback(
-            message: 'Google Maps 키가 설정되지 않았어요.',
-          );
-        }
-        return GoogleDetailRouteMap(
-          routePoints: routePoints,
-          routeSegments: routeSegments,
-        );
-      },
-      loading: () => const _RoutePreviewSkeleton(),
-      error: (_, _) =>
-          const _RoutePreviewFallback(message: '지도 설정을 확인하지 못했어요.'),
+    return AnimatedSwitcher(
+      duration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.shortTransition,
+      ),
+      switchInCurve: RunliniMotion.enterCurve,
+      switchOutCurve: RunliniMotion.exitCurve,
+      child: preview,
     );
   }
 }
