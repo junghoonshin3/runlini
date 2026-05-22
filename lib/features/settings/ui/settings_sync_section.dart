@@ -46,7 +46,7 @@ class SettingsSyncSection extends ConsumerWidget {
     final healthLabel = healthDestinationLabel(platform);
 
     return SettingsSectionPanel(
-      title: '연동',
+      title: '연동과 백업',
       child: Column(
         children: [
           SettingsSyncCard(

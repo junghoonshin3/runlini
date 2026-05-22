@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
-import 'package:runlini/features/settings/ui/settings_display_section.dart';
 import 'package:runlini/features/settings/ui/settings_distance_goal_section.dart';
 import 'package:runlini/features/settings/ui/settings_privacy_section.dart';
 import 'package:runlini/features/settings/ui/settings_profile_section.dart';
@@ -34,17 +33,17 @@ class SettingsTabScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           SettingsRunningSection(settings: settings),
           const SizedBox(height: 14),
-          SettingsProfileSection(settings: settings),
-          const SizedBox(height: 14),
-          SettingsDisplaySection(settings: settings.display),
+          SettingsRunGuidanceSection(settings: settings),
           const SizedBox(height: 14),
           SettingsDistanceGoalSection(settings: settings),
           const SizedBox(height: 14),
-          SettingsPrivacySection(settings: settings.privacy),
+          SettingsProfileSection(settings: settings),
           const SizedBox(height: 14),
           const SettingsShoeSection(),
           const SizedBox(height: 14),
           const SettingsSyncSection(),
+          const SizedBox(height: 14),
+          SettingsPrivacySection(settings: settings.privacy),
         ],
       ),
     );

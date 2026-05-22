@@ -1,5 +1,21 @@
 # Context Notes
 
+## 2026-05-22 설정탭 정보 구조 정리 구현
+
+- 사용자는 이전 Agent Company 설정탭 변경 계획대로 개발 진행을 승인했다.
+- 구현 목표는 설정탭 단일 홈을 유지하면서 섹션 정보 구조를 정리해 난잡함을 줄이는 것이다.
+- 이번 MVP 섹션 기준은 `러닝 추적`, `러닝 화면과 안내`, `기록 목표와 표시`, `내 정보`, `러닝화`, `연동과 백업`, `개인정보 보호`다.
+- 새 하위 화면, 검색, 접힘 패널, provider 변경, 저장 구조 변경, Health/Wear 로직 이동, 새 아이콘 체계는 제외한다.
+- `러닝화` 섹션명은 이번 MVP에서 유지한다.
+- 상단 `조치 필요` 요약 카드는 이번 구현에서 제외한다.
+- 기존 작업트리의 `app-store-screenshots.json`, `src/lib/defaults.ts`, `.agent-company/`, `.agents/`, `skills-lock.json` 변경은 이번 요청과 무관하므로 되돌리거나 정리하지 않는다.
+- `checklist.md`와 `context-notes.md`는 기존 내용을 보존하고 이번 섹션만 맨 위에 추가한다.
+- 구현은 `SettingsTabScreen`의 단일 `ListView`와 기존 provider/key를 유지한 채 섹션 순서와 제목을 바꾸는 방식으로 제한한다.
+- `SettingsRunningSection`은 위치 업데이트와 자동 일시정지만 담는 `러닝 추적`으로 줄이고, 기록 레이스 마커와 음성 안내 계열은 같은 파일의 `SettingsRunGuidanceSection`으로 분리한다.
+- 거리 단위 선택은 기존 key와 controller 호출을 유지한 채 `SettingsDistanceGoalSection` 안의 `기록 목표와 표시` 패널로 옮겨 목표 입력과 같은 기록 해석 맥락에 둔다.
+- 섹션 순서 smoke test는 `settings_tab_information_architecture_test.dart`로 분리해 guardrail의 300라인 제한을 지킨다.
+- 검증은 설정 focused tests, 대시보드 탭 전환 테스트, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
 ## 2026-05-22 러닝탭 경쟁레이스 진입점 정리
 
 - 사용자는 러닝탭의 상단 `오늘 추천` 섹션과 START 근처 `경쟁레이스 선택` 버튼이 역할상 중복된다고 보고 Agent Company 토론을 요청했다.

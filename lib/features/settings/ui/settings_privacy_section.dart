@@ -14,7 +14,7 @@ class SettingsPrivacySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(runSettingsControllerProvider.notifier);
     return SettingsSectionPanel(
-      title: '프라이버시',
+      title: '개인정보 보호',
       child: Column(
         children: [
           _PrivacySwitch(

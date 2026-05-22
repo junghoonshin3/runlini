@@ -2,33 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/theme/app_theme.dart';
-import 'package:runlini/features/run_tracking/repo/run_settings_repository.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
-import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
 
+import '../../helpers/fake_run_settings_repository.dart';
 import '../../helpers/runlini_widget_harness.dart';
 
 void main() {
   testWidgets('updates units, privacy, and running shoes', (tester) async {
-    final repository = _FakeRunSettingsRepository();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          runSettingsRepositoryProvider.overrideWithValue(repository),
-          runSessionRepositoryProvider.overrideWithValue(
-            FakeRunSessionRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          theme: AppTheme.dark(),
-          home: const Scaffold(body: SettingsTabScreen()),
-        ),
-      ),
-    );
-    await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
+    final repository = FakeRunSettingsRepository();
+    await _pumpSettingsTab(tester, repository);
 
     expect(find.text('시작 카운트다운'), findsNothing);
     expect(find.byKey(const Key('countdown-seconds-5-button')), findsNothing);
@@ -58,9 +43,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.settings.kmVoiceCueEnabled, isFalse);
 
-    await tester.tap(
-      find.byKey(const Key('record-race-voice-cue-enabled-switch')),
+    final recordRaceVoiceSwitch = find.byKey(
+      const Key('record-race-voice-cue-enabled-switch'),
     );
+    await tester.ensureVisible(recordRaceVoiceSwitch);
+    await tester.pumpAndSettle();
+    await tester.tap(recordRaceVoiceSwitch);
     await tester.pumpAndSettle();
     expect(repository.settings.recordRaceVoiceCueEnabled, isTrue);
 
@@ -72,19 +60,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.settings.voiceCueVolume, 0.6);
 
-    final saveWeightButton = find.byKey(const Key('save-runner-weight-button'));
-    await tester.ensureVisible(saveWeightButton);
+    final distanceUnitMiButton = find.byKey(
+      const Key('distance-unit-mi-button'),
+    );
+    await tester.scrollUntilVisible(
+      distanceUnitMiButton,
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('runner-weight-input')), '70');
-    await tester.tap(saveWeightButton);
-    await tester.pumpAndSettle();
-    expect(repository.settings.bodyWeightKg, 70);
-
-    await tester.tap(find.byKey(const Key('clear-runner-weight-button')));
-    await tester.pumpAndSettle();
-    expect(repository.settings.bodyWeightKg, isNull);
-
-    await tester.tap(find.byKey(const Key('distance-unit-mi-button')));
+    await tester.tap(distanceUnitMiButton);
     await tester.pumpAndSettle();
     expect(repository.settings.display.distanceUnit, RunDistanceUnit.mi);
 
@@ -110,12 +95,28 @@ void main() {
     expect(repository.settings.distanceGoals.monthlyGoalM, closeTo(40233.6, 1));
     expect(repository.settings.distanceGoals.yearlyGoalM, closeTo(160934.4, 1));
 
-    final hideRouteSwitchFinder = find
-        .byKey(const Key('hide-route-map-switch'))
-        .first;
-    await tester.ensureVisible(hideRouteSwitchFinder);
+    final saveWeightButton = find.byKey(const Key('save-runner-weight-button'));
+    await tester.ensureVisible(saveWeightButton);
     await tester.pumpAndSettle();
-    await tester.tap(hideRouteSwitchFinder);
+    await tester.enterText(find.byKey(const Key('runner-weight-input')), '70');
+    await tester.tap(saveWeightButton);
+    await tester.pumpAndSettle();
+    expect(repository.settings.bodyWeightKg, 70);
+
+    await tester.tap(find.byKey(const Key('clear-runner-weight-button')));
+    await tester.pumpAndSettle();
+    expect(repository.settings.bodyWeightKg, isNull);
+
+    final hideRouteSwitchFinder = find.byKey(
+      const Key('hide-route-map-switch'),
+    );
+    await tester.scrollUntilVisible(
+      hideRouteSwitchFinder,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(hideRouteSwitchFinder.first);
     await tester.pumpAndSettle();
     expect(repository.settings.privacy.hideRouteMap, isTrue);
 
@@ -124,7 +125,7 @@ void main() {
     );
     await tester.scrollUntilVisible(
       manageShoesButtonFinder,
-      300,
+      -300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
@@ -253,40 +254,23 @@ void main() {
   });
 }
 
-class _FakeRunSettingsRepository implements RunSettingsRepository {
-  RunSettingsState settings = const RunSettingsState();
-  final List<RunShoe> shoes = <RunShoe>[];
-
-  @override
-  Future<RunSettingsState> loadSettings() async => settings;
-
-  @override
-  Future<void> saveSettings(RunSettingsState settings) async {
-    this.settings = settings;
-  }
-
-  @override
-  Future<List<RunShoe>> listShoes() async => List<RunShoe>.unmodifiable(shoes);
-
-  @override
-  Future<void> saveShoe(RunShoe shoe) async {
-    shoes.removeWhere((existing) => existing.id == shoe.id);
-    shoes.add(shoe);
-  }
-
-  @override
-  Future<void> retireShoe(String id) async {
-    final index = shoes.indexWhere((shoe) => shoe.id == id);
-    if (index >= 0) {
-      shoes[index] = shoes[index].copyWith(retired: true);
-    }
-  }
-
-  @override
-  Future<void> deleteShoe(String id) async {
-    final index = shoes.indexWhere((shoe) => shoe.id == id);
-    if (index >= 0) {
-      shoes[index] = shoes[index].copyWith(retired: true, deleted: true);
-    }
-  }
+Future<void> _pumpSettingsTab(
+  WidgetTester tester,
+  FakeRunSettingsRepository repository,
+) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        runSettingsRepositoryProvider.overrideWithValue(repository),
+        runSessionRepositoryProvider.overrideWithValue(
+          FakeRunSessionRepository(),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.dark(),
+        home: const Scaffold(body: SettingsTabScreen()),
+      ),
+    ),
+  );
+  await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
 }
