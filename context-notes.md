@@ -1,5 +1,19 @@
 # Context Notes
 
+## 2026-05-22 러닝탭 경쟁레이스 진입점 정리
+
+- 사용자는 러닝탭의 상단 `오늘 추천` 섹션과 START 근처 `경쟁레이스 선택` 버튼이 역할상 중복된다고 보고 Agent Company 토론을 요청했다.
+- 회의 결론은 상단 `오늘 추천`은 추천과 발견, START 근처 selector는 선택된 경쟁레이스 상태 확인, 변경, 해제 역할로 분리하는 것이다.
+- 사용자 결정은 추천 카드 주 동작을 `이 기록 선택` 즉시 선택으로 하고, 러닝탭 진입 UI 용어는 `경쟁레이스`, 기록 없음 또는 추천 불가 상태는 안내 없이 숨기는 것이다.
+- 구현 범위는 러닝탭 시작 전 진입점과 관련 widget tests로 제한한다. DB, repository, provider 저장 구조, 지도/러닝 중 UI는 바꾸지 않는다.
+- 현재 작업트리의 `app-store-screenshots.json`, `src/lib/defaults.ts`, `.agent-company/`, `.agents/`, `skills-lock.json` 변경은 이번 요청과 무관하므로 건드리지 않는다.
+- `checklist.md`와 `context-notes.md`는 이미 수정된 상태이므로 기존 내용을 보존하고 이번 섹션만 맨 위에 추가한다.
+- 구현 결과 추천 있음·미선택 상태에서는 `오늘 추천` 카드만 보이고, `이 기록 선택`은 즉시 선택, `다른 기록`은 기존 선택 시트를 연다.
+- 선택 후에는 추천 카드가 사라지고 START 근처 selector가 선택 요약, 변경, 해제를 담당한다.
+- 추천이 없거나 추천 provider 오류가 있을 때 선택 가능한 기록이 있으면 selector fallback을 노출하고, 기록 또는 선택 가능한 경로가 없으면 경쟁레이스 UI를 숨긴다.
+- 검증은 `dart run tool/guardrails.dart`, `flutter analyze`, 관련 focused widget tests, 전체 `flutter test`로 통과했다.
+- Android 실기기 `5200024fee2b2571`에서 debug app 설치와 launch까지 확인했다. 기기 화면이 잠금 상태라 screenshot은 잠금 화면으로 캡처되어 앱 UI 시각 검증은 제한됐다.
+
 ## 2026-05-22 Runlini 애니메이션 적용 v1
 
 - 사용자는 이전 에이전트가 작성한 Runlini 애니메이션 적용 계획 v1을 fresh context에서 구현하길 요청했다.

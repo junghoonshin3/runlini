@@ -138,6 +138,7 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final isReviewing = playbackState.isReviewing;
     final recordRaceCompletionSummary =
         playbackState.recordRaceCompletionSummary;
+    final showRecordRaceControlChip = _shouldShowRecordRaceControlChip();
 
     return SafeArea(
       bottom: false,
@@ -206,12 +207,13 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 ),
               ),
             if (!playbackState.hasActiveSession && !countdownState.isActive)
-              const Positioned(
-                left: 20,
-                right: 20,
-                bottom: 156,
-                child: RunliniFadeUp(child: RunRecordRaceControlChip()),
-              ),
+              if (showRecordRaceControlChip)
+                const Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 156,
+                  child: RunliniFadeUp(child: RunRecordRaceControlChip()),
+                ),
             Positioned(
               right: 20,
               bottom: 28,

@@ -25,7 +25,7 @@ class RunRecordRaceControlChip extends ConsumerWidget {
         constraints: const BoxConstraints(maxWidth: 340),
         child: summariesAsync.when(
           data: (summaries) {
-            if (summaries.isEmpty) {
+            if (!summaries.any(_isSelectableRecordRaceSummary)) {
               return const SizedBox.shrink();
             }
             final selectedSummary = _selectedSummary(settings, summaries);
@@ -43,6 +43,14 @@ class RunRecordRaceControlChip extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  bool _isSelectableRecordRaceSummary(RunSessionSummary summary) {
+    return summary.distanceM > 0 &&
+        summary.durationMs > 0 &&
+        summary.pointCount >= 2 &&
+        summary.averagePaceSecPerKm.isFinite &&
+        summary.averagePaceSecPerKm > 0;
   }
 
   RunSessionSummary? _selectedSummary(

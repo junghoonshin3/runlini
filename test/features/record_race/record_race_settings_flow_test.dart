@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/app/runlini_app.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_record_race_control_chip.dart';
@@ -47,6 +48,9 @@ void main() {
             runSessionRepositoryProvider.overrideWithValue(
               FakeRunSessionRepository(sampleRunSessions()),
             ),
+            runRecordRaceRecommendationProvider.overrideWith(
+              (ref) async => null,
+            ),
             locationStreamClientProvider.overrideWithValue(
               const SilentLocationStreamClient(),
             ),
@@ -61,7 +65,6 @@ void main() {
         find.byKey(const Key('record-race-control-chip')),
       );
       await pumpUntilFound(tester, find.text('경쟁레이스 선택'));
-
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       await tester.tap(find.byKey(const Key('record-race-control-chip')));
@@ -70,7 +73,6 @@ void main() {
         find.byKey(const Key('record-race-session-sheet')),
       );
       await tester.pumpAndSettle();
-
       expect(
         find.byKey(const Key('record-race-session-draggable-sheet')),
         findsOneWidget,
@@ -79,7 +81,6 @@ void main() {
         const Key('record-race-session-drag-handle'),
       );
       expect(tester.getTopLeft(handleFinder).dy, lessThan(40));
-
       expect(
         find.byKey(const Key('record-race-route-shape-preview')),
         findsOneWidget,
@@ -129,10 +130,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-
       await tester.tap(find.byKey(const Key('record-race-clear-button')));
       await tester.pump(const Duration(milliseconds: 300));
-
       expect(find.byKey(const Key('record-race-polyline-layer')), findsNothing);
       expect(find.text('경쟁레이스 선택'), findsOneWidget);
     },
@@ -152,6 +151,9 @@ void main() {
             disableStartupWeightPromptOverride,
             runSessionRepositoryProvider.overrideWithValue(
               FakeRunSessionRepository(sampleRunSessions()),
+            ),
+            runRecordRaceRecommendationProvider.overrideWith(
+              (ref) async => null,
             ),
             locationStreamClientProvider.overrideWithValue(
               const SilentLocationStreamClient(),
@@ -201,6 +203,7 @@ void main() {
           runSessionRepositoryProvider.overrideWithValue(
             FakeRunSessionRepository(sampleRunSessions()),
           ),
+          runRecordRaceRecommendationProvider.overrideWith((ref) async => null),
           locationStreamClientProvider.overrideWithValue(
             const SilentLocationStreamClient(),
           ),

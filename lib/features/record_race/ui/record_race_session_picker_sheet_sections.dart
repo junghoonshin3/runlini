@@ -27,7 +27,7 @@ class _RecordRaceSessionSheetHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        Text('기록 레이스 선택', style: titleStyle),
+        Text('경쟁레이스 선택', style: titleStyle),
         const SizedBox(height: 8),
         Text('오늘 달릴 기준 기록을 확인하고 골라요.', style: descriptionStyle),
       ],
@@ -78,7 +78,7 @@ class _EmptyRecordRaceSessionState extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        '경로가 있는 러닝 기록을 저장하면 기록 레이스를 시작할 수 있어요.',
+        '경로가 있는 러닝 기록을 저장하면 경쟁레이스를 시작할 수 있어요.',
         style: Theme.of(
           context,
         ).textTheme.bodyLarge?.copyWith(color: AppColors.muted),

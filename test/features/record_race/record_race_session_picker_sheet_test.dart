@@ -122,7 +122,7 @@ void main() {
       find.byKey(const Key('record-race-session-empty-state')),
       findsOneWidget,
     );
-    expect(find.text('경로가 있는 러닝 기록을 저장하면 기록 레이스를 시작할 수 있어요.'), findsOneWidget);
+    expect(find.text('경로가 있는 러닝 기록을 저장하면 경쟁레이스를 시작할 수 있어요.'), findsOneWidget);
     expect(
       find.byKey(const Key('record-race-session-select-single-point-run')),
       findsNothing,

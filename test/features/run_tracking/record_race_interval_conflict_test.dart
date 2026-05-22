@@ -6,6 +6,7 @@ import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_live_metrics_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
@@ -135,6 +136,7 @@ Future<void> _pumpRunningApp(
       overrides: [
         disableStartupWeightPromptOverride,
         runSettingsRepositoryProvider.overrideWithValue(repository),
+        runRecordRaceRecommendationProvider.overrideWith((ref) async => null),
         runSessionRepositoryProvider.overrideWithValue(
           FakeRunSessionRepository(sampleRunSessions()),
         ),

@@ -26,12 +26,17 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
     return recommendationAsync.maybeWhen(
       data: (recommendation) {
         if (recommendation == null) {
-          return const _RunRecordRaceRecommendationUnavailableCard();
+          return const SizedBox.shrink();
         }
         return _RunRecordRaceRecommendationCardBody(
           recommendation: recommendation,
           displaySettings: displaySettings,
-          onTap: () => openRecordRacePicker(
+          onSelect: () => selectRecordRaceSummary(
+            context: context,
+            ref: ref,
+            summary: recommendation.summary,
+          ),
+          onBrowseOther: () => openRecordRacePicker(
             context: context,
             ref: ref,
             recommendation: recommendation,
@@ -39,9 +44,7 @@ class RunRecordRaceRecommendationCard extends ConsumerWidget {
         );
       },
       loading: () => const _RunRecordRaceRecommendationLoadingCard(),
-      error: (_, _) => const _RunRecordRaceRecommendationUnavailableCard(
-        message: '추천을 불러오지 못했어요.',
-      ),
+      error: (_, _) => const SizedBox.shrink(),
       orElse: () => const _RunRecordRaceRecommendationLoadingCard(),
     );
   }
@@ -62,35 +65,18 @@ class _RunRecordRaceRecommendationLoadingCard extends StatelessWidget {
   }
 }
 
-class _RunRecordRaceRecommendationUnavailableCard extends StatelessWidget {
-  const _RunRecordRaceRecommendationUnavailableCard({
-    this.message = '경로 있는 기록을 저장하면 추천할게요.',
-  });
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return _RunRecordRaceRecommendationShell(
-      key: const Key('record-race-recommendation-empty-card'),
-      accent: AppColors.muted,
-      title: '오늘 추천',
-      message: message,
-      enabled: false,
-    );
-  }
-}
-
 class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
   const _RunRecordRaceRecommendationCardBody({
     required this.recommendation,
     required this.displaySettings,
-    required this.onTap,
+    required this.onSelect,
+    required this.onBrowseOther,
   });
 
   final RunRecordRaceRecommendation recommendation;
   final RunDisplaySettings displaySettings;
-  final VoidCallback onTap;
+  final VoidCallback onSelect;
+  final VoidCallback onBrowseOther;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +87,8 @@ class _RunRecordRaceRecommendationCardBody extends StatelessWidget {
       title: '오늘 추천',
       message: _titleFor(recommendation.reason),
       detail: _metricsFor(summary),
-      onTap: onTap,
+      onSelect: onSelect,
+      onBrowseOther: onBrowseOther,
     );
   }
 
@@ -130,7 +117,8 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
     required this.title,
     required this.message,
     this.detail,
-    this.onTap,
+    this.onSelect,
+    this.onBrowseOther,
     this.enabled = true,
   });
 
@@ -138,7 +126,8 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
   final String title;
   final String message;
   final String? detail;
-  final VoidCallback? onTap;
+  final VoidCallback? onSelect;
+  final VoidCallback? onBrowseOther;
   final bool enabled;
 
   @override
@@ -150,68 +139,119 @@ class _RunRecordRaceRecommendationShell extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 340),
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              decoration: BoxDecoration(
-                color: AppColors.black.withValues(alpha: 0.9),
-                border: Border.all(color: accent, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: textTheme.labelSmall?.copyWith(
-                            color: accent,
-                            fontWeight: FontWeight.w900,
-                            height: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          message,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: foreground,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                          ),
-                        ),
-                        if (detail != null) ...[
-                          const SizedBox(height: 2),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              color: AppColors.black.withValues(alpha: 0.9),
+              border: Border.all(color: accent, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            detail!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            title,
                             style: textTheme.labelSmall?.copyWith(
-                              color: AppColors.muted,
-                              fontWeight: FontWeight.w700,
+                              color: accent,
+                              fontWeight: FontWeight.w900,
                               height: 1.0,
                             ),
                           ),
+                          const SizedBox(height: 3),
+                          Text(
+                            message,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: foreground,
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                            ),
+                          ),
+                          if (detail != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              detail!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: AppColors.muted,
+                                fontWeight: FontWeight.w700,
+                                height: 1.0,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  if (enabled) ...[
-                    const SizedBox(width: 12),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: AppColors.voltGreen,
-                      size: 22,
-                    ),
+                    if (enabled) ...[
+                      const SizedBox(width: 10),
+                      const Icon(
+                        Icons.route_rounded,
+                        color: AppColors.voltGreen,
+                        size: 22,
+                      ),
+                    ],
                   ],
+                ),
+                if (enabled) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          key: const Key(
+                            'record-race-recommendation-other-button',
+                          ),
+                          onPressed: onBrowseOther,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.chalk,
+                            side: const BorderSide(
+                              color: AppColors.chalk,
+                              width: 2,
+                            ),
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const FittedBox(child: Text('다른 기록')),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: FilledButton(
+                          key: const Key(
+                            'record-race-recommendation-select-button',
+                          ),
+                          onPressed: onSelect,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.voltGreen,
+                            foregroundColor: AppColors.black,
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const FittedBox(child: Text('이 기록 선택')),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ),

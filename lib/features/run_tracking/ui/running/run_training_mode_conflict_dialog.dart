@@ -18,7 +18,7 @@ Future<bool> confirmDisableIntervalForRecordRace(BuildContext context) async {
           TextButton(
             key: const Key('disable-interval-for-record-race-button'),
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('인터벌 끄고 기록 레이스 선택'),
+            child: const Text('인터벌 끄고 경쟁레이스 선택'),
           ),
         ],
       );
@@ -35,7 +35,7 @@ Future<bool> confirmDisableRecordRaceForInterval(BuildContext context) async {
         key: const Key('interval-record-race-conflict-dialog'),
         backgroundColor: AppColors.panel,
         title: const Text('인터벌에서는 기록 레이스을 사용할 수 없어요'),
-        content: const Text('인터벌 러닝을 사용하려면 기록 레이스 선택을 해제해 주세요.'),
+        content: const Text('인터벌 러닝을 사용하려면 경쟁레이스 선택을 해제해 주세요.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
