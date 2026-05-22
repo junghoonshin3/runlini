@@ -149,10 +149,7 @@ class LiveRunDashboardRecordRaceExpanded extends StatelessWidget {
             Expanded(
               child: LiveDashboardCompactMetric(
                 label: '진행',
-                value: _formatRecordRaceProgress(
-                  frame: frame,
-                  completed: completed,
-                ),
+                value: _formatRecordRaceProgress(frame),
                 valueKey: const Key('record-race-progress-value'),
               ),
             ),
@@ -186,15 +183,9 @@ Color recordRaceDashboardColor(RecordRaceStatus status) {
   };
 }
 
-String _formatRecordRaceProgress({
-  required RecordRaceFrame frame,
-  required bool completed,
-}) {
-  if (completed) {
-    return '100%';
-  }
+String _formatRecordRaceProgress(RecordRaceFrame frame) {
   final percent = (frame.routeProgress * 100).clamp(0, 100).round();
-  return '${percent >= 100 ? 99 : percent}%';
+  return '$percent%';
 }
 
 class _RecordRaceStartPendingBadge extends StatelessWidget {

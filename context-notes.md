@@ -1,5 +1,14 @@
 # Context Notes
 
+## 2026-05-22 경쟁레이스 진행률 99% 고정 정책 폐기
+
+- 사용자는 경쟁레이스 진행률을 완료 전 99%로 고정하는 정책 폐기를 명시했다.
+- 기존 `_formatRecordRaceProgress`는 `completed == false`이면 route progress가 100% 이상이어도 99%로 표시했다.
+- 새 결정은 완료 프롬프트 여부와 무관하게 화면 진행률은 실제 `routeProgress`를 0~100% clamp 후 반올림해 표시하는 것이다.
+- 완료 프롬프트 판정은 별도 `RecordRaceCompletionDetector` 책임으로 남기고, 이번 변경에서는 판정 조건을 바꾸지 않는다.
+- 과거 `완료 전 진행률 100% 미표시` 정책은 이번 결정으로 supersede 한다.
+- 검증은 `flutter test test/features/run_tracking/live_run_dashboard_overlay_test.dart`, `flutter analyze`, `git diff --check`로 통과했다.
+
 ## 2026-05-22 Release signing 구성
 
 - 사용자는 Google Play release signing을 Codex가 알아서 처리할 수 있는지 물었다.

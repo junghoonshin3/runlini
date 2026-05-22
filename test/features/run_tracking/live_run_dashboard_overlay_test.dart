@@ -137,7 +137,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('recordRace progress stays below 100 before completion', (
+  testWidgets('recordRace progress can show 100 before completion', (
     tester,
   ) async {
     await _pumpOverlay(
@@ -149,8 +149,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('record-race-progress-value')), findsOneWidget);
-    expect(find.text('99%'), findsOneWidget);
-    expect(find.text('100%'), findsNothing);
+    expect(find.text('100%'), findsOneWidget);
+    expect(find.text('99%'), findsNothing);
   });
 
   testWidgets('recordRace progress shows 100 after completion', (tester) async {
