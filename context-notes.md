@@ -1,5 +1,21 @@
 # Context Notes
 
+## 2026-05-22 Release signing 구성
+
+- 사용자는 Google Play release signing을 Codex가 알아서 처리할 수 있는지 물었다.
+- 실제 Play Console 업로드, 게시, Play App Signing 설정 클릭은 하지 않는다.
+- 저장소에는 release signing 설정 골격과 ignore 규칙만 커밋한다.
+- 실제 upload keystore와 `android/key.properties`는 로컬 비밀 파일로 생성하고 커밋하지 않는다.
+- upload keystore는 `android/app/upload-keystore.jks`, key alias는 `upload`로 둔다.
+- `android/key.properties`는 `storeFile`, `storePassword`, `keyAlias`, `keyPassword`를 담고, 비밀번호는 로컬에서 생성한다.
+- release build는 key 설정이 없으면 debug signing으로 fallback 하지 않고 명확한 Gradle 오류로 중단되게 한다.
+- phone과 wear 배포 전략이 아직 최종 확정되지 않았으므로 같은 upload key 설정을 양쪽 release build에 적용한다.
+- `android/.gitignore`가 이미 `key.properties`와 `**/*.jks`를 ignore 하므로 루트 ignore 중복 추가는 하지 않는다.
+- `android/key.properties`와 `android/app/upload-keystore.jks`를 생성했고 권한은 `600`으로 확인했다.
+- `:app:signingReport`와 `:wear:signingReport`에서 release variant가 모두 `android/app/upload-keystore.jks`의 `upload` alias를 사용함을 확인했다.
+- `flutter build appbundle --release`와 `./gradlew :wear:assembleRelease`가 새 signing 설정으로 통과했다.
+- `flutter analyze`, `flutter test`, `./gradlew :app:testDebugUnitTest :wear:testDebugUnitTest`, `git diff --check`가 통과했다.
+
 ## 2026-05-22 Google Play 릴리즈 준비
 
 - 사용자는 Runlini를 Google Play Store에 올리고 싶다고 했고, 릴리즈 담당자 중심 Agent Company 진행을 승인했다.

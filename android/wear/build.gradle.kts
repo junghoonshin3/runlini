@@ -1,3 +1,6 @@
+import org.gradle.api.GradleException
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,6 +19,42 @@ val hasFirebaseConfig = hasGoogleServicesConfig()
 if (hasFirebaseConfig) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
+}
+
+val releaseSigningProperties = Properties().apply {
+    val propertiesFile = rootProject.file("key.properties")
+    if (propertiesFile.exists()) {
+        propertiesFile.inputStream().use(::load)
+    }
+}
+val releaseSigningPropertyNames = listOf(
+    "storeFile",
+    "storePassword",
+    "keyAlias",
+    "keyPassword",
+)
+val hasReleaseSigningConfig = releaseSigningPropertyNames.all { name ->
+    !releaseSigningProperties.getProperty(name).isNullOrBlank()
+}
+
+fun releaseSigningProperty(name: String): String =
+    releaseSigningProperties.getProperty(name)
+        ?: throw GradleException("Missing '$name' in android/key.properties.")
+
+fun releaseKeystoreFile() = rootProject.file(releaseSigningProperty("storeFile"))
+
+fun requireReleaseSigningConfig() {
+    if (!hasReleaseSigningConfig) {
+        throw GradleException(
+            "Missing Android release signing config. Create android/key.properties " +
+                "with storeFile, storePassword, keyAlias, and keyPassword.",
+        )
+    }
+    if (!releaseKeystoreFile().isFile) {
+        throw GradleException(
+            "Missing Android release keystore at ${releaseKeystoreFile().path}.",
+        )
+    }
 }
 
 android {
@@ -42,6 +81,33 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = releaseKeystoreFile()
+                storePassword = releaseSigningProperty("storePassword")
+                keyAlias = releaseSigningProperty("keyAlias")
+                keyPassword = releaseSigningProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
+}
+
+tasks.matching { task ->
+    task.name in setOf("assembleRelease", "bundleRelease", "packageRelease")
+}.configureEach {
+    doFirst {
+        requireReleaseSigningConfig()
     }
 }
 

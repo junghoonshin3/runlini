@@ -1,5 +1,15 @@
 # Checklist
 
+## Release signing 구성
+
+- [x] 현재 Android signing 설정과 ignore 규칙을 확인한다.
+- [x] release signing 작업 범위와 비밀 파일 정책을 기록한다.
+- [x] Android release signing 비밀 파일 ignore 적용을 확인한다.
+- [x] phone과 wear release build가 upload key signing을 쓰도록 설정한다.
+- [x] 로컬 upload keystore와 `android/key.properties`를 생성한다.
+- [x] release build와 signing report를 검증한다.
+- [x] 변경을 커밋하고 남은 Play Console 액션을 정리한다.
+
 ## Google Play 릴리즈 준비
 
 - [x] Agent Company 릴리즈 준비 회의를 시작하고 역할별 점검을 병렬 요청한다.

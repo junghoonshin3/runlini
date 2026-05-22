@@ -4,9 +4,9 @@
 
 ## 결론
 
-Runlini는 로컬에서 Android App Bundle 생성 가능성이 확인됐지만, 지금 상태 그대로 Google Play에 업로드하면 안 된다.
+Runlini는 로컬에서 Android App Bundle 생성과 release signing이 가능하다.
 
-제출 전 차단 항목은 phone 앱 release build가 debug signing을 사용한다는 점이다. `android/app/build.gradle.kts`의 `release` 빌드가 `signingConfigs.getByName("debug")`를 가리키므로 Play App Signing용 업로드 키와 release signing 절차를 확정해야 한다.
+기술적으로는 release AAB를 만들 수 있지만, Play Console에 올리기 전에는 Play App Signing 설정, upload key 백업, 개인정보처리방침 URL, Data safety, App content, 계정 production access 상태를 먼저 닫아야 한다.
 
 ## 로컬 확인 결과
 
@@ -14,8 +14,9 @@ Runlini는 로컬에서 Android App Bundle 생성 가능성이 확인됐지만, 
 - Wear 모듈은 `compileSdk = 36`, `targetSdk = 36`, `minSdk = 30`, `applicationId = "kr.sjh.runlini"`이다.
 - Phone 버전은 `pubspec.yaml`의 `1.0.0+1`을 따른다.
 - Wear 버전은 `versionCode = 36010001`, `versionName = "1.0.0"`이다.
-- `flutter build appbundle --release`는 Agent Company 아키텍트 점검에서 통과했고 `build/app/outputs/bundle/release/app-release.aab`가 생성됐다.
-- 생성된 AAB는 debug signing 상태이므로 제출용 산출물로 보지 않는다.
+- `flutter build appbundle --release`가 통과했고 `build/app/outputs/bundle/release/app-release.aab`가 생성됐다.
+- Phone과 Wear release variant는 `android/app/upload-keystore.jks`의 `upload` alias로 signing 된다.
+- `android/key.properties`와 `android/app/upload-keystore.jks`는 로컬 비밀 파일이며 git에 커밋하지 않는다.
 - `android/app/google-services.json`, `android/wear/google-services.json`, `GOOGLE_MAPS_API_KEY` 설정 키가 존재한다.
 - 개인정보처리방침 URL은 저장소에서 확인되지 않았다.
 
@@ -37,8 +38,7 @@ Runlini는 로컬에서 Android App Bundle 생성 가능성이 확인됐지만, 
 
 ## 제출 전 차단 항목
 
-- Release signing을 debug key에서 업로드 키 기반 release signing으로 바꾼다.
-- Play App Signing 사용 여부와 업로드 키 보관 위치를 확정한다.
+- Play App Signing 사용 여부와 upload key 백업 위치를 확정한다.
 - 개인정보처리방침 URL과 지원 이메일을 확정한다.
 - Phone과 Wear를 같은 Play 앱 패키지로 함께 배포할지, phone 중심으로 먼저 배포할지 결정한다.
 - Data safety와 App content 답변을 실제 구현 기준으로 작성한다.
@@ -58,7 +58,7 @@ Runlini는 다음 데이터를 실제 구현 기준으로 확인해 Play Console
 
 ## 권장 제출 순서
 
-1. Release signing과 Play App Signing 절차를 확정한다.
+1. Upload key를 안전한 위치에 백업하고 Play App Signing 절차를 확정한다.
 2. 개인정보처리방침 URL, 지원 이메일, 기본 등록 언어, 출시 국가, 첫 트랙을 확정한다.
 3. Data safety, App content, 권한 사용 사유, Health Connect 설명을 작성한다.
 4. `flutter analyze`, `flutter test`, Android unit tests, release build, 16KB 검증을 통과시킨다.
