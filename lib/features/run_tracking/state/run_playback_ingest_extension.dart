@@ -10,6 +10,12 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
             state.pauseReason != RunPauseReason.auto)) {
       return;
     }
+    final resumedAt = state.resumedAt;
+    if (state.status == RunScreenStatus.running &&
+        resumedAt != null &&
+        sample.capturedAt.isBefore(resumedAt)) {
+      return;
+    }
 
     final rawPoint = sample.toRunPoint(
       elapsedMs: sample.capturedAt.difference(state.startedAt!).inMilliseconds,
