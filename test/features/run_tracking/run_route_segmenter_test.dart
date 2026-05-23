@@ -40,6 +40,23 @@ void main() {
     expect(route.distanceM, 0);
   });
 
+  test('breaks explicit segment starts even when the bridge is plausible', () {
+    final route = segmenter.segment([
+      _point(latitude: 37.0, longitude: 127.0, timestampRelMs: 0),
+      _point(
+        latitude: 37.0,
+        longitude: 127.0001,
+        timestampRelMs: 10000,
+        startsNewSegment: true,
+      ),
+      _point(latitude: 37.0, longitude: 127.0002, timestampRelMs: 20000),
+    ]);
+
+    expect(route.segments, hasLength(2));
+    expect(route.transitions, hasLength(1));
+    expect(route.distanceM, closeTo(8.9, 1));
+  });
+
   test('skips poor accuracy points as segment breaks', () {
     final route = segmenter.segment([
       _point(latitude: 37.0, longitude: 127.0, timestampRelMs: 0),
@@ -63,6 +80,7 @@ RunPoint _point({
   required double longitude,
   required int timestampRelMs,
   double? horizontalAccuracyM,
+  bool startsNewSegment = false,
 }) {
   return RunPoint(
     latitude: latitude,
@@ -70,5 +88,6 @@ RunPoint _point({
     timestampRelMs: timestampRelMs,
     horizontalAccuracyM: horizontalAccuracyM,
     source: RunPointSource.deviceGps,
+    startsNewSegment: startsNewSegment,
   );
 }

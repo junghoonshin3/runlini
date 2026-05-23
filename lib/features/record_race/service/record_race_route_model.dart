@@ -21,6 +21,9 @@ class RecordRaceRouteModel {
     for (var index = 0; index < points.length - 1; index += 1) {
       final start = points[index];
       final end = points[index + 1];
+      if (end.startsNewSegment) {
+        continue;
+      }
       final distanceM = distanceBetween(start, end);
       if (distanceM <= 0) {
         continue;

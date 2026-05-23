@@ -67,4 +67,19 @@ class RunPlaybackSampleFusionResult {
   final List<RunPoint> acceptedRawPoints;
   final List<RunPoint> recordedPoints;
   final bool stationaryDriftLocked;
+
+  RunPlaybackSampleFusionResult copyWith({
+    List<RunPoint>? rawPoints,
+    List<RunPoint>? acceptedRawPoints,
+    List<RunPoint>? recordedPoints,
+    bool? stationaryDriftLocked,
+  }) {
+    return RunPlaybackSampleFusionResult(
+      rawPoints: rawPoints ?? this.rawPoints,
+      acceptedRawPoints: acceptedRawPoints ?? this.acceptedRawPoints,
+      recordedPoints: recordedPoints ?? this.recordedPoints,
+      stationaryDriftLocked:
+          stationaryDriftLocked ?? this.stationaryDriftLocked,
+    );
+  }
 }

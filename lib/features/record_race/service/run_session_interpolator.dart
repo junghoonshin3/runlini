@@ -23,6 +23,12 @@ RunPoint interpolateRunPoint({
   for (var index = 0; index < points.length - 1; index++) {
     final current = points[index];
     final next = points[index + 1];
+    if (next.startsNewSegment) {
+      if (clampedElapsedMs < next.timestampRelMs) {
+        return current;
+      }
+      continue;
+    }
     final isInsideSegment =
         clampedElapsedMs >= current.timestampRelMs &&
         clampedElapsedMs <= next.timestampRelMs;

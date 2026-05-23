@@ -63,8 +63,12 @@ class RunRouteSegmenter {
   }
 
   RunRouteTransition _transition(RunPoint previous, RunPoint current) {
-    final elapsedMs = current.timestampRelMs - previous.timestampRelMs;
     final distanceM = _metersBetween(previous, current);
+    if (current.startsNewSegment) {
+      return RunRouteTransition.rejected(previous, current, distanceM);
+    }
+
+    final elapsedMs = current.timestampRelMs - previous.timestampRelMs;
     if (elapsedMs <= 0 || !distanceM.isFinite) {
       return RunRouteTransition.rejected(previous, current, distanceM);
     }

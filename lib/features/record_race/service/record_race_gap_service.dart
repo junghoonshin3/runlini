@@ -57,6 +57,10 @@ class RecordRaceGapService {
         index < runnerPoints.length;
         index += 1
       ) {
+        if (runnerPoints[index].startsNewSegment) {
+          nextCount = 0;
+          continue;
+        }
         final previousProjection = route.projectGlobal(runnerPoints[index - 1]);
         final currentProjection = route.projectGlobal(runnerPoints[index]);
         final progressedForward =

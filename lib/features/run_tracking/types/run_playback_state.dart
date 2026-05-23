@@ -25,6 +25,7 @@ class RunPlaybackState {
     this.pauseReason,
     this.autoPauseEnabled = false,
     this.stationaryDriftLocked = false,
+    this.pendingManualResumeSegmentStart = false,
     this.recordRaceCompletionCandidateCount = 0,
     this.recordRaceCompletionPromptPending = false,
     this.recordRaceCompletionPromptDismissed = false,
@@ -54,6 +55,7 @@ class RunPlaybackState {
   final RunPauseReason? pauseReason;
   final bool autoPauseEnabled;
   final bool stationaryDriftLocked;
+  final bool pendingManualResumeSegmentStart;
   final int recordRaceCompletionCandidateCount;
   final bool recordRaceCompletionPromptPending;
   final bool recordRaceCompletionPromptDismissed;
@@ -98,6 +100,7 @@ class RunPlaybackState {
     Object? pauseReason = _unset,
     bool? autoPauseEnabled,
     bool? stationaryDriftLocked,
+    bool? pendingManualResumeSegmentStart,
     int? recordRaceCompletionCandidateCount,
     bool? recordRaceCompletionPromptPending,
     bool? recordRaceCompletionPromptDismissed,
@@ -131,6 +134,9 @@ class RunPlaybackState {
       autoPauseEnabled: autoPauseEnabled ?? this.autoPauseEnabled,
       stationaryDriftLocked:
           stationaryDriftLocked ?? this.stationaryDriftLocked,
+      pendingManualResumeSegmentStart:
+          pendingManualResumeSegmentStart ??
+          this.pendingManualResumeSegmentStart,
       recordRaceCompletionCandidateCount:
           recordRaceCompletionCandidateCount ??
           this.recordRaceCompletionCandidateCount,

@@ -11,7 +11,7 @@ class RunliniDatabase {
        _databaseName = databaseName,
        _databasePath = databasePath;
 
-  static const int version = 9;
+  static const int version = 10;
 
   final DatabaseFactory _databaseFactory;
   final String _databaseName;
@@ -82,6 +82,7 @@ CREATE TABLE run_points (
   cadence_spm REAL,
   horizontal_accuracy_m REAL,
   speed_accuracy_mps REAL,
+  starts_new_segment INTEGER NOT NULL DEFAULT 0,
   source TEXT NOT NULL,
   PRIMARY KEY (session_id, sequence_index),
   FOREIGN KEY (session_id) REFERENCES run_sessions(id) ON DELETE CASCADE
@@ -144,6 +145,13 @@ WHERE record_race_summary_json IS NULL
   AND ghost_summary_json IS NOT NULL
 ''');
       }
+    }
+    if (oldVersion < 10) {
+      await _addColumnIfMissing(
+        db,
+        'run_points',
+        'starts_new_segment INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 

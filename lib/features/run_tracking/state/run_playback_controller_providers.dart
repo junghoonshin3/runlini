@@ -115,6 +115,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
       status: RunScreenStatus.reviewing,
       elapsedBeforePauseMs: durationMs,
       resumedAt: null,
+      pendingManualResumeSegmentStart: false,
       pendingFinishedSession: pendingSession,
     );
   }
@@ -195,10 +196,12 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
 
     final resumedAt = ref.read(runPlaybackClockProvider)();
+    final shouldStartNewSegment = state.pauseReason == RunPauseReason.manual;
     state = state.copyWith(
       status: RunScreenStatus.running,
       resumedAt: resumedAt,
       pauseReason: null,
+      pendingManualResumeSegmentStart: shouldStartNewSegment,
     );
     _markCadenceEvidenceSeen(ref.read(runMotionEvidenceProvider));
     ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(true);

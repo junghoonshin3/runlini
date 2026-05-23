@@ -18,6 +18,7 @@ void main() {
 
     expect(session.recordRaceSummary, isNull);
     expect(session.captureSource, RunSessionCaptureSource.phoneGps);
+    expect(session.points.single.startsNewSegment, isFalse);
   });
 
   test('round trips recordRace summary metadata', () {
@@ -33,6 +34,7 @@ void main() {
           longitude: 127.0,
           timestampRelMs: 0,
           source: RunPointSource.watchOs,
+          startsNewSegment: true,
         ),
       ],
       captureSource: RunSessionCaptureSource.watchOs,
@@ -53,6 +55,7 @@ void main() {
     );
     expect(restored.captureSource, RunSessionCaptureSource.watchOs);
     expect(restored.points.single.source, RunPointSource.watchOs);
+    expect(restored.points.single.startsNewSegment, isTrue);
     expect(restored.recordRaceSummary?.timeGapMs, 12000);
     expect(restored.recordRaceSummary?.distanceGapM, 42);
     expect(

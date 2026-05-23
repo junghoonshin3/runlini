@@ -48,6 +48,7 @@ Map<String, Object?> _pointRow(String sessionId, int index, RunPoint point) {
     'cadence_spm': point.cadenceSpm,
     'horizontal_accuracy_m': point.horizontalAccuracyM,
     'speed_accuracy_mps': point.speedAccuracyMps,
+    'starts_new_segment': point.startsNewSegment ? 1 : 0,
     'source': point.source.name,
   };
 }
@@ -65,6 +66,7 @@ RunPoint _pointFromRow(Map<String, Object?> row) {
     horizontalAccuracyM: _nullableDouble(row['horizontal_accuracy_m']),
     speedAccuracyMps: _nullableDouble(row['speed_accuracy_mps']),
     source: RunPointSource.values.byName(row['source']! as String),
+    startsNewSegment: _bool(row['starts_new_segment']),
   );
 }
 
@@ -115,6 +117,13 @@ int _int(Object? value) {
 
 int? _nullableInt(Object? value) {
   return value == null ? null : (value as num).toInt();
+}
+
+bool _bool(Object? value) {
+  if (value == null) {
+    return false;
+  }
+  return (value as num).toInt() != 0;
 }
 
 DateTime? _date(Object? value) {

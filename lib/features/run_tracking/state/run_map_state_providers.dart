@@ -4,6 +4,7 @@ import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
 import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 import 'package:runlini/features/record_race/state/record_race_providers.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_core_providers.dart';
@@ -83,7 +84,10 @@ final currentRunnerPolylinePointsProvider = Provider<List<MapCoordinate>>((
     return const <MapCoordinate>[];
   }
 
-  return mapCoordinatesFromRunPoints(playbackState.recordedPoints);
+  final route = ref
+      .watch(runRouteSegmenterProvider)
+      .segment(playbackState.recordedPoints);
+  return _singleSegmentFallbackPoints(route);
 });
 
 final currentRunnerPolylineSegmentsProvider =
@@ -102,6 +106,13 @@ final currentRunnerPolylineSegmentsProvider =
           )
           .toList(growable: false);
     });
+
+List<MapCoordinate> _singleSegmentFallbackPoints(RunRouteSegments route) {
+  if (route.segments.length != 1 || route.segments.single.length < 2) {
+    return const <MapCoordinate>[];
+  }
+  return mapCoordinatesFromRunPoints(route.segments.single);
+}
 
 final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final staticState = ref.watch(runMapStaticStateProvider).value;
