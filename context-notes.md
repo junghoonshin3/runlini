@@ -1,5 +1,15 @@
 # Context Notes
 
+## 2026-05-25 README 화면 기록 영상 갱신
+
+- 사용자는 지금 찍은 화면 기록 영상 파일을 찾아 README에 다시 올리라고 요청했다.
+- 최근 2시간 내 Desktop 화면 기록 파일은 `화면 기록 2026-05-25 오후 8.12.46.mov`와 `화면 기록 2026-05-25 오후 8.10.38.mov`다.
+- 가장 최신 파일은 `화면 기록 2026-05-25 오후 8.12.46.mov`이고 27MB QuickTime MOV 파일이다.
+- 로컬 브랜치는 원격의 `8c9f5f3 Remove demo section from README`보다 뒤처져 있었으므로 README 수정 전 `git merge --ff-only origin/develop`로 동기화했다.
+- README에는 최신 화면 기록 파일을 ASCII 파일명으로 `docs/assets`에 복사한 뒤 데모 섹션을 다시 연결한다.
+- 최신 녹화본은 `docs/assets/runlini-app-screen-recording-20260525.mov`로 복사했고, README의 Demo 섹션은 이 파일을 가리키도록 복구했다.
+- 검증은 파일 존재 확인, `file` 형식 확인, README 링크 `rg`, `git diff --check`로 통과했다.
+
 ## 2026-05-25 Runlini README 재작성
 
 - 사용자는 Runlini README 작성을 요청했다.
