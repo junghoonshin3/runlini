@@ -46,6 +46,46 @@ void main() {
     await tester.pump();
     expect(stopped, isTrue);
   });
+
+  testWidgets('is immediately actionable and static with reduce motion', (
+    tester,
+  ) async {
+    var continued = false;
+    var stopped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: RunRecordRaceCompletionOverlay(
+              summary: _summary(),
+              onContinue: () => continued = true,
+              onStop: () async => stopped = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('record-race-run-completion-dialog')),
+      findsOneWidget,
+    );
+    expect(tester.hasRunningAnimations, isFalse);
+
+    await tester.tap(
+      find.byKey(const Key('continue-after-record-race-completion-button')),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('stop-after-record-race-completion-button')),
+    );
+    await tester.pump();
+
+    expect(continued, isTrue);
+    expect(stopped, isTrue);
+  });
 }
 
 RunSessionRecordRaceSummary _summary() {

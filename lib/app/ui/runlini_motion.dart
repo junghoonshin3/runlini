@@ -54,3 +54,30 @@ class RunliniFadeUp extends StatelessWidget {
     );
   }
 }
+
+class RunliniOverlayEntrance extends StatelessWidget {
+  const RunliniOverlayEntrance({
+    super.key,
+    required this.child,
+    this.duration = RunliniMotion.shortTransition,
+  });
+
+  final Widget child;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    if (RunliniMotion.reduceMotion(context)) {
+      return child;
+    }
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.92, end: 1),
+      duration: duration,
+      curve: RunliniMotion.enterCurve,
+      builder: (BuildContext context, double value, Widget? child) {
+        return Opacity(opacity: value, child: child);
+      },
+      child: child,
+    );
+  }
+}

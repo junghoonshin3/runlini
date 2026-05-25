@@ -10,10 +10,48 @@ import 'package:runlini/features/run_tracking/state/run_settings_providers.dart'
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/types/run_shoe.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
 
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets(
+    'finish review overlay actions are available on the first frame',
+    (WidgetTester tester) async {
+      var saved = false;
+      var discarded = false;
+
+      await _pumpFinishReviewOverlay(
+        tester,
+        onSave: () => saved = true,
+        onDiscard: () => discarded = true,
+      );
+
+      expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('save-run-button')));
+      await tester.tap(find.byKey(const Key('discard-run-button')));
+
+      expect(saved, isTrue);
+      expect(discarded, isTrue);
+    },
+  );
+
+  testWidgets('finish review overlay is static with reduce motion', (
+    WidgetTester tester,
+  ) async {
+    await _pumpFinishReviewOverlay(tester, reduceMotion: true);
+
+    expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('run-finish-review-panel')),
+        matching: find.byType(Opacity),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('stop shows finish review and save returns to idle controls', (
     WidgetTester tester,
   ) async {
@@ -114,6 +152,42 @@ void main() {
     expect(healthRecorder.cancelCalls, 1);
     expect(healthRecorder.finishCalls, 0);
   });
+}
+
+Future<void> _pumpFinishReviewOverlay(
+  WidgetTester tester, {
+  bool reduceMotion = false,
+  VoidCallback? onSave,
+  VoidCallback? onDiscard,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        runDisplaySettingsProvider.overrideWithValue(
+          const RunDisplaySettings(),
+        ),
+        runPrivacySettingsProvider.overrideWithValue(
+          const RunPrivacySettings(),
+        ),
+        runShoeListProvider.overrideWith((ref) async => const <RunShoe>[]),
+      ],
+      child: MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(
+            disableAnimations: reduceMotion,
+            size: const Size(390, 844),
+          ),
+          child: Scaffold(
+            body: RunFinishReviewOverlay(
+              session: sampleRunSessions().first,
+              onSave: onSave ?? () {},
+              onDiscard: onDiscard ?? () {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _pumpRunningApp(

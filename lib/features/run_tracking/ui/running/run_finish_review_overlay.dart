@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
@@ -24,14 +25,16 @@ class RunFinishReviewOverlay extends ConsumerWidget {
     final shoes = ref.watch(runShoeListProvider).value ?? const <RunShoe>[];
     final shoe = _shoeFor(shoes);
 
-    return RunFinishReviewPanel(
-      session: session,
-      displaySettings: displaySettings,
-      privacySettings: privacySettings,
-      shoeName: shoe == null ? null : '${shoe.brand} ${shoe.name}',
-      shoeImagePath: shoe?.imagePath,
-      onSave: onSave,
-      onDiscard: onDiscard,
+    return RunliniOverlayEntrance(
+      child: RunFinishReviewPanel(
+        session: session,
+        displaySettings: displaySettings,
+        privacySettings: privacySettings,
+        shoeName: shoe == null ? null : '${shoe.brand} ${shoe.name}',
+        shoeImagePath: shoe?.imagePath,
+        onSave: onSave,
+        onDiscard: onDiscard,
+      ),
     );
   }
 
