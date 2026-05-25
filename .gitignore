@@ -50,3 +50,8 @@ app.*.map.json
 # Next.js screenshot editor
 node_modules/
 .next/
+
+# Local agent runtime and installed skills
+.agent-company/
+.agents/
+skills-lock.json
