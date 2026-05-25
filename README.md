@@ -6,14 +6,6 @@ Health Connect와 건강 앱 연동을 한 흐름으로 다루는 Flutter 러닝
 
 > 지금 내가 이전 기록보다 앞서고 있는가?
 
-## Demo
-
-<video src="docs/assets/runlini-emulator-demo.mov" controls width="360"></video>
-
-[Android emulator demo 보기](docs/assets/runlini-emulator-demo.mov)
-
-이 영상은 macOS 내장 화면 기록 도구로 실제 Android 에뮬레이터에서 촬영했습니다.
-
 ## 주요 기능
 
 - **라이브 러닝** - GPS 기반 거리, 시간, 평균 페이스, 평균 속도, 칼로리,
