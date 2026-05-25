@@ -1,5 +1,19 @@
 # Context Notes
 
+## 2026-05-25 CI guardrails 파일 길이 실패 수정
+
+- 사용자는 push 후 GitHub Actions가 다시 실패한 문제를 고치라고 요청했다.
+- 최신 실패 run `26395893676`과 로컬 `dart run tool/guardrails.dart` 기준 실패 원인은 Dart 파일 300줄 제한 초과다.
+- 실패 파일은 `lib/features/run_tracking/ui/detail/run_detail_summary_sections.dart` 328줄, `test/features/run_tracking/live_tracking_lifecycle_providers_test.dart` 413줄, `test/features/run_tracking/run_playback_session_providers_test.dart` 323줄, `test/runlini_running_controls_widget_test.dart` 366줄이다.
+- guardrails 제한을 완화하지 않고, 의미 단위 파일 분리로 해결한다.
+- `run_detail_summary_sections.dart`는 기존 import 경로를 유지하고 metric strip 관련 구현만 part 파일로 분리한다.
+- provider lifecycle 테스트는 delayed cancel race 테스트와 fake stream client를 별도 테스트 파일로 분리한다.
+- playback session 테스트는 리뷰 중 몸무게 저장 칼로리 갱신 테스트를 별도 테스트 파일로 분리한다.
+- running controls widget 테스트는 reduce motion 고정 geometry 테스트를 별도 widget test 파일로 분리한다.
+- 동작 변경과 API 변경은 하지 않고 CI 실패 해소를 위한 구조 분리만 한다.
+- 구현 결과 8개 대상 파일의 줄 수는 각각 145, 187, 289, 135, 256, 78, 274, 97줄로 모두 300줄 이하가 됐다.
+- 검증은 `dart run tool/guardrails.dart`, 분리 대상 focused `flutter test` 3묶음, `flutter analyze`, 전체 `flutter test`로 통과했다.
+
 ## 2026-05-22 경쟁레이스 완료 판정 finish corridor 우선 정책 구현
 
 - 사용자는 기존 기획과 리서치 결론을 토대로 경쟁레이스 완료 판정 구현을 진행하라고 승인했다.

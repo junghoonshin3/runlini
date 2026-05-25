@@ -1,5 +1,14 @@
 # Checklist
 
+## CI guardrails 파일 길이 실패 수정
+
+- [x] 최신 GitHub Actions 실패 로그와 로컬 guardrails 실패를 확인한다.
+- [x] 300줄 초과 UI 파일을 의미 단위 part 파일로 분리한다.
+- [x] 300줄 초과 테스트 파일 3개를 의미 단위로 분리한다.
+- [x] 분리된 파일과 원본 파일이 모두 300줄 이하인지 확인한다.
+- [x] 관련 focused tests, guardrails, analyzer, 전체 테스트를 실행한다.
+- [x] 변경을 커밋하고 push한다.
+
 ## 경쟁레이스 완료 판정 finish corridor 우선 정책 구현
 
 - [x] Agent Company 구현 회의를 시작하고 역할별 검토를 병렬 요청한다.
