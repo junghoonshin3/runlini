@@ -1,5 +1,16 @@
 # Context Notes
 
+## 2026-05-25 Runlini README 재작성
+
+- 사용자는 Runlini README 작성을 요청했다.
+- 현재 README에는 데모 영상, 기본 명령, 지도 설정, repo guide 정도만 있고, 실제 제품 기능과 현재 개발 흐름 설명이 부족하다.
+- README는 한국어로 재작성하고, Runlini의 핵심 가치인 라이브 러닝, 기록 레이스, 기록 홈, 상세 분석, Health 연동, 설정과 러닝화 관리를 짧게 설명한다.
+- 기존 Android 에뮬레이터 데모 영상 링크는 유지한다.
+- 설정 안내는 Android Google Maps API key, iOS Apple Maps, Health Connect와 건강 앱 권한, Flutter 검증 명령으로 제한한다.
+- 코드 변경은 하지 않고 README와 작업 기록만 변경한다.
+- README는 제품 소개, 데모, 주요 기능, 기술 구성, 시작하기, 검증, 프로젝트 구조, 주요 문서, 개발 원칙 순서로 재작성했다.
+- 데모 영상과 주요 문서 링크는 `test -f`로 확인했고, `git diff --check`는 통과했다.
+
 ## 2026-05-25 CI guardrails 파일 길이 실패 수정
 
 - 사용자는 push 후 GitHub Actions가 다시 실패한 문제를 고치라고 요청했다.

@@ -1,5 +1,13 @@
 # Checklist
 
+## Runlini README 재작성
+
+- [x] 현재 README와 제품, 아키텍처, 플랫폼 문서를 확인한다.
+- [x] README를 실제 Runlini 기능과 개발 흐름 기준으로 재작성한다.
+- [x] 데모 영상 링크와 주요 문서 링크가 유효한지 확인한다.
+- [x] 문서 diff 공백 검사를 실행한다.
+- [x] 변경을 커밋한다.
+
 ## CI guardrails 파일 길이 실패 수정
 
 - [x] 최신 GitHub Actions 실패 로그와 로컬 guardrails 실패를 확인한다.
