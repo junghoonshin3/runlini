@@ -66,12 +66,15 @@ class _PrivacySwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(color: AppColors.chalk)),
-      activeThumbColor: AppColors.voltGreen,
-      value: value,
-      onChanged: onChanged,
+    return Material(
+      color: Colors.transparent,
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(title, style: const TextStyle(color: AppColors.chalk)),
+        activeThumbColor: AppColors.voltGreen,
+        value: value,
+        onChanged: onChanged,
+      ),
     );
   }
 }

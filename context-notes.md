@@ -13,6 +13,10 @@
 - 동작 변경과 API 변경은 하지 않고 CI 실패 해소를 위한 구조 분리만 한다.
 - 구현 결과 8개 대상 파일의 줄 수는 각각 145, 187, 289, 135, 256, 78, 274, 97줄로 모두 300줄 이하가 됐다.
 - 검증은 `dart run tool/guardrails.dart`, 분리 대상 focused `flutter test` 3묶음, `flutter analyze`, 전체 `flutter test`로 통과했다.
+- push 후 GitHub Actions run `26396285103`에서는 `Run guardrails`와 `Analyze`는 통과했지만 `flutter test`가 14건 실패했다.
+- 원격 실패 원인은 Flutter stable 3.44에서 배경색 있는 `DecoratedBox` 안의 `ListTile` 계열 위젯을 assertion으로 잡는 것이다.
+- 실패 위치는 설정 개인정보 스위치, 러닝화 기본값 스위치, 상세 기록 삭제 dialog의 Health 삭제 checkbox이며, `SwitchListTile`와 `CheckboxListTile`을 투명 `Material`로 감싸 해결한다.
+- ListTile assertion 보정 후 실패 대상 focused 테스트 묶음, `dart run tool/guardrails.dart`, `flutter analyze`, 전체 `flutter test`가 통과했다.
 
 ## 2026-05-22 경쟁레이스 완료 판정 finish corridor 우선 정책 구현
 

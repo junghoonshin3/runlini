@@ -150,17 +150,20 @@ class RunSessionDetailScreen extends ConsumerWidget {
                 children: [
                   const Text('기본적으로 Runlini에서만 삭제돼요. Health 기록은 유지됩니다.'),
                   const SizedBox(height: 12),
-                  CheckboxListTile(
-                    key: const Key('delete-health-source-checkbox'),
-                    value: deleteFromHealth,
-                    onChanged: (bool? value) {
-                      setState(() => deleteFromHealth = value ?? false);
-                    },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Health에서도 영구 삭제'),
-                    subtitle: const Text(
-                      'Health Connect / Apple 건강에 저장된 원본 기록도 삭제를 시도해요.',
+                  Material(
+                    color: Colors.transparent,
+                    child: CheckboxListTile(
+                      key: const Key('delete-health-source-checkbox'),
+                      value: deleteFromHealth,
+                      onChanged: (bool? value) {
+                        setState(() => deleteFromHealth = value ?? false);
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Health에서도 영구 삭제'),
+                      subtitle: const Text(
+                        'Health Connect / Apple 건강에 저장된 원본 기록도 삭제를 시도해요.',
+                      ),
                     ),
                   ),
                 ],
