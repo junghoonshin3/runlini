@@ -1,5 +1,13 @@
 # Checklist
 
+## README 인라인 데모 재생 개선
+
+- [x] README의 기존 `.mov` 링크가 다운로드 흐름이 되는 문제를 확인한다.
+- [x] 최신 화면 기록 MOV에서 README용 GIF 프리뷰를 생성한다.
+- [x] README가 GIF를 직접 렌더링하고 원본 MOV는 보조 링크로 제공하게 수정한다.
+- [x] GIF 파일, README 링크, diff 공백을 검증한다.
+- [x] 변경을 커밋하고 push한다.
+
 ## README 화면 기록 영상 갱신
 
 - [x] 최근 화면 기록 파일과 원격 README 상태를 확인한다.

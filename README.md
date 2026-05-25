@@ -8,11 +8,11 @@ Health Connect와 건강 앱 연동을 한 흐름으로 다루는 Flutter 러닝
 
 ## Demo
 
-<video src="docs/assets/runlini-app-screen-recording-20260525.mov" controls width="360"></video>
+![Runlini 앱 구동 데모](docs/assets/runlini-app-demo-20260525.gif)
 
-[Runlini 앱 구동 화면 보기](docs/assets/runlini-app-screen-recording-20260525.mov)
+[고화질 원본 화면 기록 보기](docs/assets/runlini-app-screen-recording-20260525.mov)
 
-이 영상은 macOS 화면 기록 도구로 실제 Android 에뮬레이터에서 촬영했습니다.
+이 데모는 macOS 화면 기록 도구로 실제 Android 에뮬레이터에서 촬영했습니다.
 
 ## 주요 기능
 

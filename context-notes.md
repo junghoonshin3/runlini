@@ -1,5 +1,17 @@
 # Context Notes
 
+## 2026-05-25 README 인라인 데모 재생 개선
+
+- 사용자는 README에서 영상을 다운로드하지 않고 바로 볼 수 있게 하라고 요청했다.
+- GitHub README에서 repo 내부 MOV 상대 링크는 파일 페이지 또는 다운로드 흐름이 될 수 있으므로, README 본문에는 GitHub가 안정적으로 인라인 렌더링하는 GIF 프리뷰를 넣는다.
+- 원본 MOV는 고화질 확인용 보조 링크로 남긴다.
+- `ffmpeg`와 ImageMagick은 설치되어 있지 않고, macOS 기본 `avconvert`와 Swift 프레임워크는 사용할 수 있다.
+- GIF는 최신 원본 `docs/assets/runlini-app-screen-recording-20260525.mov`에서 생성한다.
+- macOS AVFoundation/ImageIO 기반 임시 Swift 스크립트로 16초, 5fps, 폭 360px GIF를 생성했다.
+- README는 `docs/assets/runlini-app-demo-20260525.gif`를 인라인 이미지로 렌더링하고, 원본 MOV는 고화질 보조 링크로 둔다.
+- GIF는 360x707, 534KB로 생성됐고, `README.md`에는 더 이상 `<video>` 태그가 없다.
+- 검증은 GIF와 MOV 존재 확인, `sips` 크기 확인, README 링크 `rg`, `git diff --check`로 통과했다.
+
 ## 2026-05-25 README 화면 기록 영상 갱신
 
 - 사용자는 지금 찍은 화면 기록 영상 파일을 찾아 README에 다시 올리라고 요청했다.
