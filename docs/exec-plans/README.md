@@ -9,9 +9,6 @@ Execution plans are short-lived work logs for multi-file changes.
 - `archive/superseded/`: old broad plans replaced by narrower plans or product
   docs.
 
-`active/runlini-agent-first-bootstrap.md` is kept in place because guardrails
-require that bootstrap baseline artifact.
-
 ## Rules
 
 - Do not leave completed plans in `active/`.

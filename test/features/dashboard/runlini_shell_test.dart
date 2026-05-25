@@ -45,12 +45,12 @@ void main() {
     expect(find.byKey(const Key('settings-tab-screen')), findsOneWidget);
     expect(find.text('위치 업데이트'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('기록 목표'),
+      find.text('기록 목표와 표시'),
       160,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('기록 목표'), findsOneWidget);
+    expect(find.text('기록 목표와 표시'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.directions_run_rounded));
     await pumpUntilFound(tester, find.byKey(const Key('run-map')));

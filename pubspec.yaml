@@ -1,5 +1,5 @@
 name: runlini
-description: "Runlini agent-first running coach bootstrap."
+description: "Runlini running coach app."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,6 +9,8 @@ environment:
 dependencies:
   apple_maps_flutter: ^1.4.0
   cupertino_icons: ^1.0.8
+  firebase_core: ^4.7.0
+  firebase_crashlytics: ^5.2.0
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
@@ -29,6 +31,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   mocktail: ^1.0.5
   sqflite_common_ffi: ^2.4.0+2
 
@@ -36,6 +40,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/map/
     - assets/fixtures/fake_run_session.json
     - assets/fixtures/osaka_namba_tobita_route.json
     - assets/fixtures/osaka_namba_kanzakigawa_route.json

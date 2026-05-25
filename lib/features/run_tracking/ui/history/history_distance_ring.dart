@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/types/run_history_distance_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_history_period.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -12,10 +13,12 @@ class HistoryDistanceRing extends StatelessWidget {
     super.key,
     required this.summary,
     required this.displaySettings,
+    this.size = 184,
   });
 
   final RunHistoryDistanceSummary summary;
   final RunDisplaySettings displaySettings;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +29,21 @@ class HistoryDistanceRing extends StatelessWidget {
     );
     return SizedBox(
       key: const Key('history-distance-progress-ring'),
-      width: 184,
-      height: 184,
-      child: CustomPaint(
-        painter: _RingPainter(progress: summary.progress),
+      width: size,
+      height: size,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: summary.progress),
+        duration: RunliniMotion.enabledDuration(
+          context,
+          RunliniMotion.standardTransition,
+        ),
+        curve: RunliniMotion.enterCurve,
+        builder: (BuildContext context, double progress, Widget? child) {
+          return CustomPaint(
+            painter: _RingPainter(progress: progress),
+            child: child,
+          );
+        },
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -42,13 +56,19 @@ class HistoryDistanceRing extends StatelessWidget {
                 ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
               ),
               const SizedBox(height: 8),
-              Text(
-                distance,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppColors.chalk,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    distance,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.chalk,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

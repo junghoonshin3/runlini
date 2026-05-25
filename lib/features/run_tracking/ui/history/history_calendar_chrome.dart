@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 
@@ -135,8 +136,13 @@ class _CalendarModeButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(6),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
+          duration: RunliniMotion.enabledDuration(
+            context,
+            RunliniMotion.shortTransition,
+          ),
+          curve: RunliniMotion.enterCurve,
+          constraints: const BoxConstraints(minWidth: 54, minHeight: 44),
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: selected ? AppColors.voltGreen : Colors.transparent,

@@ -1,0 +1,268 @@
+// 러닝 탭의 오늘 기록 레이스 추천 카드 흐름을 검증한다
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:runlini/app/runlini_app.dart';
+import 'package:runlini/core/location/location_stream_client.dart';
+import 'package:runlini/core/map/map_coordinate.dart';
+import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_record_race_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_point.dart';
+import 'package:runlini/features/run_tracking/types/run_session.dart';
+
+import '../../helpers/runlini_widget_harness.dart';
+
+void main() {
+  testWidgets('selects a recommended record directly before showing selector', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 5, 18, 7);
+    final sessions = <RunSession>[
+      _session(id: 'latest-other-day', startedAt: DateTime(2026, 5, 17, 7)),
+      _session(id: 'same-weekday', startedAt: DateTime(2026, 5, 11, 7)),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          staticMapStateOverride(
+            fallbackMapCenter: const MapCoordinate(
+              latitude: 37.0,
+              longitude: 127.0,
+            ),
+          ),
+          deviceLocationClientProvider.overrideWithValue(
+            FakeDeviceLocationClient(
+              lastKnownSample: sample(latitude: 37.55, longitude: 126.97),
+            ),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sessions),
+          ),
+          runPlaybackClockProvider.overrideWithValue(() => now),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('record-race-recommendation-card')),
+    );
+
+    _expectTopCompactCard(
+      tester,
+      find.byKey(const Key('record-race-recommendation-card')),
+    );
+    expect(find.text('오늘 추천'), findsOneWidget);
+    expect(find.text('같은 요일 기록으로 달리기'), findsOneWidget);
+    expect(find.text('이 기록 선택'), findsOneWidget);
+    expect(find.text('다른 기록'), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+
+    await tester.tap(
+      find.byKey(const Key('record-race-recommendation-select-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('record-race-recommendation-card')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
+    expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
+  });
+
+  testWidgets('opens the picker from the recommendation secondary action', (
+    WidgetTester tester,
+  ) async {
+    final now = DateTime(2026, 5, 18, 7);
+    final sessions = <RunSession>[
+      _session(id: 'latest-other-day', startedAt: DateTime(2026, 5, 17, 7)),
+      _session(id: 'same-weekday', startedAt: DateTime(2026, 5, 11, 7)),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          staticMapStateOverride(
+            fallbackMapCenter: const MapCoordinate(
+              latitude: 37.0,
+              longitude: 127.0,
+            ),
+          ),
+          deviceLocationClientProvider.overrideWithValue(
+            FakeDeviceLocationClient(
+              lastKnownSample: sample(latitude: 37.55, longitude: 126.97),
+            ),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sessions),
+          ),
+          runPlaybackClockProvider.overrideWithValue(() => now),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('record-race-recommendation-card')),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('record-race-recommendation-other-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-race-session-sheet')), findsOneWidget);
+    expect(find.text('경쟁레이스 선택'), findsOneWidget);
+    expect(
+      find.byKey(const Key('record-race-session-recommendation-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('record-race-session-select-same-weekday')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('record-race-session-select-same-weekday')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
+    expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
+  });
+
+  testWidgets('hides recommendation and selector before any runnable record', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          staticMapStateOverride(
+            fallbackMapCenter: const MapCoordinate(
+              latitude: 37.0,
+              longitude: 127.0,
+            ),
+          ),
+          deviceLocationClientProvider.overrideWithValue(
+            FakeDeviceLocationClient(
+              lastKnownSample: sample(latitude: 37.55, longitude: 126.97),
+            ),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(),
+          ),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('record-race-recommendation-card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('record-race-recommendation-empty-card')),
+      findsNothing,
+    );
+    expect(find.text('오늘 추천'), findsNothing);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+  });
+
+  testWidgets('shows selector fallback when no recommendation is available', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          disableStartupWeightPromptOverride,
+          staticMapStateOverride(
+            fallbackMapCenter: const MapCoordinate(
+              latitude: 37.0,
+              longitude: 127.0,
+            ),
+          ),
+          deviceLocationClientProvider.overrideWithValue(
+            FakeDeviceLocationClient(
+              lastKnownSample: sample(latitude: 37.55, longitude: 126.97),
+            ),
+          ),
+          locationStreamClientProvider.overrideWithValue(
+            const SilentLocationStreamClient(),
+          ),
+          runSessionRepositoryProvider.overrideWithValue(
+            FakeRunSessionRepository(sampleRunSessions()),
+          ),
+          runRecordRaceRecommendationProvider.overrideWith((ref) async => null),
+        ],
+        child: const RunliniApp(),
+      ),
+    );
+    await tester.pump();
+    await openRunningTab(tester);
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('record-race-control-chip')),
+    );
+
+    expect(
+      find.byKey(const Key('record-race-recommendation-card')),
+      findsNothing,
+    );
+    expect(find.text('경쟁레이스 선택'), findsOneWidget);
+  });
+}
+
+void _expectTopCompactCard(WidgetTester tester, Finder finder) {
+  final top = tester.getTopLeft(finder).dy;
+  final height = tester.getSize(finder).height;
+
+  expect(top, lessThan(80));
+  expect(height, lessThanOrEqualTo(128));
+}
+
+RunSession _session({required String id, required DateTime startedAt}) {
+  return RunSession(
+    id: id,
+    startedAt: startedAt,
+    distanceM: 3000,
+    durationMs: 1080000,
+    sourceSummary: 'device:gps',
+    points: const [
+      RunPoint(
+        latitude: 37.5,
+        longitude: 127.0,
+        timestampRelMs: 0,
+        source: RunPointSource.simulated,
+      ),
+      RunPoint(
+        latitude: 37.51,
+        longitude: 127.01,
+        timestampRelMs: 1080000,
+        source: RunPointSource.simulated,
+      ),
+    ],
+  );
+}

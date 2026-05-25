@@ -10,6 +10,12 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
             state.pauseReason != RunPauseReason.auto)) {
       return;
     }
+    final resumedAt = state.resumedAt;
+    if (state.status == RunScreenStatus.running &&
+        resumedAt != null &&
+        sample.capturedAt.isBefore(resumedAt)) {
+      return;
+    }
 
     final rawPoint = sample.toRunPoint(
       elapsedMs: sample.capturedAt.difference(state.startedAt!).inMilliseconds,
@@ -36,31 +42,53 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
           motionEvidence: motionEvidence,
           capturedAt: sample.capturedAt,
         );
+    final manualResumeBoundaryApplied =
+        state.pendingManualResumeSegmentStart &&
+        fusion.recordedPoints.length > state.recordedPoints.length;
+    final routeFusion = manualResumeBoundaryApplied
+        ? fusion.copyWith(
+            recordedPoints: _withLastPointStartingSegment(
+              fusion.recordedPoints,
+            ),
+          )
+        : fusion;
     final autoPauseDecision = _autoPauseDecision(
-      fusion,
+      routeFusion,
       motionEvidence,
       sample.capturedAt,
     );
     if (autoPauseDecision == RunAutoPauseDecision.pause &&
         state.status == RunScreenStatus.running) {
-      _applyAutoPause(fusion, motionEvidence, sample.capturedAt);
+      _applyAutoPause(
+        routeFusion,
+        motionEvidence,
+        sample.capturedAt,
+        manualResumeBoundaryApplied: manualResumeBoundaryApplied,
+      );
       return;
     }
     if (autoPauseDecision == RunAutoPauseDecision.resume &&
         state.isAutoPaused) {
-      _applyAutoResume(fusion, motionEvidence, sample.capturedAt);
+      _applyAutoResume(
+        routeFusion,
+        motionEvidence,
+        sample.capturedAt,
+        manualResumeBoundaryApplied: manualResumeBoundaryApplied,
+      );
       return;
     }
-    if (fusion.recordedPoints.length == state.recordedPoints.length &&
-        fusion.rawPoints.length == state.rawPoints.length) {
+    if (routeFusion.recordedPoints.length == state.recordedPoints.length &&
+        routeFusion.rawPoints.length == state.rawPoints.length) {
       return;
     }
     state = state.copyWith(
-      rawPoints: fusion.rawPoints,
+      rawPoints: routeFusion.rawPoints,
       motionEvidence: motionEvidence,
-      recordedPoints: fusion.recordedPoints,
-      currentPointIndex: fusion.recordedPoints.length - 1,
-      stationaryDriftLocked: fusion.stationaryDriftLocked,
+      recordedPoints: routeFusion.recordedPoints,
+      currentPointIndex: routeFusion.recordedPoints.length - 1,
+      stationaryDriftLocked: routeFusion.stationaryDriftLocked,
+      pendingManualResumeSegmentStart:
+          state.pendingManualResumeSegmentStart && !manualResumeBoundaryApplied,
     );
   }
 
@@ -86,8 +114,9 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
   void _applyAutoPause(
     RunPlaybackSampleFusionResult fusion,
     List<RunMotionEvidence> motionEvidence,
-    DateTime capturedAt,
-  ) {
+    DateTime capturedAt, {
+    required bool manualResumeBoundaryApplied,
+  }) {
     state = state.copyWith(
       status: RunScreenStatus.paused,
       rawPoints: fusion.rawPoints,
@@ -98,6 +127,8 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
       resumedAt: null,
       pauseReason: RunPauseReason.auto,
       stationaryDriftLocked: true,
+      pendingManualResumeSegmentStart:
+          state.pendingManualResumeSegmentStart && !manualResumeBoundaryApplied,
     );
     _markCadenceEvidenceSeen(motionEvidence);
   }
@@ -105,8 +136,9 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
   void _applyAutoResume(
     RunPlaybackSampleFusionResult fusion,
     List<RunMotionEvidence> motionEvidence,
-    DateTime capturedAt,
-  ) {
+    DateTime capturedAt, {
+    required bool manualResumeBoundaryApplied,
+  }) {
     state = state.copyWith(
       status: RunScreenStatus.running,
       rawPoints: fusion.rawPoints,
@@ -116,8 +148,20 @@ mixin RunPlaybackLiveSampleIngest on Notifier<RunPlaybackState> {
       resumedAt: capturedAt,
       pauseReason: null,
       stationaryDriftLocked: false,
+      pendingManualResumeSegmentStart:
+          state.pendingManualResumeSegmentStart && !manualResumeBoundaryApplied,
     );
     _markCadenceEvidenceSeen(motionEvidence);
+  }
+
+  List<RunPoint> _withLastPointStartingSegment(List<RunPoint> points) {
+    if (points.isEmpty) {
+      return points;
+    }
+    return <RunPoint>[
+      ...points.take(points.length - 1),
+      points.last.copyWith(startsNewSegment: true),
+    ];
   }
 
   int _lastIndex(RunPlaybackSampleFusionResult fusion) =>

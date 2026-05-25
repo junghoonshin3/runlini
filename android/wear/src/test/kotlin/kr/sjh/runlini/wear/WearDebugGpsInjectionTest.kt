@@ -96,8 +96,8 @@ class WearDebugGpsInjectionTest {
     }
 
     @Test
-    fun injectedOsakaPointCanMatchGhostRoute() {
-        val config = WearGhostConfig(
+    fun injectedOsakaPointCanMatchRecordRaceRoute() {
+        val config = WearRecordRaceConfig(
             id = "osaka",
             durationMs = 60_000L,
             distanceM = 100.0,
@@ -107,16 +107,16 @@ class WearDebugGpsInjectionTest {
                 WearRunPoint(34.668781, 135.496668, 60_000L),
             ),
         )
-        val frame = WearGhostGapCalculator().calculate(
+        val frame = WearRecordRaceGapCalculator().calculate(
             runnerPoint = WearDebugGpsInjectionMerger()
                 .recordInjectedSample(debugSample(), realtimeMs = 1_000L)
                 .points
                 .first(),
-            ghostConfig = config,
+            recordRaceConfig = config,
             runnerElapsedMs = 12_000L,
         )
 
-        assertNotEquals(WearGhostStatus.OffRoute, frame.status)
+        assertNotEquals(WearRecordRaceStatus.OffRoute, frame.status)
     }
 
     private fun debugSample(): WearDebugGpsSample {

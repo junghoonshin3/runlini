@@ -1,10 +1,14 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+const String runVoiceCueLanguage = 'ko-KR';
+const double runVoiceCueSpeechRate = 0.42;
+
 abstract class RunVoiceCueClient {
-  Future<void> speak(String text, {required double volume});
+  Future<bool> speak(String text, {required double volume});
 
   Future<void> stop();
 }
@@ -13,7 +17,7 @@ class NoOpRunVoiceCueClient implements RunVoiceCueClient {
   const NoOpRunVoiceCueClient();
 
   @override
-  Future<void> speak(String text, {required double volume}) async {}
+  Future<bool> speak(String text, {required double volume}) async => false;
 
   @override
   Future<void> stop() async {}
@@ -27,19 +31,33 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
   bool _configured = false;
 
   @override
-  Future<void> speak(String text, {required double volume}) async {
+  Future<bool> speak(String text, {required double volume}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || (!Platform.isAndroid && !Platform.isIOS)) {
-      return;
+      return false;
     }
     try {
       await _configureIfNeeded();
       await _flutterTts.setVolume(volume.clamp(0, 1).toDouble());
-      await _flutterTts.speak(trimmed);
+      final Object? result;
+      if (Platform.isAndroid) {
+        result = await _flutterTts.speak(trimmed, focus: true);
+      } else {
+        result = await _flutterTts.speak(trimmed);
+      }
+      if (result is num && result == 0) {
+        debugPrint('Runlini voice cue dropped: $trimmed');
+        return false;
+      }
+      return true;
     } on MissingPluginException {
-      return;
-    } on PlatformException {
-      return;
+      return false;
+    } on PlatformException catch (error) {
+      debugPrint('Runlini voice cue skipped: $error');
+      return false;
+    } catch (error) {
+      debugPrint('Runlini voice cue skipped: $error');
+      return false;
     }
   }
 
@@ -58,11 +76,13 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
     if (_configured) {
       return;
     }
-    _configured = true;
     await _flutterTts.awaitSpeakCompletion(true);
-    await _flutterTts.setLanguage('ko-KR');
-    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setLanguage(runVoiceCueLanguage);
+    await _flutterTts.setSpeechRate(runVoiceCueSpeechRate);
     await _flutterTts.setPitch(1.0);
+    if (Platform.isAndroid) {
+      await _flutterTts.setAudioAttributesForNavigation();
+    }
     if (Platform.isIOS) {
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.setIosAudioCategory(
@@ -75,5 +95,6 @@ class FlutterTtsRunVoiceCueClient implements RunVoiceCueClient {
         IosTextToSpeechAudioMode.voicePrompt,
       );
     }
+    _configured = true;
   }
 }

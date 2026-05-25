@@ -5,6 +5,7 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
+import 'package:runlini/features/settings/ui/settings_display_section.dart';
 import 'package:runlini/features/settings/ui/settings_section_panel.dart';
 
 class SettingsDistanceGoalSection extends ConsumerStatefulWidget {
@@ -53,10 +54,16 @@ class _SettingsDistanceGoalSectionState
   Widget build(BuildContext context) {
     final unit = distanceUnitLabel(widget.settings.display);
     return SettingsSectionPanel(
-      title: '기록 목표',
+      title: '기록 목표와 표시',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text('표시 단위', style: _labelStyle),
+          const SizedBox(height: 10),
+          SettingsDisplayControls(settings: widget.settings.display),
+          const SizedBox(height: 18),
+          const Text('목표 거리', style: _labelStyle),
+          const SizedBox(height: 8),
           Text(
             '기록탭 원형 진행률에 사용할 목표 거리를 정해요.',
             style: Theme.of(
@@ -203,6 +210,11 @@ class _SettingsDistanceGoalSectionState
     return value >= 100 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
   }
 }
+
+const _labelStyle = TextStyle(
+  color: AppColors.chalk,
+  fontWeight: FontWeight.w900,
+);
 
 class _GoalInput extends StatelessWidget {
   const _GoalInput({

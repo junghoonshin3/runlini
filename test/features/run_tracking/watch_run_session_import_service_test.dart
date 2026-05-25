@@ -3,7 +3,7 @@ import 'package:runlini/features/run_tracking/repo/run_session_repository.dart';
 import 'package:runlini/features/run_tracking/service/watch_run_session_import_service.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/watch_run_draft.dart';
 import 'package:runlini/features/run_tracking/types/watch_run_platform.dart';
@@ -42,25 +42,28 @@ void main() {
     expect(repository.sessions.single.distanceM, 1200);
   });
 
-  test('imports optional ghost summary from a Wear OS draft', () async {
+  test('imports optional recordRace summary from a Wear OS draft', () async {
     final repository = _FakeRunSessionRepository();
     final service = WatchRunSessionImportService(repository: repository);
 
     final session = await service.importDraft(
       _draft(
-        ghostSummary: const RunSessionGhostSummary(
-          result: RunSessionGhostResult.behind,
+        recordRaceSummary: const RunSessionRecordRaceSummary(
+          result: RunSessionRecordRaceResult.behind,
           timeGapMs: -8000,
           distanceGapM: -24,
-          ghostSessionId: 'ghost-1',
-          ghostLabel: '한강 5K',
+          recordRaceSessionId: 'record-race-1',
+          recordRaceLabel: '한강 5K',
         ),
       ),
     );
 
-    expect(session?.ghostSummary?.result, RunSessionGhostResult.behind);
-    expect(session?.ghostSummary?.ghostSessionId, 'ghost-1');
-    expect(repository.sessions.single.ghostSummary?.timeGapMs, -8000);
+    expect(
+      session?.recordRaceSummary?.result,
+      RunSessionRecordRaceResult.behind,
+    );
+    expect(session?.recordRaceSummary?.recordRaceSessionId, 'record-race-1');
+    expect(repository.sessions.single.recordRaceSummary?.timeGapMs, -8000);
   });
 
   test('skips a watch draft blocked by a local tombstone', () async {
@@ -78,7 +81,7 @@ void main() {
 
 WatchRunDraft _draft({
   double distanceM = 1000,
-  RunSessionGhostSummary? ghostSummary,
+  RunSessionRecordRaceSummary? recordRaceSummary,
 }) {
   return WatchRunDraft(
     id: 'wear-draft-1',
@@ -90,7 +93,7 @@ WatchRunDraft _draft({
     externalWorkoutId: 'wear-workout-1',
     sourceDeviceName: 'Galaxy Watch',
     caloriesKcal: 70,
-    ghostSummary: ghostSummary,
+    recordRaceSummary: recordRaceSummary,
     points: const <RunPoint>[
       RunPoint(
         latitude: 37.5,

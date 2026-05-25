@@ -109,6 +109,77 @@ void main() {
   );
 
   test(
+    'resume ignores samples captured during the manual pause window even if delivered later',
+    () async {
+      final startedAt = DateTime(2026, 4, 20, 6, 0, 0);
+      final acceptedBeforePause = playbackSample(
+        latitude: 37.0001,
+        longitude: 127.0001,
+        capturedAt: startedAt.add(const Duration(seconds: 5)),
+      );
+      final latePausedSample = playbackSample(
+        latitude: 37.0002,
+        longitude: 127.0002,
+        capturedAt: startedAt.add(const Duration(seconds: 12)),
+      );
+      final acceptedAfterResume = playbackSample(
+        latitude: 37.0003,
+        longitude: 127.0003,
+        capturedAt: startedAt.add(const Duration(seconds: 18)),
+      );
+      final streamClient = TrackingLocationStreamClient();
+      var now = startedAt;
+      final container = ProviderContainer(
+        overrides: [
+          deviceLocationClientProvider.overrideWithValue(
+            TestDeviceLocationClient(),
+          ),
+          locationStreamClientProvider.overrideWithValue(streamClient),
+          runPlaybackClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(() async {
+        await streamClient.close();
+        container.dispose();
+      });
+
+      await startVisibleLiveTracking(container);
+      await streamClient.emit(
+        playbackSample(latitude: 37.0, longitude: 127.0, capturedAt: startedAt),
+      );
+      await container.read(runPlaybackControllerProvider.notifier).start();
+      await streamClient.emit(acceptedBeforePause);
+
+      now = startedAt.add(const Duration(seconds: 5));
+      await container.read(runPlaybackControllerProvider.notifier).pause();
+      now = startedAt.add(const Duration(seconds: 13));
+      await container.read(runPlaybackControllerProvider.notifier).resume();
+
+      await streamClient.emit(latePausedSample);
+      expect(
+        container.read(runPlaybackControllerProvider).recordedPoints,
+        hasLength(2),
+      );
+      expect(
+        container.read(runPlaybackControllerProvider).rawPoints,
+        hasLength(2),
+      );
+
+      await streamClient.emit(acceptedAfterResume);
+
+      final recordedPoints = container
+          .read(runPlaybackControllerProvider)
+          .recordedPoints;
+      expect(recordedPoints, hasLength(3));
+      expect(recordedPoints.map((point) => point.timestampRelMs), <int>[
+        0,
+        5000,
+        10000,
+      ]);
+    },
+  );
+
+  test(
     'stop from paused creates a review draft with frozen active time',
     () async {
       final startedAt = DateTime(2026, 4, 20, 6, 0, 0);

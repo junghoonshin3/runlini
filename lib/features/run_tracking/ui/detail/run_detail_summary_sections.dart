@@ -6,6 +6,8 @@ import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/live_run_metrics_formatters.dart';
 import 'package:runlini/features/run_tracking/ui/formatters/run_display_formatters.dart';
 
+part 'run_detail_metric_strip.dart';
+
 class RunDetailHeader extends StatelessWidget {
   const RunDetailHeader({
     super.key,
@@ -102,144 +104,6 @@ class _HeaderSummaryChip extends StatelessWidget {
       ),
     );
   }
-}
-
-class RunDetailMetricStrip extends StatelessWidget {
-  const RunDetailMetricStrip({
-    super.key,
-    required this.detail,
-    this.displaySettings = const RunDisplaySettings(),
-    this.privacySettings = const RunPrivacySettings(),
-    this.shoeName,
-    this.includePrimaryMetrics = true,
-  });
-
-  final RunSessionDetail detail;
-  final RunDisplaySettings displaySettings;
-  final RunPrivacySettings privacySettings;
-  final String? shoeName;
-  final bool includePrimaryMetrics;
-
-  @override
-  Widget build(BuildContext context) {
-    final metrics = <_MetricItem>[
-      if (includePrimaryMetrics) ...[
-        _MetricItem(
-          'Distance (${distanceUnitLabel(displaySettings)})',
-          _distanceValue(detail.distanceKm * 1000),
-        ),
-        _MetricItem('Time', formatLiveRunElapsed(detail.durationMs)),
-        _MetricItem(
-          'Avg. Pace (${paceUnitLabel(displaySettings)})',
-          _formatPaceValue(detail.averagePaceSecPerKm, displaySettings),
-        ),
-      ],
-      _MetricItem(
-        'Avg. Speed (${speedUnitLabel(displaySettings)})',
-        speedForDisplay(
-          detail.averageSpeedKmh,
-          displaySettings,
-        ).toStringAsFixed(1),
-      ),
-      _MetricItem(
-        'Calories (kcal)',
-        privacySettings.hideCalories
-            ? 'Hidden'
-            : detail.caloriesLabel.replaceAll(' kcal', ''),
-      ),
-      _MetricItem(
-        'Elevation (m)',
-        detail.elevationGainM == null
-            ? '--'
-            : detail.elevationGainM!.round().toString(),
-      ),
-      _MetricItem(
-        'Heart Rate (bpm)',
-        privacySettings.hideHeartRate
-            ? 'Hidden'
-            : detail.averageHeartRateBpm?.toString() ?? '--',
-      ),
-      _MetricItem(
-        'Avg. Cadence (spm)',
-        detail.averageCadenceSpm == null
-            ? '--'
-            : detail.averageCadenceSpm!.round().toString(),
-      ),
-      if (shoeName != null) _MetricItem('Shoes', shoeName!),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth - 10) / 2;
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: metrics
-              .map((metric) => _MetricTile(width: itemWidth, metric: metric))
-              .toList(growable: false),
-        );
-      },
-    );
-  }
-
-  String _distanceValue(double distanceM) {
-    return _formatDistanceValue(distanceM, displaySettings);
-  }
-}
-
-String _formatDistanceValue(
-  double distanceM,
-  RunDisplaySettings displaySettings,
-) {
-  final formatted = formatRunDistance(distanceM, displaySettings, decimals: 2);
-  return formatted.replaceFirst(' ${distanceUnitLabel(displaySettings)}', '');
-}
-
-String _formatPaceValue(
-  double? secondsPerKm,
-  RunDisplaySettings displaySettings,
-) {
-  return formatRunPaceCompact(secondsPerKm, displaySettings);
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.width, required this.metric});
-
-  final double width;
-  final _MetricItem metric;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(14),
-      decoration: _panelDecoration(AppColors.chalk),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            metric.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: _mutedStyle,
-          ),
-          const SizedBox(height: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(metric.value, maxLines: 1, style: _valueStyle),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricItem {
-  const _MetricItem(this.label, this.value);
-
-  final String label;
-  final String value;
 }
 
 BoxDecoration _panelDecoration(Color accent) {

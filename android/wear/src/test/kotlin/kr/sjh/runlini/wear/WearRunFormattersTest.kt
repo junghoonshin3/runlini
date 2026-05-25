@@ -5,7 +5,7 @@ import org.junit.Test
 
 class WearRunFormattersTest {
     @Test
-    fun formatsElapsedDistancePaceAndGhostGapForWatch() {
+    fun formatsElapsedDistancePaceAndRecordRaceGapForWatch() {
         assertEquals("01:05", WearRunFormatters.elapsed(65_000L))
         assertEquals("1:01:05", WearRunFormatters.elapsed(3_665_000L))
         assertEquals("1.23 km", WearRunFormatters.distance(1_234.0))
@@ -16,8 +16,10 @@ class WearRunFormattersTest {
         assertEquals("5:07/km", WearRunFormatters.pace(307.0))
         assertEquals("12.0 km/h", WearRunFormatters.speed(3.333))
         assertEquals("172 spm", WearRunFormatters.cadence(171.6))
-        assertEquals("+0:12", WearRunFormatters.ghostGap(ghostFrame(12_000L)))
-        assertEquals("-1:05", WearRunFormatters.ghostGap(ghostFrame(-65_000L)))
+        assertEquals("+0:12", WearRunFormatters.recordRaceGap(recordRaceFrame(12_000L)))
+        assertEquals("-1:05", WearRunFormatters.recordRaceGap(recordRaceFrame(-65_000L)))
+        assertEquals("72%", WearRunFormatters.recordRaceProgress(recordRaceFrame(12_000L)))
+        assertEquals("420 m", WearRunFormatters.recordRaceRemaining(recordRaceFrame(12_000L)))
     }
 
     @Test
@@ -27,7 +29,9 @@ class WearRunFormattersTest {
         assertEquals("--", WearRunFormatters.cadence(null))
         assertEquals("--", WearRunFormatters.heartRate(null))
         assertEquals("--", WearRunFormatters.calories(null))
-        assertEquals("--", WearRunFormatters.ghostGap(null))
+        assertEquals("--", WearRunFormatters.recordRaceGap(null))
+        assertEquals("--", WearRunFormatters.recordRaceProgress(null))
+        assertEquals("--", WearRunFormatters.recordRaceRemaining(null))
     }
 
     @Test
@@ -58,11 +62,13 @@ class WearRunFormattersTest {
         )
     }
 
-    private fun ghostFrame(gapMs: Long): WearGhostFrame {
-        return WearGhostFrame(
-            status = WearGhostStatus.Ahead,
+    private fun recordRaceFrame(gapMs: Long): WearRecordRaceFrame {
+        return WearRecordRaceFrame(
+            status = WearRecordRaceStatus.Ahead,
             timeGapMs = gapMs,
             distanceGapM = 24.0,
+            routeProgress = 0.72,
+            distanceToFinishM = 420.0,
         )
     }
 }

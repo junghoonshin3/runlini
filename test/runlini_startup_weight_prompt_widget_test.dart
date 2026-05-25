@@ -12,42 +12,18 @@ import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
-  testWidgets(
-    'blocks the app shell with a weight screen until weight is saved',
-    (WidgetTester tester) async {
-      final settingsRepository = _PromptSettingsRepository();
+  testWidgets('opens the app shell without body weight', (
+    WidgetTester tester,
+  ) async {
+    final settingsRepository = _PromptSettingsRepository();
 
-      await _pumpApp(tester, settingsRepository);
-      await pumpUntilFound(
-        tester,
-        find.byKey(const Key('startup-weight-screen')),
-      );
+    await _pumpApp(tester, settingsRepository);
+    await pumpUntilFound(tester, find.byKey(const Key('history-list')));
 
-      expect(find.byKey(const Key('history-list')), findsNothing);
-      expect(find.byIcon(Icons.list_alt_rounded), findsNothing);
-      expect(find.byKey(const Key('run-map')), findsNothing);
-
-      await tester.enterText(
-        find.byKey(const Key('startup-weight-input')),
-        '5',
-      );
-      await tester.tap(find.byKey(const Key('startup-weight-save-button')));
-      await tester.pump();
-
-      expect(find.text('20kg부터 250kg 사이로 입력해 주세요.'), findsOneWidget);
-      expect(find.byKey(const Key('startup-weight-screen')), findsOneWidget);
-
-      await tester.enterText(
-        find.byKey(const Key('startup-weight-input')),
-        '70',
-      );
-      await tester.tap(find.byKey(const Key('startup-weight-save-button')));
-      await pumpUntilFound(tester, find.byKey(const Key('history-list')));
-
-      expect(settingsRepository.settings.bodyWeightKg, 70);
-      expect(find.byKey(const Key('startup-weight-screen')), findsNothing);
-    },
-  );
+    expect(settingsRepository.settings.bodyWeightKg, isNull);
+    expect(find.byKey(const Key('startup-weight-screen')), findsNothing);
+    expect(find.byIcon(Icons.list_alt_rounded), findsOneWidget);
+  });
 
   testWidgets('does not ask for body weight when it already exists', (
     WidgetTester tester,

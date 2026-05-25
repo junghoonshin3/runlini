@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -17,9 +18,15 @@ Future<void> showRunIntervalSheet(BuildContext context, WidgetRef ref) {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
-    sheetAnimationStyle: const AnimationStyle(
-      duration: Duration(milliseconds: 140),
-      reverseDuration: Duration(milliseconds: 80),
+    sheetAnimationStyle: AnimationStyle(
+      duration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.shortTransition,
+      ),
+      reverseDuration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.fastTransition,
+      ),
     ),
     builder: (_) => const RunIntervalSheet(),
   );
@@ -44,7 +51,10 @@ class RunIntervalSheet extends ConsumerWidget {
       minChildSize: 0.0,
       maxChildSize: 1.0,
       snap: true,
-      snapAnimationDuration: const Duration(milliseconds: 80),
+      snapAnimationDuration: RunliniMotion.enabledDuration(
+        context,
+        RunliniMotion.fastTransition,
+      ),
       shouldCloseOnMinExtent: true,
       builder: (context, scrollController) {
         return SafeArea(
@@ -159,13 +169,14 @@ class RunIntervalSheet extends ConsumerWidget {
       return;
     }
 
-    final ghostSettings = ref.read(ghostSettingsProvider);
-    if (ghostSettings.enabled && ghostSettings.selectedSessionId != null) {
-      final confirmed = await confirmDisableGhostForInterval(context);
+    final recordRaceSettings = ref.read(recordRaceSettingsProvider);
+    if (recordRaceSettings.enabled &&
+        recordRaceSettings.selectedSessionId != null) {
+      final confirmed = await confirmDisableRecordRaceForInterval(context);
       if (!context.mounted || !confirmed) {
         return;
       }
-      ref.read(ghostSettingsProvider.notifier).disable();
+      ref.read(recordRaceSettingsProvider.notifier).disable();
     }
 
     await ref

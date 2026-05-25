@@ -2,7 +2,7 @@ import 'package:runlini/core/motion/run_motion_evidence_client.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 
 enum RunPauseReason { manual, auto }
 
@@ -25,10 +25,11 @@ class RunPlaybackState {
     this.pauseReason,
     this.autoPauseEnabled = false,
     this.stationaryDriftLocked = false,
-    this.ghostCompletionCandidateCount = 0,
-    this.ghostCompletionPromptPending = false,
-    this.ghostCompletionPromptDismissed = false,
-    this.ghostCompletionSummary,
+    this.pendingManualResumeSegmentStart = false,
+    this.recordRaceCompletionCandidateCount = 0,
+    this.recordRaceCompletionPromptPending = false,
+    this.recordRaceCompletionPromptDismissed = false,
+    this.recordRaceCompletionSummary,
   });
 
   const RunPlaybackState.idle()
@@ -54,10 +55,11 @@ class RunPlaybackState {
   final RunPauseReason? pauseReason;
   final bool autoPauseEnabled;
   final bool stationaryDriftLocked;
-  final int ghostCompletionCandidateCount;
-  final bool ghostCompletionPromptPending;
-  final bool ghostCompletionPromptDismissed;
-  final RunSessionGhostSummary? ghostCompletionSummary;
+  final bool pendingManualResumeSegmentStart;
+  final int recordRaceCompletionCandidateCount;
+  final bool recordRaceCompletionPromptPending;
+  final bool recordRaceCompletionPromptDismissed;
+  final RunSessionRecordRaceSummary? recordRaceCompletionSummary;
 
   bool get hasActiveSession =>
       status == RunScreenStatus.running || status == RunScreenStatus.paused;
@@ -98,10 +100,11 @@ class RunPlaybackState {
     Object? pauseReason = _unset,
     bool? autoPauseEnabled,
     bool? stationaryDriftLocked,
-    int? ghostCompletionCandidateCount,
-    bool? ghostCompletionPromptPending,
-    bool? ghostCompletionPromptDismissed,
-    Object? ghostCompletionSummary = _unset,
+    bool? pendingManualResumeSegmentStart,
+    int? recordRaceCompletionCandidateCount,
+    bool? recordRaceCompletionPromptPending,
+    bool? recordRaceCompletionPromptDismissed,
+    Object? recordRaceCompletionSummary = _unset,
   }) {
     return RunPlaybackState(
       status: status ?? this.status,
@@ -131,15 +134,22 @@ class RunPlaybackState {
       autoPauseEnabled: autoPauseEnabled ?? this.autoPauseEnabled,
       stationaryDriftLocked:
           stationaryDriftLocked ?? this.stationaryDriftLocked,
-      ghostCompletionCandidateCount:
-          ghostCompletionCandidateCount ?? this.ghostCompletionCandidateCount,
-      ghostCompletionPromptPending:
-          ghostCompletionPromptPending ?? this.ghostCompletionPromptPending,
-      ghostCompletionPromptDismissed:
-          ghostCompletionPromptDismissed ?? this.ghostCompletionPromptDismissed,
-      ghostCompletionSummary: identical(ghostCompletionSummary, _unset)
-          ? this.ghostCompletionSummary
-          : ghostCompletionSummary as RunSessionGhostSummary?,
+      pendingManualResumeSegmentStart:
+          pendingManualResumeSegmentStart ??
+          this.pendingManualResumeSegmentStart,
+      recordRaceCompletionCandidateCount:
+          recordRaceCompletionCandidateCount ??
+          this.recordRaceCompletionCandidateCount,
+      recordRaceCompletionPromptPending:
+          recordRaceCompletionPromptPending ??
+          this.recordRaceCompletionPromptPending,
+      recordRaceCompletionPromptDismissed:
+          recordRaceCompletionPromptDismissed ??
+          this.recordRaceCompletionPromptDismissed,
+      recordRaceCompletionSummary:
+          identical(recordRaceCompletionSummary, _unset)
+          ? this.recordRaceCompletionSummary
+          : recordRaceCompletionSummary as RunSessionRecordRaceSummary?,
     );
   }
 }

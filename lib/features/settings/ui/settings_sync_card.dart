@@ -7,6 +7,7 @@ class SettingsSyncCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.status,
+    this.statusLoading = false,
     this.actionKey,
     this.actionLabel,
     this.onPressed,
@@ -15,6 +16,7 @@ class SettingsSyncCard extends StatelessWidget {
 
   final String title;
   final String status;
+  final bool statusLoading;
   final Key? actionKey;
   final String? actionLabel;
   final VoidCallback? onPressed;
@@ -33,7 +35,13 @@ class SettingsSyncCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SettingsStatusRow(label: title, value: status),
+          SettingsStatusRow(
+            label: title,
+            value: status,
+            valueWidget: statusLoading
+                ? const SettingsStatusSkeletonValue()
+                : null,
+          ),
           const SizedBox(height: 8),
           child ??
               SettingsCompactButton(

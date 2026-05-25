@@ -14,7 +14,7 @@ class SettingsRunningSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(runSettingsControllerProvider.notifier);
     return SettingsSectionPanel(
-      title: '러닝',
+      title: '러닝 추적',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -50,46 +50,12 @@ class SettingsRunningSection extends ConsumerWidget {
             style: _hintStyle,
           ),
           const SizedBox(height: 18),
-          _VoiceCueSwitch(
+          _SettingsSwitch(
             switchKey: const Key('auto-pause-enabled-switch'),
             label: '자동 일시정지',
             hint: '멈춰 있으면 시간과 거리 누적을 멈춰요.',
             value: settings.autoPauseEnabled,
             onChanged: controller.setAutoPauseEnabled,
-          ),
-          const SizedBox(height: 18),
-          _GhostMarkerSwitch(
-            value: settings.showGhostMarker,
-            onChanged: controller.setShowGhostMarker,
-          ),
-          const SizedBox(height: 18),
-          _VoiceCueSwitch(
-            switchKey: const Key('voice-cue-enabled-switch'),
-            label: '음성 안내',
-            hint: '폰 러닝과 워치 러닝의 안내 음성을 켜요.',
-            value: settings.voiceCueEnabled,
-            onChanged: controller.setVoiceCueEnabled,
-          ),
-          const SizedBox(height: 18),
-          _VoiceCueSwitch(
-            switchKey: const Key('km-voice-cue-enabled-switch'),
-            label: '1km 안내',
-            hint: '1km마다 평균 페이스와 시간을 알려줘요.',
-            value: settings.kmVoiceCueEnabled,
-            onChanged: controller.setKmVoiceCueEnabled,
-          ),
-          const SizedBox(height: 18),
-          _VoiceCueSwitch(
-            switchKey: const Key('ghost-voice-cue-enabled-switch'),
-            label: '고스트 음성',
-            hint: '고스트 상태가 바뀔 때만 짧게 알려줘요.',
-            value: settings.ghostVoiceCueEnabled,
-            onChanged: controller.setGhostVoiceCueEnabled,
-          ),
-          const SizedBox(height: 18),
-          _VoiceVolumeSlider(
-            value: settings.voiceCueVolume,
-            onChanged: controller.setVoiceCueVolume,
           ),
         ],
       ),
@@ -104,6 +70,58 @@ class SettingsRunningSection extends ConsumerWidget {
       RunLocationTrackingPreset.highAccuracy =>
         '경로를 더 촘촘히 남겨요. 배터리 사용은 늘어날 수 있어요.',
     };
+  }
+}
+
+class SettingsRunGuidanceSection extends ConsumerWidget {
+  const SettingsRunGuidanceSection({super.key, required this.settings});
+
+  final RunSettingsState settings;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(runSettingsControllerProvider.notifier);
+    return SettingsSectionPanel(
+      title: '러닝 화면과 안내',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _RecordRaceMarkerSwitch(
+            value: settings.showRecordRaceMarker,
+            onChanged: controller.setShowRecordRaceMarker,
+          ),
+          const SizedBox(height: 18),
+          _SettingsSwitch(
+            switchKey: const Key('voice-cue-enabled-switch'),
+            label: '음성 안내',
+            hint: '폰 러닝과 워치 러닝의 안내 음성을 켜요.',
+            value: settings.voiceCueEnabled,
+            onChanged: controller.setVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _SettingsSwitch(
+            switchKey: const Key('km-voice-cue-enabled-switch'),
+            label: '1km 안내',
+            hint: '1km마다 평균 페이스와 시간을 알려줘요.',
+            value: settings.kmVoiceCueEnabled,
+            onChanged: controller.setKmVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _SettingsSwitch(
+            switchKey: const Key('record-race-voice-cue-enabled-switch'),
+            label: '기록 레이스 음성',
+            hint: '기록 레이스 상태가 바뀔 때만 짧게 알려줘요.',
+            value: settings.recordRaceVoiceCueEnabled,
+            onChanged: controller.setRecordRaceVoiceCueEnabled,
+          ),
+          const SizedBox(height: 18),
+          _VoiceVolumeSlider(
+            value: settings.voiceCueVolume,
+            onChanged: controller.setVoiceCueVolume,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -131,8 +149,8 @@ class _PresetButton extends StatelessWidget {
   }
 }
 
-class _GhostMarkerSwitch extends StatelessWidget {
-  const _GhostMarkerSwitch({required this.value, required this.onChanged});
+class _RecordRaceMarkerSwitch extends StatelessWidget {
+  const _RecordRaceMarkerSwitch({required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -146,15 +164,15 @@ class _GhostMarkerSwitch extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('고스트 마커 표시', style: _labelStyle),
+              Text('기록 레이스 마커 표시', style: _labelStyle),
               SizedBox(height: 4),
-              Text('고스트의 현재 위치를 지도 위에 표시해요.', style: _hintStyle),
+              Text('기록 레이스의 현재 위치를 지도 위에 표시해요.', style: _hintStyle),
             ],
           ),
         ),
         const SizedBox(width: 12),
         Switch(
-          key: const Key('show-ghost-marker-switch'),
+          key: const Key('show-record-race-marker-switch'),
           value: value,
           activeThumbColor: AppColors.voltGreen,
           onChanged: onChanged,
@@ -164,8 +182,8 @@ class _GhostMarkerSwitch extends StatelessWidget {
   }
 }
 
-class _VoiceCueSwitch extends StatelessWidget {
-  const _VoiceCueSwitch({
+class _SettingsSwitch extends StatelessWidget {
+  const _SettingsSwitch({
     required this.switchKey,
     required this.label,
     required this.hint,

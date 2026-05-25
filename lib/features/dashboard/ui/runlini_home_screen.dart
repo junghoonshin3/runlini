@@ -7,8 +7,9 @@ import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
 import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
@@ -16,7 +17,6 @@ import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_tab_screen.dart';
 import 'package:runlini/features/run_tracking/ui/running/running_tab_screen.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
-import 'package:runlini/features/settings/ui/startup_weight_screen.dart';
 
 part 'runlini_home_screen_sync.dart';
 
@@ -49,7 +49,7 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _syncWearDrafts();
-      _syncRecentWatchGhostConfigs();
+      _syncRecentWatchRecordRaceConfigs();
       _syncWatchIntervalConfig();
       _syncWatchVoiceSettings();
     }
@@ -59,14 +59,6 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   Widget build(BuildContext context) {
     final currentTab = ref.watch(appTabProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
-    final settingsState = ref.watch(runSettingsControllerProvider);
-    final promptEnabled = ref.watch(startupWeightPromptEnabledProvider);
-
-    if (promptEnabled &&
-        settingsState.hasValue &&
-        settingsState.value?.bodyWeightKg == null) {
-      return const StartupWeightScreen();
-    }
 
     _listenForRunSessionChanges();
     _listenForRunSettingsChanges();
@@ -83,41 +75,12 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
               SettingsTabScreen(),
             ],
           ),
-          bottomNavigationBar: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: AppColors.panel,
-              border: Border(top: BorderSide(color: AppColors.chalk, width: 3)),
-            ),
-            child: BottomNavigationBar(
-              currentIndex: currentTab.index,
-              onTap: (int index) {
-                if (countdownState.isActive) {
-                  return;
-                }
-                ref.read(appTabProvider.notifier).setTab(AppTab.values[index]);
-              },
-              backgroundColor: AppColors.panel,
-              selectedItemColor: AppColors.voltGreen,
-              unselectedItemColor: AppColors.muted,
-              selectedFontSize: 14,
-              unselectedFontSize: 14,
-              showUnselectedLabels: true,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.list_alt_rounded),
-                  label: '기록',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.directions_run_rounded),
-                  label: '러닝',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings_rounded),
-                  label: '설정',
-                ),
-              ],
-            ),
+          bottomNavigationBar: _RunliniBottomNavigationBar(
+            currentTab: currentTab,
+            enabled: !countdownState.isActive,
+            onSelected: (AppTab tab) {
+              ref.read(appTabProvider.notifier).setTab(tab);
+            },
           ),
         ),
         if (countdownState.isActive)
@@ -125,6 +88,74 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
             remainingSeconds: countdownState.remainingSeconds!,
           ),
       ],
+    );
+  }
+}
+
+class _RunliniBottomNavigationBar extends StatelessWidget {
+  const _RunliniBottomNavigationBar({
+    required this.currentTab,
+    required this.enabled,
+    required this.onSelected,
+  });
+
+  final AppTab currentTab;
+  final bool enabled;
+  final ValueChanged<AppTab> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.panel,
+        border: Border(
+          top: BorderSide(color: AppColors.chalk.withValues(alpha: 0.18)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: BottomNavigationBar(
+          key: const Key('runlini-bottom-navigation'),
+          currentIndex: currentTab.index,
+          onTap: enabled
+              ? (int index) => onSelected(AppTab.values[index])
+              : null,
+          backgroundColor: AppColors.panel,
+          elevation: 0,
+          selectedItemColor: AppColors.voltGreen,
+          unselectedItemColor: AppColors.muted,
+          selectedFontSize: 13,
+          unselectedFontSize: 13,
+          selectedIconTheme: const IconThemeData(size: 28),
+          unselectedIconTheme: const IconThemeData(size: 24),
+          selectedLabelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0,
+          ),
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt_rounded),
+              label: '기록',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.directions_run_rounded),
+              label: '러닝',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_rounded),
+              label: '설정',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

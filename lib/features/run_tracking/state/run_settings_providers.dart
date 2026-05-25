@@ -86,9 +86,9 @@ class RunSettingsController extends AsyncNotifier<RunSettingsState> {
     await _save(current.copyWith(autoPauseEnabled: enabled));
   }
 
-  Future<void> setShowGhostMarker(bool visible) async {
+  Future<void> setShowRecordRaceMarker(bool visible) async {
     final current = state.value ?? const RunSettingsState();
-    await _save(current.copyWith(showGhostMarker: visible));
+    await _save(current.copyWith(showRecordRaceMarker: visible));
   }
 
   Future<void> setIntervalWorkout(RunIntervalWorkout workout) async {
@@ -112,9 +112,9 @@ class RunSettingsController extends AsyncNotifier<RunSettingsState> {
     await _save(current.copyWith(kmVoiceCueEnabled: enabled));
   }
 
-  Future<void> setGhostVoiceCueEnabled(bool enabled) async {
+  Future<void> setRecordRaceVoiceCueEnabled(bool enabled) async {
     final current = state.value ?? const RunSettingsState();
-    await _save(current.copyWith(ghostVoiceCueEnabled: enabled));
+    await _save(current.copyWith(recordRaceVoiceCueEnabled: enabled));
   }
 
   Future<void> setBodyWeightKg(double? weightKg) async {

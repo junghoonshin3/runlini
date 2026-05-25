@@ -1,4 +1,4 @@
-enum WatchRunEventType { start, pause, resume, stop, lap, ghost, audioCue }
+enum WatchRunEventType { start, pause, resume, stop, lap, recordRace, audioCue }
 
 class WatchRunEvent {
   const WatchRunEvent({
@@ -8,7 +8,7 @@ class WatchRunEvent {
     required this.createdAt,
     this.message,
     this.lapIndex,
-    this.ghostTimeGapMs,
+    this.recordRaceTimeGapMs,
   });
 
   final String sessionId;
@@ -17,7 +17,7 @@ class WatchRunEvent {
   final DateTime createdAt;
   final String? message;
   final int? lapIndex;
-  final int? ghostTimeGapMs;
+  final int? recordRaceTimeGapMs;
 
   factory WatchRunEvent.fromJson(Map<String, dynamic> json) {
     return WatchRunEvent(
@@ -31,7 +31,7 @@ class WatchRunEvent {
       createdAt: DateTime.parse(json['createdAt'] as String),
       message: json['message'] as String?,
       lapIndex: json['lapIndex'] as int?,
-      ghostTimeGapMs: json['ghostTimeGapMs'] as int?,
+      recordRaceTimeGapMs: json['recordRaceTimeGapMs'] as int?,
     );
   }
 
@@ -43,7 +43,7 @@ class WatchRunEvent {
       'createdAt': createdAt.toIso8601String(),
       'message': message,
       'lapIndex': lapIndex,
-      'ghostTimeGapMs': ghostTimeGapMs,
+      'recordRaceTimeGapMs': recordRaceTimeGapMs,
     };
   }
 

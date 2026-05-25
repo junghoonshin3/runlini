@@ -135,11 +135,11 @@ class RunSettingsState {
     this.countdownSeconds = defaultRunCountdownSeconds,
     this.locationTrackingPreset = RunLocationTrackingPreset.balanced,
     this.autoPauseEnabled = false,
-    this.showGhostMarker = false,
+    this.showRecordRaceMarker = false,
     this.intervalWorkout = const RunIntervalWorkout(),
     this.voiceCueEnabled = true,
     this.kmVoiceCueEnabled = true,
-    this.ghostVoiceCueEnabled = false,
+    this.recordRaceVoiceCueEnabled = false,
     this.voiceCueVolume = defaultRunVoiceCueVolume,
     this.bodyWeightKg,
     this.defaultShoeId,
@@ -151,11 +151,11 @@ class RunSettingsState {
   final int countdownSeconds;
   final RunLocationTrackingPreset locationTrackingPreset;
   final bool autoPauseEnabled;
-  final bool showGhostMarker;
+  final bool showRecordRaceMarker;
   final RunIntervalWorkout intervalWorkout;
   final bool voiceCueEnabled;
   final bool kmVoiceCueEnabled;
-  final bool ghostVoiceCueEnabled;
+  final bool recordRaceVoiceCueEnabled;
   final double voiceCueVolume;
   final double? bodyWeightKg;
   final String? defaultShoeId;
@@ -167,11 +167,11 @@ class RunSettingsState {
     int? countdownSeconds,
     RunLocationTrackingPreset? locationTrackingPreset,
     bool? autoPauseEnabled,
-    bool? showGhostMarker,
+    bool? showRecordRaceMarker,
     RunIntervalWorkout? intervalWorkout,
     bool? voiceCueEnabled,
     bool? kmVoiceCueEnabled,
-    bool? ghostVoiceCueEnabled,
+    bool? recordRaceVoiceCueEnabled,
     double? voiceCueVolume,
     double? bodyWeightKg,
     bool clearBodyWeightKg = false,
@@ -186,11 +186,12 @@ class RunSettingsState {
       locationTrackingPreset:
           locationTrackingPreset ?? this.locationTrackingPreset,
       autoPauseEnabled: autoPauseEnabled ?? this.autoPauseEnabled,
-      showGhostMarker: showGhostMarker ?? this.showGhostMarker,
+      showRecordRaceMarker: showRecordRaceMarker ?? this.showRecordRaceMarker,
       intervalWorkout: intervalWorkout ?? this.intervalWorkout,
       voiceCueEnabled: voiceCueEnabled ?? this.voiceCueEnabled,
       kmVoiceCueEnabled: kmVoiceCueEnabled ?? this.kmVoiceCueEnabled,
-      ghostVoiceCueEnabled: ghostVoiceCueEnabled ?? this.ghostVoiceCueEnabled,
+      recordRaceVoiceCueEnabled:
+          recordRaceVoiceCueEnabled ?? this.recordRaceVoiceCueEnabled,
       voiceCueVolume: voiceCueVolume ?? this.voiceCueVolume,
       bodyWeightKg: clearBodyWeightKg
           ? null

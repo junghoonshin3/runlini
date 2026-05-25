@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/ui/running/live_run_metrics_panel.dart';
@@ -36,7 +36,17 @@ void main() {
     expect(find.text('7.5 mph'), findsOneWidget);
   });
 
-  testWidgets('live run metrics panel shows off-route ghost state', (
+  testWidgets(
+    'live run metrics panel asks for body weight when calories are null',
+    (WidgetTester tester) async {
+      await _pumpPanel(tester, caloriesKcal: null);
+
+      expect(find.text('몸무게 필요'), findsOneWidget);
+      expect(find.text('-- kcal'), findsNothing);
+    },
+  );
+
+  testWidgets('live run metrics panel shows off-route recordRace state', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -51,11 +61,11 @@ void main() {
               caloriesKcal: 84,
               isPaused: false,
             ),
-            ghostRace: GhostRaceFrame(
-              status: GhostRaceStatus.offRoute,
+            recordRace: RecordRaceFrame(
+              status: RecordRaceStatus.offRoute,
               timeGapMs: 0,
               distanceGapM: 0,
-              ghostMarkerPoint: MapCoordinate(latitude: 0, longitude: 0),
+              recordRaceMarkerPoint: MapCoordinate(latitude: 0, longitude: 0),
               isOffRoute: true,
               routeProgress: 0.5,
               distanceToFinishM: 500,
@@ -68,27 +78,28 @@ void main() {
       ),
     );
 
-    expect(find.byKey(const Key('ghost-race-panel')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-panel')), findsOneWidget);
     expect(find.text('경로 이탈'), findsOneWidget);
     expect(find.text('--:--'), findsOneWidget);
-    expect(find.text('고스트 비교를 잠시 멈췄어요'), findsOneWidget);
+    expect(find.text('기록 레이스 비교를 잠시 멈췄어요'), findsOneWidget);
   });
 }
 
 Future<void> _pumpPanel(
   WidgetTester tester, {
   RunDisplaySettings displaySettings = const RunDisplaySettings(),
+  double? caloriesKcal = 84,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: LiveRunMetricsPanel(
-          metrics: const LiveRunMetrics(
+          metrics: LiveRunMetrics(
             distanceKm: 1.2,
             elapsedMs: 360000,
             averagePaceSecPerKm: 300,
             averageSpeedKmh: 12,
-            caloriesKcal: 84,
+            caloriesKcal: caloriesKcal,
             isPaused: false,
           ),
           displaySettings: displaySettings,

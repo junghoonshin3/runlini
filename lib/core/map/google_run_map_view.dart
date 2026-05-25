@@ -1,33 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmap;
-import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/google_map_coordinate_adapter.dart';
+import 'package:runlini/core/map/google_run_map_layers.dart';
 import 'package:runlini/core/map/google_run_marker_icons.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
 
 class GoogleRunMapView extends StatefulWidget {
   const GoogleRunMapView({
     super.key,
     required this.mapCenter,
     this.runnerMarkerPoint,
-    this.ghostMarkerPoint,
+    this.recordRaceMarkerPoint,
     this.recenterTargetPoint,
     required this.currentRunnerPolylinePoints,
     required this.currentRunnerPolylineSegments,
-    required this.ghostPolylinePoints,
-    required this.ghostPolylineSegments,
+    required this.recordRacePolylinePoints,
+    required this.recordRacePolylineSegments,
+    this.recordRaceRouteEndpointMarkers = const <MapRouteEndpointMarker>[],
     required this.recenterTick,
   });
 
   final MapCoordinate mapCenter;
   final MapCoordinate? runnerMarkerPoint;
-  final MapCoordinate? ghostMarkerPoint;
+  final MapCoordinate? recordRaceMarkerPoint;
   final MapCoordinate? recenterTargetPoint;
   final List<MapCoordinate> currentRunnerPolylinePoints;
   final List<MapPolylineSegment> currentRunnerPolylineSegments;
-  final List<MapCoordinate> ghostPolylinePoints;
-  final List<MapPolylineSegment> ghostPolylineSegments;
+  final List<MapCoordinate> recordRacePolylinePoints;
+  final List<MapPolylineSegment> recordRacePolylineSegments;
+  final List<MapRouteEndpointMarker> recordRaceRouteEndpointMarkers;
   final int recenterTick;
 
   @override
@@ -39,9 +42,11 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
 
   gmap.GoogleMapController? _mapController;
   gmap.BitmapDescriptor? _runnerMarkerIcon;
-  gmap.BitmapDescriptor? _ghostMarkerIcon;
+  gmap.BitmapDescriptor? _recordRaceMarkerIcon;
+  Map<MapRouteEndpointRole, gmap.BitmapDescriptor>? _routeEndpointMarkerIcons;
   double? _runnerMarkerDevicePixelRatio;
-  double? _ghostMarkerDevicePixelRatio;
+  double? _recordRaceMarkerDevicePixelRatio;
+  double? _routeEndpointMarkerDevicePixelRatio;
 
   @override
   void didChangeDependencies() {
@@ -53,21 +58,25 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
         _runnerMarkerDevicePixelRatio != devicePixelRatio) {
       _loadRunnerMarkerIcon(devicePixelRatio);
     }
-    if (_ghostMarkerIcon == null ||
-        _ghostMarkerDevicePixelRatio != devicePixelRatio) {
-      _loadGhostMarkerIcon(devicePixelRatio);
+    if (_recordRaceMarkerIcon == null ||
+        _recordRaceMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRecordRaceMarkerIcon(devicePixelRatio);
+    }
+    if (_routeEndpointMarkerIcons == null ||
+        _routeEndpointMarkerDevicePixelRatio != devicePixelRatio) {
+      _loadRouteEndpointMarkerIcons(devicePixelRatio);
     }
   }
 
   @override
   void didUpdateWidget(covariant GoogleRunMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final shouldFitGhostPolyline =
+    final shouldFitRecordRacePolyline =
         widget.currentRunnerPolylinePoints.isEmpty &&
-        widget.ghostPolylinePoints.isNotEmpty &&
-        oldWidget.ghostPolylinePoints != widget.ghostPolylinePoints;
-    if (shouldFitGhostPolyline) {
-      _scheduleFitGhostPolyline();
+        widget.recordRacePolylinePoints.isNotEmpty &&
+        oldWidget.recordRacePolylinePoints != widget.recordRacePolylinePoints;
+    if (shouldFitRecordRacePolyline) {
+      _scheduleFitRecordRacePolyline();
       return;
     }
 
@@ -113,8 +122,8 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       onMapCreated: (gmap.GoogleMapController controller) {
         _mapController = controller;
         if (widget.currentRunnerPolylinePoints.isEmpty &&
-            widget.ghostPolylinePoints.isNotEmpty) {
-          _scheduleFitGhostPolyline();
+            widget.recordRacePolylinePoints.isNotEmpty) {
+          _scheduleFitRecordRacePolyline();
         }
       },
       mapType: gmap.MapType.normal,
@@ -123,14 +132,28 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       zoomControlsEnabled: false,
       mapToolbarEnabled: false,
       trafficEnabled: false,
-      polylines: <gmap.Polyline>{..._ghostPolylines(), ..._runnerPolylines()},
+      polylines: <gmap.Polyline>{
+        ...googleRecordRacePolylines(
+          points: widget.recordRacePolylinePoints,
+          segments: widget.recordRacePolylineSegments,
+        ),
+        ...googleRunnerPolylines(
+          points: widget.currentRunnerPolylinePoints,
+          segments: widget.currentRunnerPolylineSegments,
+        ),
+      },
       markers: <gmap.Marker>{
-        if (widget.ghostMarkerPoint != null && _ghostMarkerIcon != null)
+        ...googleRouteEndpointMarkers(
+          markers: widget.recordRaceRouteEndpointMarkers,
+          icons: _routeEndpointMarkerIcons,
+        ),
+        if (widget.recordRaceMarkerPoint != null &&
+            _recordRaceMarkerIcon != null)
           gmap.Marker(
-            markerId: const gmap.MarkerId('ghost-marker'),
-            position: widget.ghostMarkerPoint!.toGoogleLatLng(),
+            markerId: const gmap.MarkerId('record-race-marker'),
+            position: widget.recordRaceMarkerPoint!.toGoogleLatLng(),
             anchor: const Offset(0.5, 0.5),
-            icon: _ghostMarkerIcon!,
+            icon: _recordRaceMarkerIcon!,
             zIndexInt: 2,
           ),
         if (widget.runnerMarkerPoint != null && _runnerMarkerIcon != null)
@@ -145,101 +168,16 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     );
   }
 
-  Set<gmap.Polyline> _runnerPolylines() {
-    final segments = widget.currentRunnerPolylineSegments.isEmpty
-        ? <MapPolylineSegment>[
-            if (widget.currentRunnerPolylinePoints.length >= 2)
-              MapPolylineSegment(
-                points: widget.currentRunnerPolylinePoints,
-                color: AppColors.voltGreen,
-              ),
-          ]
-        : widget.currentRunnerPolylineSegments;
-    return <gmap.Polyline>{
-      for (var index = 0; index < segments.length; index += 1)
-        _runnerPolyline(
-          id: 'runner-polyline-$index',
-          points: segments[index].points,
-          color: segments[index].color,
-        ),
-    };
-  }
-
-  gmap.Polyline _runnerPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return gmap.Polyline(
-      polylineId: gmap.PolylineId(id),
-      points: points
-          .map((MapCoordinate point) => point.toGoogleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 6,
-      zIndex: 2,
-    );
-  }
-
-  Set<gmap.Polyline> _ghostPolylines() {
-    if (widget.ghostPolylineSegments.isEmpty &&
-        widget.ghostPolylinePoints.isEmpty) {
-      return const <gmap.Polyline>{};
-    }
-
-    if (widget.ghostPolylineSegments.isEmpty) {
-      return <gmap.Polyline>{
-        _ghostPolyline(
-          id: 'ghost-polyline',
-          points: widget.ghostPolylinePoints,
-          color: AppColors.electricRed,
-        ),
-      };
-    }
-
-    return <gmap.Polyline>{
-      for (
-        var index = 0;
-        index < widget.ghostPolylineSegments.length;
-        index += 1
-      )
-        _ghostPolyline(
-          id: 'ghost-polyline-$index',
-          points: widget.ghostPolylineSegments[index].points,
-          color: widget.ghostPolylineSegments[index].color,
-        ),
-    };
-  }
-
-  gmap.Polyline _ghostPolyline({
-    required String id,
-    required List<MapCoordinate> points,
-    required Color color,
-  }) {
-    return gmap.Polyline(
-      polylineId: gmap.PolylineId(id),
-      startCap: gmap.Cap.roundCap,
-      endCap: gmap.Cap.roundCap,
-      jointType: gmap.JointType.round,
-      points: points
-          .map((MapCoordinate point) => point.toGoogleLatLng())
-          .toList(growable: false),
-      color: color,
-      width: 10,
-      zIndex: 1,
-    );
-  }
-
-  void _scheduleFitGhostPolyline() {
+  void _scheduleFitRecordRacePolyline() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final mapController = _mapController;
       if (!mounted ||
           mapController == null ||
-          widget.ghostPolylinePoints.isEmpty) {
+          widget.recordRacePolylinePoints.isEmpty) {
         return;
       }
 
-      final bounds = googleBoundsFor(widget.ghostPolylinePoints);
+      final bounds = googleBoundsFor(widget.recordRacePolylinePoints);
       final hasSinglePointBounds =
           bounds.southwest.latitude == bounds.northeast.latitude &&
           bounds.southwest.longitude == bounds.northeast.longitude;
@@ -247,7 +185,7 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
       if (hasSinglePointBounds) {
         mapController.animateCamera(
           gmap.CameraUpdate.newLatLngZoom(
-            widget.ghostPolylinePoints.first.toGoogleLatLng(),
+            widget.recordRacePolylinePoints.first.toGoogleLatLng(),
             _zoomLevel,
           ),
         );
@@ -274,8 +212,8 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     });
   }
 
-  Future<void> _loadGhostMarkerIcon(double devicePixelRatio) async {
-    final gmap.BitmapDescriptor icon = await GoogleRunMarkerIcons.ghost(
+  Future<void> _loadRecordRaceMarkerIcon(double devicePixelRatio) async {
+    final gmap.BitmapDescriptor icon = await GoogleRunMarkerIcons.recordRace(
       devicePixelRatio: devicePixelRatio,
     );
     if (!mounted) {
@@ -283,8 +221,22 @@ class _GoogleRunMapViewState extends State<GoogleRunMapView> {
     }
 
     setState(() {
-      _ghostMarkerIcon = icon;
-      _ghostMarkerDevicePixelRatio = devicePixelRatio;
+      _recordRaceMarkerIcon = icon;
+      _recordRaceMarkerDevicePixelRatio = devicePixelRatio;
+    });
+  }
+
+  Future<void> _loadRouteEndpointMarkerIcons(double devicePixelRatio) async {
+    final icons = await GoogleRunMarkerIcons.routeEndpoints(
+      devicePixelRatio: devicePixelRatio,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _routeEndpointMarkerIcons = icons;
+      _routeEndpointMarkerDevicePixelRatio = devicePixelRatio;
     });
   }
 }

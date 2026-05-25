@@ -110,19 +110,19 @@ class _FakeRunSettingsRepository implements RunSettingsRepository {
   Future<void> saveShoe(RunShoe shoe) async {}
 }
 
-class _FakeWatchGhostConfigClient implements WatchGhostConfigClient {
-  List<WatchGhostConfig> sentConfigs = const [];
+class _FakeWatchRecordRaceConfigClient implements WatchRecordRaceConfigClient {
+  List<WatchRecordRaceConfig> sentConfigs = const [];
 
   @override
-  Future<void> clearGhostConfig() async {}
+  Future<void> clearRecordRaceConfig() async {}
 
   @override
-  Future<void> sendGhostConfig(WatchGhostConfig config) async {}
+  Future<void> sendRecordRaceConfig(WatchRecordRaceConfig config) async {}
 
   @override
-  Future<void> sendGhostConfigs({
+  Future<void> sendRecordRaceConfigs({
     required String? activeId,
-    required List<WatchGhostConfig> configs,
+    required List<WatchRecordRaceConfig> configs,
   }) async {
     sentConfigs = configs;
   }

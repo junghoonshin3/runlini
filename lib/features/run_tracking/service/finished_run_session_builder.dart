@@ -2,7 +2,7 @@ import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dar
 import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 
 class FinishedRunSessionBuilder {
   const FinishedRunSessionBuilder({
@@ -21,7 +21,7 @@ class FinishedRunSessionBuilder {
     required List<RunPoint> recordedPoints,
     required double? bodyWeightKg,
     int cadenceStepCount = 0,
-    RunSessionGhostSummary? ghostSummary,
+    RunSessionRecordRaceSummary? recordRaceSummary,
   }) {
     final distanceM = routeSegmenter.segment(recordedPoints).distanceM;
     final safeDurationMs = durationMs < 0 ? 0 : durationMs;
@@ -41,7 +41,7 @@ class FinishedRunSessionBuilder {
         distanceM: distanceM,
         bodyWeightKg: bodyWeightKg,
       ),
-      ghostSummary: ghostSummary,
+      recordRaceSummary: recordRaceSummary,
     );
   }
 

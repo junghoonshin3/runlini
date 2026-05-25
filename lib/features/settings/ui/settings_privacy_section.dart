@@ -14,7 +14,7 @@ class SettingsPrivacySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(runSettingsControllerProvider.notifier);
     return SettingsSectionPanel(
-      title: '프라이버시',
+      title: '개인정보 보호',
       child: Column(
         children: [
           _PrivacySwitch(
@@ -66,12 +66,15 @@ class _PrivacySwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(color: AppColors.chalk)),
-      activeThumbColor: AppColors.voltGreen,
-      value: value,
-      onChanged: onChanged,
+    return Material(
+      color: Colors.transparent,
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(title, style: const TextStyle(color: AppColors.chalk)),
+        activeThumbColor: AppColors.voltGreen,
+        value: value,
+        onChanged: onChanged,
+      ),
     );
   }
 }

@@ -13,7 +13,7 @@ See also:
 
 ## Phase 2
 
-- ghost selection
+- record race selection
 - time-based interpolation
 - live gap feedback and haptics
 

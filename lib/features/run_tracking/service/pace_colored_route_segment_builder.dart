@@ -18,14 +18,31 @@ class PaceColoredRouteSegmentBuilder {
   final double chunkDistanceM;
   final double rollingWindowM;
 
-  List<MapPolylineSegment> buildGhostSegments(RunSession session) {
+  List<MapPolylineSegment> buildRecordRaceSegments(RunSession session) {
     if (session.points.length < 2) {
       return const <MapPolylineSegment>[];
     }
 
-    return buildRouteSegments(<List<RunPoint>>[
-      session.points,
-    ], fallbackBaselinePaceSecPerKm: _averagePaceSecPerKm(session));
+    return buildRouteSegments(
+      _splitAtExplicitSegmentStarts(session.points),
+      fallbackBaselinePaceSecPerKm: _averagePaceSecPerKm(session),
+    );
+  }
+
+  List<List<RunPoint>> _splitAtExplicitSegmentStarts(List<RunPoint> points) {
+    final segments = <List<RunPoint>>[];
+    var current = <RunPoint>[];
+    for (final point in points) {
+      if (point.startsNewSegment && current.isNotEmpty) {
+        segments.add(List<RunPoint>.unmodifiable(current));
+        current = <RunPoint>[];
+      }
+      current.add(point);
+    }
+    if (current.isNotEmpty) {
+      segments.add(List<RunPoint>.unmodifiable(current));
+    }
+    return List<List<RunPoint>>.unmodifiable(segments);
   }
 
   List<MapPolylineSegment> buildRouteSegments(

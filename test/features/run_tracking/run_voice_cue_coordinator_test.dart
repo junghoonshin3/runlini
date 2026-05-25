@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:runlini/core/map/map_coordinate.dart';
-import 'package:runlini/features/ghost_racer/types/ghost_race_frame.dart';
+import 'package:runlini/features/record_race/types/record_race_frame.dart';
 import 'package:runlini/features/run_tracking/service/run_interval_workout_calculator.dart';
 import 'package:runlini/features/run_tracking/service/run_voice_cue_coordinator.dart';
+import 'package:runlini/features/run_tracking/service/run_voice_cue_formatter.dart';
 import 'package:runlini/features/run_tracking/types/live_run_metrics.dart';
 import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
@@ -17,7 +17,7 @@ void main() {
         averagePaceSecPerKm: 320,
         elapsedMs: 321000,
       ),
-      '1킬로미터, 평균 페이스 5분 20초, 시간 5분 21초',
+      '1킬로미터. 평균 페이스 5분 20초. 시간 5분 21초',
     );
   });
 
@@ -34,8 +34,10 @@ void main() {
     );
 
     expect(first.single.text, startsWith('1킬로미터'));
+    expect(first.single.priority, RunVoiceCuePriority.low);
     expect(duplicate, isEmpty);
     expect(second.single.text, startsWith('2킬로미터'));
+    expect(second.single.priority, RunVoiceCuePriority.low);
   });
 
   test('does not speak while paused, idle, reviewing, or disabled', () {
@@ -86,49 +88,11 @@ void main() {
     final duplicate = coordinator.cuesFor(_snapshot(intervalFrame: frame));
 
     expect(first.map((cue) => cue.text), contains('질주 2/8'));
+    expect(
+      first.firstWhere((cue) => cue.text == '질주 2/8').priority,
+      RunVoiceCuePriority.normal,
+    );
     expect(duplicate, isEmpty);
-  });
-
-  test('does not speak ghost status changes while cues are redesigned', () {
-    final coordinator = RunVoiceCueCoordinator();
-
-    final cues = coordinator.cuesFor(
-      _snapshot(
-        metrics: _metrics(distanceKm: 0.5),
-        ghostFrame: _ghost(GhostRaceStatus.ahead, gapMs: 31000),
-        settings: const RunSettingsState(ghostVoiceCueEnabled: true),
-      ),
-    );
-
-    expect(cues, isEmpty);
-  });
-
-  test('does not speak any cue during a ghost run', () {
-    final coordinator = RunVoiceCueCoordinator();
-    const frame = RunIntervalFrame(
-      step: RunIntervalStep(
-        kind: RunIntervalStepKind.work,
-        target: RunIntervalTarget.time(60000),
-        repeatIndex: 2,
-        repeatCount: 8,
-      ),
-      nextStep: null,
-      remainingMs: 42000,
-      remainingM: null,
-      progress: 0.3,
-    );
-
-    final cues = coordinator.cuesFor(
-      _snapshot(
-        isGhostRun: true,
-        metrics: _metrics(distanceKm: 1.01),
-        intervalFrame: frame,
-        ghostFrame: _ghost(GhostRaceStatus.behind, gapMs: -12000),
-        settings: const RunSettingsState(ghostVoiceCueEnabled: true),
-      ),
-    );
-
-    expect(cues, isEmpty);
   });
 }
 
@@ -136,19 +100,19 @@ RunVoiceCueSnapshot _snapshot({
   RunPlaybackState? playbackState,
   LiveRunMetrics? metrics,
   RunIntervalFrame? intervalFrame,
-  GhostRaceFrame? ghostFrame,
+  RecordRaceFrame? recordRaceFrame,
   RunSettingsState settings = const RunSettingsState(),
   DateTime? now,
-  bool isGhostRun = false,
+  bool isRecordRaceRun = false,
 }) {
   return RunVoiceCueSnapshot(
     playbackState: playbackState ?? _playback(),
     metrics: metrics ?? _metrics(),
     intervalFrame: intervalFrame,
-    ghostFrame: ghostFrame,
+    recordRaceFrame: recordRaceFrame,
     settings: settings,
     now: now ?? DateTime(2026, 5, 3),
-    isGhostRun: isGhostRun,
+    isRecordRaceRun: isRecordRaceRun,
   );
 }
 
@@ -172,20 +136,5 @@ LiveRunMetrics _metrics({double distanceKm = 1.01}) {
     averageSpeedKmh: 11.2,
     caloriesKcal: 45,
     isPaused: false,
-  );
-}
-
-GhostRaceFrame _ghost(GhostRaceStatus status, {required int gapMs}) {
-  return GhostRaceFrame(
-    status: status,
-    timeGapMs: gapMs,
-    distanceGapM: 30,
-    ghostMarkerPoint: const MapCoordinate(latitude: 37, longitude: 127),
-    isOffRoute: status == GhostRaceStatus.offRoute,
-    routeProgress: 0.5,
-    distanceToFinishM: 500,
-    distanceFromRouteM: status == GhostRaceStatus.offRoute ? 40 : 4,
-    totalRouteDistanceM: 1000,
-    distanceToFinishPointM: 500,
   );
 }

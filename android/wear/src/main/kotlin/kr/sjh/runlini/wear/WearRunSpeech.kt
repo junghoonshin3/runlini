@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 
+private const val WearRunSpeechRate = 0.85f
+
 interface WearRunSpeech {
     fun speak(text: String, volume: Float = 1.0f)
     fun shutdown()
@@ -38,7 +40,7 @@ class AndroidWearRunSpeech(context: Context) : WearRunSpeech, TextToSpeech.OnIni
             shutdown()
             return
         }
-        tts.setSpeechRate(1.0f)
+        tts.setSpeechRate(WearRunSpeechRate)
         isReady = true
         pendingText?.let { speakNow(it, pendingVolume) }
         pendingText = null
@@ -71,7 +73,7 @@ class AndroidWearRunSpeech(context: Context) : WearRunSpeech, TextToSpeech.OnIni
         }
         textToSpeech?.speak(
             text,
-            TextToSpeech.QUEUE_FLUSH,
+            TextToSpeech.QUEUE_ADD,
             params,
             "runlini-${System.nanoTime()}",
         )

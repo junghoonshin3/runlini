@@ -15,9 +15,9 @@ Map<String, Object?> _sessionRow(RunSession session) {
     'external_id': session.externalId,
     'last_synced_at': session.lastSyncedAt?.toIso8601String(),
     'sync_status': session.syncStatus.name,
-    'ghost_summary_json': session.ghostSummary == null
+    'record_race_summary_json': session.recordRaceSummary == null
         ? null
-        : jsonEncode(session.ghostSummary!.toJson()),
+        : jsonEncode(session.recordRaceSummary!.toJson()),
     'shoe_id': session.shoeId,
   };
 }
@@ -48,6 +48,7 @@ Map<String, Object?> _pointRow(String sessionId, int index, RunPoint point) {
     'cadence_spm': point.cadenceSpm,
     'horizontal_accuracy_m': point.horizontalAccuracyM,
     'speed_accuracy_mps': point.speedAccuracyMps,
+    'starts_new_segment': point.startsNewSegment ? 1 : 0,
     'source': point.source.name,
   };
 }
@@ -65,6 +66,7 @@ RunPoint _pointFromRow(Map<String, Object?> row) {
     horizontalAccuracyM: _nullableDouble(row['horizontal_accuracy_m']),
     speedAccuracyMps: _nullableDouble(row['speed_accuracy_mps']),
     source: RunPointSource.values.byName(row['source']! as String),
+    startsNewSegment: _bool(row['starts_new_segment']),
   );
 }
 
@@ -117,6 +119,13 @@ int? _nullableInt(Object? value) {
   return value == null ? null : (value as num).toInt();
 }
 
+bool _bool(Object? value) {
+  if (value == null) {
+    return false;
+  }
+  return (value as num).toInt() != 0;
+}
+
 DateTime? _date(Object? value) {
   return value == null ? null : DateTime.parse(value as String);
 }
@@ -140,11 +149,11 @@ bool _isLikelyDeletedSession(
       distanceDeltaM <= distanceToleranceM;
 }
 
-RunSessionGhostSummary? _ghostSummary(Object? value) {
+RunSessionRecordRaceSummary? _recordRaceSummary(Object? value) {
   if (value == null) {
     return null;
   }
-  return RunSessionGhostSummary.fromJson(
+  return RunSessionRecordRaceSummary.fromJson(
     jsonDecode(value as String) as Map<String, dynamic>,
   );
 }

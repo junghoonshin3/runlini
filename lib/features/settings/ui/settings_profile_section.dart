@@ -45,7 +45,7 @@ class _SettingsProfileSectionState
   @override
   Widget build(BuildContext context) {
     return SettingsSectionPanel(
-      title: '프로필',
+      title: '내 정보',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

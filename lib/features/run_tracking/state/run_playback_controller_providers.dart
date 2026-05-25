@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/motion/run_motion_evidence_client.dart';
 import 'package:runlini/features/run_tracking/service/run_auto_pause_detector.dart';
+import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dart';
 import 'package:runlini/features/run_tracking/service/run_playback_sample_fusion.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_motion_evidence_providers.dart';
@@ -14,13 +15,14 @@ import 'package:runlini/features/run_tracking/types/live_location_sample.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 
 part 'run_playback_ingest_extension.dart';
+part 'run_playback_record_race_extension.dart';
 
 class RunPlaybackController extends Notifier<RunPlaybackState>
-    with RunPlaybackLiveSampleIngest {
+    with RunPlaybackLiveSampleIngest, RunPlaybackRecordRaceTracking {
   @override
   RunPlaybackState build() {
     ref.listen(runSettingsControllerProvider, (previous, next) {
@@ -65,7 +67,7 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     return RunTrackingToggleResult.started;
   }
 
-  Future<void> stop({RunSessionGhostSummary? ghostSummary}) async {
+  Future<void> stop({RunSessionRecordRaceSummary? recordRaceSummary}) async {
     if (!state.hasActiveSession) {
       try {
         await ref.read(healthWorkoutRecorderProvider).cancelRunCapture();
@@ -108,12 +110,13 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
           recordedPoints: recordedPoints,
           bodyWeightKg: bodyWeightKg,
           cadenceStepCount: state.cadenceStepCount,
-          ghostSummary: ghostSummary,
+          recordRaceSummary: recordRaceSummary,
         );
     state = state.copyWith(
       status: RunScreenStatus.reviewing,
       elapsedBeforePauseMs: durationMs,
       resumedAt: null,
+      pendingManualResumeSegmentStart: false,
       pendingFinishedSession: pendingSession,
     );
   }
@@ -129,15 +132,6 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
         .value
         ?.defaultShoeId;
     final sessionToSave = pendingSession.copyWith(shoeId: defaultShoeId);
-
-    try {
-      await ref.read(runSessionRepositoryProvider).saveSession(sessionToSave);
-      ref.invalidate(runSessionListProvider);
-      ref.invalidate(runSessionSummaryListProvider);
-    } catch (error) {
-      debugPrint('Runlini local run save failed: $error');
-      return null;
-    }
 
     const exportResult = HealthWorkoutExportResult.skipped(
       'Health backup is available from Settings.',
@@ -155,12 +149,29 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
       ref.invalidate(runSessionListProvider);
       ref.invalidate(runSessionSummaryListProvider);
     } catch (error) {
-      debugPrint('Runlini health export status save failed: $error');
+      debugPrint('Runlini local run save failed: $error');
+      return null;
     }
 
     state = const RunPlaybackState.idle();
     _resetCadenceTracking();
     return exportResult;
+  }
+
+  void applyBodyWeightToPendingFinishedRun(double bodyWeightKg) {
+    final pendingSession = state.pendingFinishedSession;
+    if (state.status != RunScreenStatus.reviewing || pendingSession == null) {
+      return;
+    }
+    final caloriesKcal = const RunCalorieCalculator().activeCaloriesKcal(
+      distanceM: pendingSession.distanceM,
+      bodyWeightKg: bodyWeightKg,
+    );
+    state = state.copyWith(
+      pendingFinishedSession: pendingSession.copyWith(
+        caloriesKcal: caloriesKcal,
+      ),
+    );
   }
 
   Future<void> discardFinishedRun() async {
@@ -202,10 +213,12 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
 
     final resumedAt = ref.read(runPlaybackClockProvider)();
+    final shouldStartNewSegment = state.pauseReason == RunPauseReason.manual;
     state = state.copyWith(
       status: RunScreenStatus.running,
       resumedAt: resumedAt,
       pauseReason: null,
+      pendingManualResumeSegmentStart: shouldStartNewSegment,
     );
     _markCadenceEvidenceSeen(ref.read(runMotionEvidenceProvider));
     ref.read(runMotionEvidenceProvider.notifier).setTrackingEnabled(true);
@@ -227,40 +240,6 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     }
     state = state.copyWith(
       intervalManualAdvanceCount: state.intervalManualAdvanceCount + 1,
-    );
-  }
-
-  void updateGhostCompletion({
-    required int candidateCount,
-    RunSessionGhostSummary? completedSummary,
-  }) {
-    if (!state.hasActiveSession) {
-      return;
-    }
-    if (state.ghostCompletionPromptDismissed ||
-        state.ghostCompletionPromptPending) {
-      return;
-    }
-    if (completedSummary != null) {
-      state = state.copyWith(
-        ghostCompletionCandidateCount: candidateCount,
-        ghostCompletionPromptPending: true,
-        ghostCompletionSummary: completedSummary,
-      );
-      return;
-    }
-    if (candidateCount != state.ghostCompletionCandidateCount) {
-      state = state.copyWith(ghostCompletionCandidateCount: candidateCount);
-    }
-  }
-
-  void continueAfterGhostCompletion() {
-    if (!state.hasActiveSession) {
-      return;
-    }
-    state = state.copyWith(
-      ghostCompletionPromptPending: false,
-      ghostCompletionPromptDismissed: true,
     );
   }
 

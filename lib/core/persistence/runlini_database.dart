@@ -11,7 +11,7 @@ class RunliniDatabase {
        _databaseName = databaseName,
        _databasePath = databasePath;
 
-  static const int version = 8;
+  static const int version = 10;
 
   final DatabaseFactory _databaseFactory;
   final String _databaseName;
@@ -64,7 +64,7 @@ CREATE TABLE run_sessions (
   external_id TEXT,
   last_synced_at TEXT,
   sync_status TEXT NOT NULL,
-  ghost_summary_json TEXT,
+  record_race_summary_json TEXT,
   shoe_id TEXT
 )
 ''');
@@ -82,6 +82,7 @@ CREATE TABLE run_points (
   cadence_spm REAL,
   horizontal_accuracy_m REAL,
   speed_accuracy_mps REAL,
+  starts_new_segment INTEGER NOT NULL DEFAULT 0,
   source TEXT NOT NULL,
   PRIMARY KEY (session_id, sequence_index),
   FOREIGN KEY (session_id) REFERENCES run_sessions(id) ON DELETE CASCADE
@@ -129,6 +130,28 @@ CREATE TABLE run_points (
     if (oldVersion < 8) {
       await _addColumnIfMissing(db, 'run_points', 'horizontal_accuracy_m REAL');
       await _addColumnIfMissing(db, 'run_points', 'speed_accuracy_mps REAL');
+    }
+    if (oldVersion < 9) {
+      await _addColumnIfMissing(
+        db,
+        'run_sessions',
+        'record_race_summary_json TEXT',
+      );
+      if (await _hasColumn(db, 'run_sessions', 'ghost_summary_json')) {
+        await db.execute('''
+UPDATE run_sessions
+SET record_race_summary_json = ghost_summary_json
+WHERE record_race_summary_json IS NULL
+  AND ghost_summary_json IS NOT NULL
+''');
+      }
+    }
+    if (oldVersion < 10) {
+      await _addColumnIfMissing(
+        db,
+        'run_points',
+        'starts_new_segment INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 
@@ -187,5 +210,10 @@ CREATE TABLE IF NOT EXISTS run_shoes (
         rethrow;
       }
     }
+  }
+
+  Future<bool> _hasColumn(Database db, String table, String column) async {
+    final rows = await db.rawQuery('PRAGMA table_info($table)');
+    return rows.any((row) => row['name'] == column);
   }
 }

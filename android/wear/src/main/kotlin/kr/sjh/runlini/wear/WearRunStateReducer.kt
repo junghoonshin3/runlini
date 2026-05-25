@@ -6,12 +6,12 @@ class WearRunStateReducer {
     fun countdown(
         state: WearRunState,
         remainingSeconds: Int,
-        ghostConfig: WearGhostConfig? = null,
+        recordRaceConfig: WearRecordRaceConfig? = null,
     ): WearRunState {
         return state.copy(
             phase = WearRunPhase.CountingDown,
             countdownRemainingSeconds = remainingSeconds.coerceAtLeast(1),
-            countdownStartGhostConfig = ghostConfig,
+            countdownStartRecordRaceConfig = recordRaceConfig,
             statusMessage = null,
             errorMessage = null,
             feedbackType = null,
@@ -22,12 +22,12 @@ class WearRunStateReducer {
         state: WearRunState,
         epochMs: Long,
         realtimeMs: Long,
-        ghostConfig: WearGhostConfig? = null,
+        recordRaceConfig: WearRecordRaceConfig? = null,
     ): WearRunState {
         return state.copy(
             phase = WearRunPhase.Running,
             countdownRemainingSeconds = null,
-            countdownStartGhostConfig = null,
+            countdownStartRecordRaceConfig = null,
             sessionId = UUID.randomUUID().toString(),
             startedAtEpochMs = epochMs,
             endedAtEpochMs = null,
@@ -45,13 +45,17 @@ class WearRunStateReducer {
             elapsedBeforeActiveSegmentMs = 0,
             activeSegmentStartedRealtimeMs = realtimeMs,
             pendingDraftCount = state.pendingDraftCount,
-            ghostConfig = ghostConfig,
-            isGhostRun = ghostConfig != null,
-            ghostFrame = null,
-            ghostCompletionCandidateCount = 0,
-            ghostCompletionPrompt = false,
-            ghostCompletionDismissed = false,
-            ghostCompletionFrame = null,
+            recordRaceConfig = recordRaceConfig,
+            isRecordRaceRun = recordRaceConfig != null,
+            recordRaceFrame = null,
+            recordRaceStartConfirmed = false,
+            recordRaceStartCandidateCount = 0,
+            recordRaceStartLastEvaluatedPointCount = 0,
+            recordRaceTrackedDistanceAlongRouteM = null,
+            recordRaceCompletionCandidateCount = 0,
+            recordRaceCompletionPrompt = false,
+            recordRaceCompletionDismissed = false,
+            recordRaceCompletionFrame = null,
             intervalFrame = null,
             pauseReason = null,
             statusMessage = null,
@@ -110,15 +114,15 @@ class WearRunStateReducer {
     fun ready(
         message: String? = null,
         pendingDraftCount: Int = 0,
-        ghostConfig: WearGhostConfig? = null,
-        ghostConfigs: List<WearGhostConfig> = emptyList(),
+        recordRaceConfig: WearRecordRaceConfig? = null,
+        recordRaceConfigs: List<WearRecordRaceConfig> = emptyList(),
         settings: WearRunSettings = WearRunSettings(),
     ): WearRunState {
         return WearRunState(
             settings = settings,
             pendingDraftCount = pendingDraftCount,
-            ghostConfig = ghostConfig,
-            ghostConfigs = ghostConfigs,
+            recordRaceConfig = recordRaceConfig,
+            recordRaceConfigs = recordRaceConfigs,
             statusMessage = message,
         )
     }
@@ -126,16 +130,16 @@ class WearRunStateReducer {
     fun feedback(
         type: WearRunFeedbackType,
         pendingDraftCount: Int = 0,
-        ghostConfig: WearGhostConfig? = null,
-        ghostConfigs: List<WearGhostConfig> = emptyList(),
+        recordRaceConfig: WearRecordRaceConfig? = null,
+        recordRaceConfigs: List<WearRecordRaceConfig> = emptyList(),
         settings: WearRunSettings = WearRunSettings(),
     ): WearRunState {
         return WearRunState(
             phase = WearRunPhase.Feedback,
             settings = settings,
             pendingDraftCount = pendingDraftCount,
-            ghostConfig = ghostConfig,
-            ghostConfigs = ghostConfigs,
+            recordRaceConfig = recordRaceConfig,
+            recordRaceConfigs = recordRaceConfigs,
             feedbackType = type,
         )
     }
@@ -211,38 +215,46 @@ class WearRunStateReducer {
         )
     }
 
-    fun applyGhostFrame(state: WearRunState, frame: WearGhostFrame?): WearRunState {
-        if (!state.isGhostRun) return state
-        return state.copy(ghostFrame = frame)
+    fun applyRecordRaceFrame(state: WearRunState, frame: WearRecordRaceFrame?): WearRunState {
+        if (!state.isRecordRaceRun) return state
+        return state.copy(
+            recordRaceFrame = frame,
+            recordRaceStartConfirmed = frame?.startConfirmed ?: state.recordRaceStartConfirmed,
+            recordRaceStartCandidateCount = frame?.startCandidateCount ?: state.recordRaceStartCandidateCount,
+            recordRaceStartLastEvaluatedPointCount =
+                frame?.startLastEvaluatedPointCount ?: state.recordRaceStartLastEvaluatedPointCount,
+            recordRaceTrackedDistanceAlongRouteM =
+                frame?.trackedDistanceAlongRouteM ?: state.recordRaceTrackedDistanceAlongRouteM,
+        )
     }
 
-    fun applyGhostCompletionDecision(
+    fun applyRecordRaceCompletionDecision(
         state: WearRunState,
-        decision: WearGhostCompletionDecision,
-        frame: WearGhostFrame?,
+        decision: WearRecordRaceCompletionDecision,
+        frame: WearRecordRaceFrame?,
     ): WearRunState {
         if (
-            !state.isGhostRun ||
-            state.ghostCompletionPrompt ||
-            state.ghostCompletionDismissed
+            !state.isRecordRaceRun ||
+            state.recordRaceCompletionPrompt ||
+            state.recordRaceCompletionDismissed
         ) {
             return state
         }
         if (decision.isComplete && frame != null) {
             return state.copy(
-                ghostCompletionCandidateCount = decision.candidateCount,
-                ghostCompletionPrompt = true,
-                ghostCompletionFrame = frame,
+                recordRaceCompletionCandidateCount = decision.candidateCount,
+                recordRaceCompletionPrompt = true,
+                recordRaceCompletionFrame = frame,
             )
         }
-        return state.copy(ghostCompletionCandidateCount = decision.candidateCount)
+        return state.copy(recordRaceCompletionCandidateCount = decision.candidateCount)
     }
 
-    fun continueAfterGhostCompletion(state: WearRunState): WearRunState {
+    fun continueAfterRecordRaceCompletion(state: WearRunState): WearRunState {
         if (!state.isActive) return state
         return state.copy(
-            ghostCompletionPrompt = false,
-            ghostCompletionDismissed = true,
+            recordRaceCompletionPrompt = false,
+            recordRaceCompletionDismissed = true,
         )
     }
 
@@ -256,7 +268,7 @@ class WearRunStateReducer {
         elapsedMs: Long,
         distanceM: Double,
     ): WearIntervalFrame? {
-        if (state.isGhostRun) return null
+        if (state.isRecordRaceRun) return null
         return WearIntervalWorkoutCalculator().calculate(
             workout = state.settings.intervalWorkout,
             elapsedMs = elapsedMs,

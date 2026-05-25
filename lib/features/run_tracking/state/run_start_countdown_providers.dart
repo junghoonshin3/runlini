@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_start_countdown_state.dart';
 
 final runStartCountdownStepDurationProvider = Provider<Duration>(
-  (Ref ref) => const Duration(seconds: 1),
+  (Ref ref) => RunliniMotion.countdownStep,
 );
 
 final runStartCountdownSecondsProvider = Provider<int>((Ref ref) {

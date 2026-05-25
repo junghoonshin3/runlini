@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/core/map/map_coordinate.dart';
 import 'package:runlini/core/map/map_polyline_segment.dart';
-import 'package:runlini/features/ghost_racer/state/ghost_racer_providers.dart';
+import 'package:runlini/core/map/map_route_endpoint_marker.dart';
+import 'package:runlini/features/record_race/state/record_race_providers.dart';
+import 'package:runlini/features/run_tracking/service/run_route_segmenter.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_controller_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_core_providers.dart';
@@ -34,28 +36,34 @@ final runMapStaticStateProvider = FutureProvider<RunMapStaticState>((
   Ref ref,
 ) async {
   final sessions = await ref.watch(runSessionListProvider.future);
-  final ghostSettings = ref.watch(ghostSettingsProvider);
-  RunSession? selectedGhostSession;
-  if (ghostSettings.enabled && ghostSettings.selectedSessionId != null) {
+  final recordRaceSettings = ref.watch(recordRaceSettingsProvider);
+  RunSession? selectedRecordRaceSession;
+  if (recordRaceSettings.enabled &&
+      recordRaceSettings.selectedSessionId != null) {
     for (final session in sessions) {
-      if (session.id == ghostSettings.selectedSessionId) {
-        selectedGhostSession = session;
+      if (session.id == recordRaceSettings.selectedSessionId) {
+        selectedRecordRaceSession = session;
         break;
       }
     }
   }
 
+  final recordRacePolylinePoints = selectedRecordRaceSession == null
+      ? const <MapCoordinate>[]
+      : mapCoordinatesFromRunPoints(selectedRecordRaceSession.points);
+
   return RunMapStaticState(
     fallbackMapCenter: _fallbackMapCenter(sessions),
-    ghostPolylinePoints: selectedGhostSession == null
-        ? const <MapCoordinate>[]
-        : mapCoordinatesFromRunPoints(selectedGhostSession.points),
-    ghostPolylineSegments: selectedGhostSession == null
+    recordRacePolylinePoints: recordRacePolylinePoints,
+    recordRacePolylineSegments: selectedRecordRaceSession == null
         ? const []
         : ref
               .read(paceColoredRouteSegmentBuilderProvider)
-              .buildGhostSegments(selectedGhostSession),
-    selectedGhostSession: selectedGhostSession,
+              .buildRecordRaceSegments(selectedRecordRaceSession),
+    recordRaceRouteEndpointMarkers: mapRouteEndpointMarkersFor(
+      recordRacePolylinePoints,
+    ),
+    selectedRecordRaceSession: selectedRecordRaceSession,
   );
 });
 
@@ -76,7 +84,10 @@ final currentRunnerPolylinePointsProvider = Provider<List<MapCoordinate>>((
     return const <MapCoordinate>[];
   }
 
-  return mapCoordinatesFromRunPoints(playbackState.recordedPoints);
+  final route = ref
+      .watch(runRouteSegmenterProvider)
+      .segment(playbackState.recordedPoints);
+  return _singleSegmentFallbackPoints(route);
 });
 
 final currentRunnerPolylineSegmentsProvider =
@@ -96,6 +107,13 @@ final currentRunnerPolylineSegmentsProvider =
           .toList(growable: false);
     });
 
+List<MapCoordinate> _singleSegmentFallbackPoints(RunRouteSegments route) {
+  if (route.segments.length != 1 || route.segments.single.length < 2) {
+    return const <MapCoordinate>[];
+  }
+  return mapCoordinatesFromRunPoints(route.segments.single);
+}
+
 final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
   final staticState = ref.watch(runMapStaticStateProvider).value;
 
@@ -106,22 +124,26 @@ final runMapViewStateProvider = Provider<RunMapViewState>((Ref ref) {
     currentRunnerPolylineSegmentsProvider,
   );
   final liveLocationPoint = ref.watch(liveLocationProvider)?.toMapCoordinate();
-  final ghostPolylinePoints =
-      staticState?.ghostPolylinePoints ?? const <MapCoordinate>[];
-  final ghostMapCenter = ghostPolylinePoints.isNotEmpty
-      ? ghostPolylinePoints.first
+  final recordRacePolylinePoints =
+      staticState?.recordRacePolylinePoints ?? const <MapCoordinate>[];
+  final recordRaceMapCenter = recordRacePolylinePoints.isNotEmpty
+      ? recordRacePolylinePoints.first
       : null;
   final fallbackMapCenter =
       staticState?.fallbackMapCenter ?? _defaultFallbackMapCenter;
 
   return RunMapViewState(
-    mapCenter: liveLocationPoint ?? ghostMapCenter ?? fallbackMapCenter,
+    mapCenter: liveLocationPoint ?? recordRaceMapCenter ?? fallbackMapCenter,
     runnerMarkerPoint: liveLocationPoint,
     recenterTargetPoint: liveLocationPoint,
     currentRunnerPolylinePoints: currentRunnerPolylinePoints,
     currentRunnerPolylineSegments: currentRunnerPolylineSegments,
-    ghostPolylinePoints: ghostPolylinePoints,
-    ghostPolylineSegments: staticState?.ghostPolylineSegments ?? const [],
-    selectedGhostSession: staticState?.selectedGhostSession,
+    recordRacePolylinePoints: recordRacePolylinePoints,
+    recordRacePolylineSegments:
+        staticState?.recordRacePolylineSegments ?? const [],
+    recordRaceRouteEndpointMarkers:
+        staticState?.recordRaceRouteEndpointMarkers ??
+        const <MapRouteEndpointMarker>[],
+    selectedRecordRaceSession: staticState?.selectedRecordRaceSession,
   );
 });

@@ -1,5 +1,5 @@
 import 'package:runlini/features/run_tracking/types/run_point.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 
 enum RunSessionRecordSource { appLocal, healthConnect, healthKit }
 
@@ -23,7 +23,7 @@ class RunSession {
     this.externalId,
     this.lastSyncedAt,
     this.syncStatus = RunSessionSyncStatus.localOnly,
-    this.ghostSummary,
+    this.recordRaceSummary,
     this.shoeId,
   });
 
@@ -41,7 +41,7 @@ class RunSession {
   final String? externalId;
   final DateTime? lastSyncedAt;
   final RunSessionSyncStatus syncStatus;
-  final RunSessionGhostSummary? ghostSummary;
+  final RunSessionRecordRaceSummary? recordRaceSummary;
   final String? shoeId;
 
   RunSession copyWith({
@@ -59,7 +59,7 @@ class RunSession {
     String? externalId,
     DateTime? lastSyncedAt,
     RunSessionSyncStatus? syncStatus,
-    RunSessionGhostSummary? ghostSummary,
+    RunSessionRecordRaceSummary? recordRaceSummary,
     String? shoeId,
     bool clearShoeId = false,
   }) {
@@ -78,7 +78,7 @@ class RunSession {
       externalId: externalId ?? this.externalId,
       lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
       syncStatus: syncStatus ?? this.syncStatus,
-      ghostSummary: ghostSummary ?? this.ghostSummary,
+      recordRaceSummary: recordRaceSummary ?? this.recordRaceSummary,
       shoeId: clearShoeId ? null : shoeId ?? this.shoeId,
     );
   }
@@ -119,10 +119,12 @@ class RunSession {
         json['syncStatus'] as String?,
         RunSessionSyncStatus.localOnly,
       ),
-      ghostSummary: json['ghostSummary'] == null
+      recordRaceSummary:
+          (json['recordRaceSummary'] ?? json['ghostSummary']) == null
           ? null
-          : RunSessionGhostSummary.fromJson(
-              json['ghostSummary'] as Map<String, dynamic>,
+          : RunSessionRecordRaceSummary.fromJson(
+              (json['recordRaceSummary'] ?? json['ghostSummary'])
+                  as Map<String, dynamic>,
             ),
       shoeId: json['shoeId'] as String?,
     );
@@ -143,7 +145,7 @@ class RunSession {
       'externalId': externalId,
       'lastSyncedAt': lastSyncedAt?.toIso8601String(),
       'syncStatus': syncStatus.name,
-      'ghostSummary': ghostSummary?.toJson(),
+      'recordRaceSummary': recordRaceSummary?.toJson(),
       'shoeId': shoeId,
       'points': points
           .map((RunPoint point) => point.toJson())

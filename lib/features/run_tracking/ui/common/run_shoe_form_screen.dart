@@ -131,19 +131,22 @@ class _RunShoeFormScreenState extends ConsumerState<RunShoeFormScreen> {
             const SizedBox(height: 14),
             RunShoeFormPanel(
               title: '사용 설정',
-              child: SwitchListTile(
-                key: const Key('shoe-default-switch'),
-                value: _makeDefault,
-                onChanged: widget.shoe?.retired == true
-                    ? null
-                    : (value) => setState(() => _makeDefault = value),
-                contentPadding: EdgeInsets.zero,
-                title: const Text('기본 러닝화로 설정'),
-                subtitle: Text(
-                  widget.shoe?.retired == true
-                      ? '은퇴한 러닝화는 기본값으로 선택할 수 없어요.'
-                      : '다음 러닝 저장 시 이 신발을 자동으로 연결해요.',
-                  style: _mutedStyle,
+              child: Material(
+                color: Colors.transparent,
+                child: SwitchListTile(
+                  key: const Key('shoe-default-switch'),
+                  value: _makeDefault,
+                  onChanged: widget.shoe?.retired == true
+                      ? null
+                      : (value) => setState(() => _makeDefault = value),
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('기본 러닝화로 설정'),
+                  subtitle: Text(
+                    widget.shoe?.retired == true
+                        ? '은퇴한 러닝화는 기본값으로 선택할 수 없어요.'
+                        : '다음 러닝 저장 시 이 신발을 자동으로 연결해요.',
+                    style: _mutedStyle,
+                  ),
                 ),
               ),
             ),

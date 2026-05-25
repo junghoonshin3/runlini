@@ -25,12 +25,14 @@ class RunMapPanel extends ConsumerWidget {
       return FakeRunMapSurface(
         mapCenter: mapViewState.mapCenter,
         runnerMarkerPoint: mapViewState.runnerMarkerPoint,
-        ghostMarkerPoint: mapViewState.ghostMarkerPoint,
+        recordRaceMarkerPoint: mapViewState.recordRaceMarkerPoint,
         currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
         currentRunnerPolylineSegments:
             mapViewState.currentRunnerPolylineSegments,
-        ghostPolylinePoints: mapViewState.ghostPolylinePoints,
-        ghostPolylineSegments: mapViewState.ghostPolylineSegments,
+        recordRacePolylinePoints: mapViewState.recordRacePolylinePoints,
+        recordRacePolylineSegments: mapViewState.recordRacePolylineSegments,
+        recordRaceRouteEndpointMarkers:
+            mapViewState.recordRaceRouteEndpointMarkers,
       );
     }
 
@@ -38,13 +40,15 @@ class RunMapPanel extends ConsumerWidget {
       return AppleRunMapView(
         mapCenter: mapViewState.mapCenter,
         runnerMarkerPoint: mapViewState.runnerMarkerPoint,
-        ghostMarkerPoint: mapViewState.ghostMarkerPoint,
+        recordRaceMarkerPoint: mapViewState.recordRaceMarkerPoint,
         recenterTargetPoint: mapViewState.recenterTargetPoint,
         currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
         currentRunnerPolylineSegments:
             mapViewState.currentRunnerPolylineSegments,
-        ghostPolylinePoints: mapViewState.ghostPolylinePoints,
-        ghostPolylineSegments: mapViewState.ghostPolylineSegments,
+        recordRacePolylinePoints: mapViewState.recordRacePolylinePoints,
+        recordRacePolylineSegments: mapViewState.recordRacePolylineSegments,
+        recordRaceRouteEndpointMarkers:
+            mapViewState.recordRaceRouteEndpointMarkers,
         recenterTick: recenterTick,
       );
     }
@@ -59,13 +63,15 @@ class RunMapPanel extends ConsumerWidget {
         return GoogleRunMapView(
           mapCenter: mapViewState.mapCenter,
           runnerMarkerPoint: mapViewState.runnerMarkerPoint,
-          ghostMarkerPoint: mapViewState.ghostMarkerPoint,
+          recordRaceMarkerPoint: mapViewState.recordRaceMarkerPoint,
           recenterTargetPoint: mapViewState.recenterTargetPoint,
           currentRunnerPolylinePoints: mapViewState.currentRunnerPolylinePoints,
           currentRunnerPolylineSegments:
               mapViewState.currentRunnerPolylineSegments,
-          ghostPolylinePoints: mapViewState.ghostPolylinePoints,
-          ghostPolylineSegments: mapViewState.ghostPolylineSegments,
+          recordRacePolylinePoints: mapViewState.recordRacePolylinePoints,
+          recordRacePolylineSegments: mapViewState.recordRacePolylineSegments,
+          recordRaceRouteEndpointMarkers:
+              mapViewState.recordRaceRouteEndpointMarkers,
           recenterTick: recenterTick,
         );
       },

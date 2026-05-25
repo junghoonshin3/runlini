@@ -27,9 +27,12 @@ class PhoneVoiceSettingsListenerService : WearableListenerService() {
                         "kmVoiceCueEnabled",
                         current.kmAlertEnabled,
                     ),
-                    ghostVoiceCueEnabled = dataMap.getBoolean(
-                        "ghostVoiceCueEnabled",
-                        current.ghostVoiceCueEnabled,
+                    recordRaceVoiceCueEnabled = dataMap.getBoolean(
+                        "recordRaceVoiceCueEnabled",
+                        dataMap.getBoolean(
+                            "ghostVoiceCueEnabled",
+                            current.recordRaceVoiceCueEnabled,
+                        ),
                     ),
                     autoPauseEnabled = dataMap.getBoolean(
                         "autoPauseEnabled",

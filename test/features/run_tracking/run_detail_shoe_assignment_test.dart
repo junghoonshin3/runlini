@@ -8,7 +8,7 @@ import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
-import 'package:runlini/features/run_tracking/types/run_session_ghost_summary.dart';
+import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/ui/detail/run_session_detail_screen.dart';
@@ -75,23 +75,23 @@ void main() {
     expect(find.text('Nike Pegasus'), findsOneWidget);
   });
 
-  testWidgets('loads original ghost session for detail comparison', (
+  testWidgets('loads original recordRace session for detail comparison', (
     tester,
   ) async {
     final session = _runSession(
       points: const [],
-      ghostSummary: const RunSessionGhostSummary(
-        result: RunSessionGhostResult.behind,
+      recordRaceSummary: const RunSessionRecordRaceSummary(
+        result: RunSessionRecordRaceResult.behind,
         timeGapMs: -47000,
         distanceGapM: 0,
-        ghostSessionId: 'ghost-a',
-        ghostLabel: 'Health Connect · kr.sjh.runlini',
+        recordRaceSessionId: 'record-race-a',
+        recordRaceLabel: 'Health Connect · kr.sjh.runlini',
       ),
     );
     final repository = FakeRunSessionRepository([
       session,
       _runSession(
-        id: 'ghost-a',
+        id: 'record-race-a',
         durationMs: 600000,
         distanceM: 1000,
         points: const [],
@@ -99,10 +99,12 @@ void main() {
     ]);
     await _pumpDetail(tester, session: session, sessionRepository: repository);
 
-    await tester.ensureVisible(find.byKey(const Key('detail-ghost-compare')));
+    await tester.ensureVisible(
+      find.byKey(const Key('detail-record-race-compare')),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('고스트 비교'), findsOneWidget);
+    expect(find.text('기록 레이스 비교'), findsOneWidget);
     expect(find.text('47초 늦었어요'), findsOneWidget);
     await pumpUntilFound(tester, find.text('코스 시간'));
     expect(find.text('코스 시간'), findsOneWidget);
@@ -144,7 +146,7 @@ RunSession _runSession({
   int durationMs = 30 * 60 * 1000,
   double distanceM = 5000,
   List<RunPoint>? points,
-  RunSessionGhostSummary? ghostSummary,
+  RunSessionRecordRaceSummary? recordRaceSummary,
 }) {
   final startedAt = DateTime(2026, 4, 26, 7);
   return RunSession(
@@ -154,7 +156,7 @@ RunSession _runSession({
     distanceM: distanceM,
     durationMs: durationMs,
     sourceSummary: 'app',
-    ghostSummary: ghostSummary,
+    recordRaceSummary: recordRaceSummary,
     points: points ?? _points,
   );
 }

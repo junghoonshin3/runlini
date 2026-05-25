@@ -21,14 +21,11 @@ void main() {
 
 void _checkRequiredPaths(List<String> errors) {
   const requiredPaths = <String>[
-    'AGENTS.md',
-    'PLANS.md',
     'ARCHITECTURE.md',
     'docs/design-docs/core-beliefs.md',
     'docs/product-specs/phase-roadmap.md',
     'docs/platform/permissions.md',
     'docs/testing/field-test-protocol.md',
-    'docs/exec-plans/active/runlini-agent-first-bootstrap.md',
     'tool/guardrails.dart',
   ];
 

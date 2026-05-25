@@ -1,6 +1,6 @@
 enum WatchRunPhase { ready, running, paused, reviewing }
 
-enum WatchGhostStatus { unavailable, ahead, behind, level, offRoute }
+enum WatchRecordRaceStatus { unavailable, ahead, behind, level, offRoute }
 
 class WatchRunSnapshot {
   const WatchRunSnapshot({
@@ -12,8 +12,8 @@ class WatchRunSnapshot {
     this.currentPaceSecPerKm,
     this.heartRateBpm,
     this.caloriesKcal,
-    this.ghostStatus = WatchGhostStatus.unavailable,
-    this.ghostTimeGapMs,
+    this.recordRaceStatus = WatchRecordRaceStatus.unavailable,
+    this.recordRaceTimeGapMs,
     this.phoneConnected = false,
   });
 
@@ -25,8 +25,8 @@ class WatchRunSnapshot {
   final double? currentPaceSecPerKm;
   final int? heartRateBpm;
   final double? caloriesKcal;
-  final WatchGhostStatus ghostStatus;
-  final int? ghostTimeGapMs;
+  final WatchRecordRaceStatus recordRaceStatus;
+  final int? recordRaceTimeGapMs;
   final bool phoneConnected;
 
   factory WatchRunSnapshot.fromJson(Map<String, dynamic> json) {
@@ -43,12 +43,12 @@ class WatchRunSnapshot {
       currentPaceSecPerKm: (json['currentPaceSecPerKm'] as num?)?.toDouble(),
       heartRateBpm: (json['heartRateBpm'] as num?)?.round(),
       caloriesKcal: (json['caloriesKcal'] as num?)?.toDouble(),
-      ghostStatus: _enumByName(
-        WatchGhostStatus.values,
-        json['ghostStatus'] as String?,
-        WatchGhostStatus.unavailable,
+      recordRaceStatus: _enumByName(
+        WatchRecordRaceStatus.values,
+        json['recordRaceStatus'] as String?,
+        WatchRecordRaceStatus.unavailable,
       ),
-      ghostTimeGapMs: json['ghostTimeGapMs'] as int?,
+      recordRaceTimeGapMs: json['recordRaceTimeGapMs'] as int?,
       phoneConnected: json['phoneConnected'] as bool? ?? false,
     );
   }
@@ -63,8 +63,8 @@ class WatchRunSnapshot {
       'currentPaceSecPerKm': currentPaceSecPerKm,
       'heartRateBpm': heartRateBpm,
       'caloriesKcal': caloriesKcal,
-      'ghostStatus': ghostStatus.name,
-      'ghostTimeGapMs': ghostTimeGapMs,
+      'recordRaceStatus': recordRaceStatus.name,
+      'recordRaceTimeGapMs': recordRaceTimeGapMs,
       'phoneConnected': phoneConnected,
     };
   }

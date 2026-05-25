@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:runlini/app/theme/app_colors.dart';
+import 'package:runlini/app/ui/runlini_motion.dart';
+import 'package:runlini/app/ui/runlini_skeleton.dart';
 
 class SettingsSectionPanel extends StatelessWidget {
   const SettingsSectionPanel({
@@ -102,14 +104,24 @@ class SettingsStatusRow extends StatelessWidget {
   const SettingsStatusRow({
     super.key,
     required this.label,
-    required this.value,
+    this.value,
+    this.valueWidget,
   });
 
   final String label;
-  final String value;
+  final String? value;
+  final Widget? valueWidget;
 
   @override
   Widget build(BuildContext context) {
+    final statusValue =
+        valueWidget ??
+        Text(
+          value ?? '',
+          key: ValueKey<String>('settings-status-value-${value ?? ''}'),
+          textAlign: TextAlign.right,
+          style: _valueStyle,
+        );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -117,7 +129,15 @@ class SettingsStatusRow extends StatelessWidget {
           Expanded(child: Text(label, style: _labelStyle)),
           const SizedBox(width: 12),
           Flexible(
-            child: Text(value, textAlign: TextAlign.right, style: _valueStyle),
+            child: AnimatedSwitcher(
+              duration: RunliniMotion.enabledDuration(
+                context,
+                RunliniMotion.shortTransition,
+              ),
+              switchInCurve: RunliniMotion.enterCurve,
+              switchOutCurve: RunliniMotion.exitCurve,
+              child: statusValue,
+            ),
           ),
         ],
       ),
@@ -134,3 +154,19 @@ const _valueStyle = TextStyle(
   color: AppColors.chalk,
   fontWeight: FontWeight.w900,
 );
+
+class SettingsStatusSkeletonValue extends StatelessWidget {
+  const SettingsStatusSkeletonValue({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Align(
+      alignment: Alignment.centerRight,
+      child: RunliniSkeletonText(
+        key: Key('settings-status-skeleton'),
+        width: 58,
+        height: 16,
+      ),
+    );
+  }
+}

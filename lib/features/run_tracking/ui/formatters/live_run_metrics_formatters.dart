@@ -9,7 +9,7 @@ String formatLiveRunElapsed(int elapsedMs) {
 
 String formatLiveRunCalories(double? caloriesKcal) {
   if (caloriesKcal == null || caloriesKcal <= 0 || !caloriesKcal.isFinite) {
-    return '-- kcal';
+    return '몸무게 필요';
   }
   return '${caloriesKcal.round()} kcal';
 }

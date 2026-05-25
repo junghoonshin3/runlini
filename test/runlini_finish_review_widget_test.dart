@@ -10,10 +10,93 @@ import 'package:runlini/features/run_tracking/state/run_settings_providers.dart'
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
+import 'package:runlini/features/run_tracking/types/run_shoe.dart';
+import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
 
+import 'helpers/fake_run_settings_repository.dart';
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
+  testWidgets(
+    'finish review overlay actions are available on the first frame',
+    (WidgetTester tester) async {
+      var saved = false;
+      var discarded = false;
+
+      await _pumpFinishReviewOverlay(
+        tester,
+        onSave: () => saved = true,
+        onDiscard: () => discarded = true,
+      );
+
+      expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('save-run-button')));
+      await tester.tap(find.byKey(const Key('discard-run-button')));
+
+      expect(saved, isTrue);
+      expect(discarded, isTrue);
+    },
+  );
+
+  testWidgets('finish review overlay is static with reduce motion', (
+    WidgetTester tester,
+  ) async {
+    await _pumpFinishReviewOverlay(tester, reduceMotion: true);
+
+    expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('run-finish-review-panel')),
+        matching: find.byType(Opacity),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+    'finish review offers body weight input when calories are missing',
+    (WidgetTester tester) async {
+      final settingsRepository = FakeRunSettingsRepository();
+
+      await _pumpFinishReviewOverlay(
+        tester,
+        settingsRepository: settingsRepository,
+      );
+
+      expect(find.text('몸무게 입력 필요'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('set-body-weight-for-calories-button')),
+      );
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const Key('set-body-weight-for-calories-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('calorie-weight-input-sheet')),
+        findsOneWidget,
+      );
+      await tester.enterText(
+        find.byKey(const Key('calorie-weight-input')),
+        '5',
+      );
+      await tester.tap(find.byKey(const Key('calorie-weight-save-button')));
+      await tester.pump();
+      expect(find.text('20kg부터 250kg 사이로 입력해 주세요.'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('calorie-weight-input')),
+        '70',
+      );
+      await tester.tap(find.byKey(const Key('calorie-weight-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(settingsRepository.settings.bodyWeightKg, 70);
+      expect(find.byKey(const Key('calorie-weight-input-sheet')), findsNothing);
+    },
+  );
+
   testWidgets('stop shows finish review and save returns to idle controls', (
     WidgetTester tester,
   ) async {
@@ -47,18 +130,19 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('settings-button')), findsNothing);
-    expect(find.byKey(const Key('ghost-control-chip')), findsNothing);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(find.byKey(const Key('pause-run-button')), findsNothing);
     expect(find.byKey(const Key('current-location-button')), findsNothing);
     expect(healthRecorder.finishCalls, 0);
 
     await tester.tap(find.byKey(const Key('save-run-button')));
     await tester.pump();
+    await pumpUntilFound(tester, find.byKey(const Key('run-interval-button')));
 
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(find.text('START'), findsOneWidget);
     expect(sessionRepository.savedSessions.length, 3);
     expect(healthRecorder.finishCalls, 0);
@@ -108,11 +192,51 @@ void main() {
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-    expect(find.byKey(const Key('ghost-control-chip')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
     expect(sessionRepository.savedSessions.length, 2);
     expect(healthRecorder.cancelCalls, 1);
     expect(healthRecorder.finishCalls, 0);
   });
+}
+
+Future<void> _pumpFinishReviewOverlay(
+  WidgetTester tester, {
+  bool reduceMotion = false,
+  VoidCallback? onSave,
+  VoidCallback? onDiscard,
+  FakeRunSettingsRepository? settingsRepository,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        runSettingsRepositoryProvider.overrideWithValue(
+          settingsRepository ?? FakeRunSettingsRepository(),
+        ),
+        runDisplaySettingsProvider.overrideWithValue(
+          const RunDisplaySettings(),
+        ),
+        runPrivacySettingsProvider.overrideWithValue(
+          const RunPrivacySettings(),
+        ),
+        runShoeListProvider.overrideWith((ref) async => const <RunShoe>[]),
+      ],
+      child: MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(
+            disableAnimations: reduceMotion,
+            size: const Size(390, 844),
+          ),
+          child: Scaffold(
+            body: RunFinishReviewOverlay(
+              session: sampleRunSessions().first,
+              onSave: onSave ?? () {},
+              onDiscard: onDiscard ?? () {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _pumpRunningApp(

@@ -22,7 +22,7 @@ class WearActiveRunStoreTest {
         val restored = store.restore(
             nowRealtimeMs = 13_500L,
             pendingDraftCount = 2,
-            fallbackGhostConfig = null,
+            fallbackRecordRaceConfig = null,
         )
 
         assertEquals(WearRunPhase.Running, restored?.phase)
@@ -48,7 +48,7 @@ class WearActiveRunStoreTest {
         val restored = store.restore(
             nowRealtimeMs = 13_500L,
             pendingDraftCount = 0,
-            fallbackGhostConfig = null,
+            fallbackRecordRaceConfig = null,
         )
 
         assertEquals(WearRunPhase.Paused, restored?.phase)
@@ -72,7 +72,7 @@ class WearActiveRunStoreTest {
         val restored = store.restore(
             nowRealtimeMs = 20_000L,
             pendingDraftCount = 0,
-            fallbackGhostConfig = null,
+            fallbackRecordRaceConfig = null,
         )
 
         assertEquals(WearRunPhase.Reviewing, restored?.phase)
@@ -90,7 +90,7 @@ class WearActiveRunStoreTest {
             store.restore(
                 nowRealtimeMs = 1_000L,
                 pendingDraftCount = 0,
-                fallbackGhostConfig = null,
+                fallbackRecordRaceConfig = null,
             ),
         )
         assertNull(persistence.read())
@@ -142,16 +142,16 @@ class WearActiveRunStoreTest {
     }
 
     @Test
-    fun restoreKeepsGhostRunState() {
+    fun restoreKeepsRecordRaceRunState() {
         val persistence = FakeActiveRunPersistence()
         val store = WearActiveRunStore(persistence)
-        val ghostConfig = ghostConfig()
+        val recordRaceConfig = recordRaceConfig()
 
         store.save(
             runningState(
-                ghostConfig = ghostConfig,
-                ghostFrame = WearGhostFrame(
-                    status = WearGhostStatus.Ahead,
+                recordRaceConfig = recordRaceConfig,
+                recordRaceFrame = WearRecordRaceFrame(
+                    status = WearRecordRaceStatus.Ahead,
                     timeGapMs = 12_000L,
                     distanceGapM = 24.0,
                 ),
@@ -162,19 +162,78 @@ class WearActiveRunStoreTest {
         val restored = store.restore(
             nowRealtimeMs = 1_000L,
             pendingDraftCount = 0,
-            fallbackGhostConfig = null,
+            fallbackRecordRaceConfig = null,
         )
 
-        assertTrue(restored?.isGhostRun == true)
-        assertEquals("ghost-1", restored?.ghostConfig?.id)
-        assertEquals(WearGhostStatus.Ahead, restored?.ghostFrame?.status)
+        assertTrue(restored?.isRecordRaceRun == true)
+        assertEquals("record-race-1", restored?.recordRaceConfig?.id)
+        assertEquals(WearRecordRaceStatus.Ahead, restored?.recordRaceFrame?.status)
+    }
+
+    @Test
+    fun restoreKeepsLegacyGhostRunState() {
+        val persistence = FakeActiveRunPersistence()
+        val store = WearActiveRunStore(persistence)
+        persistence.write(
+            """
+            {
+              "checkpointRealtimeMs": 1000,
+              "phase": "Running",
+              "sessionId": "run-1",
+              "startedAtEpochMs": 1000,
+              "elapsedMs": 10000,
+              "distanceM": 250.0,
+              "isGhostRun": true,
+              "ghostConfig": {
+                "id": "legacy-ghost-1",
+                "durationMs": 600000,
+                "distanceM": 2000.0,
+                "sourceSummary": "한강 2K",
+                "points": [
+                  {"lat":37.0,"lng":127.0,"timestampRelMs":0},
+                  {"lat":37.001,"lng":127.001,"timestampRelMs":60000}
+                ]
+              },
+              "ghostFrame": {
+                "status": "Ahead",
+                "timeGapMs": 12000,
+                "distanceGapM": 24.0
+              },
+              "ghostCompletionCandidateCount": 2,
+              "ghostCompletionPrompt": true,
+              "ghostCompletionDismissed": true,
+              "ghostCompletionFrame": {
+                "status": "Behind",
+                "timeGapMs": -8000,
+                "distanceGapM": 18.0
+              },
+              "points": [
+                {"lat":37.0,"lng":127.0,"timestampRelMs":10000}
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        val restored = store.restore(
+            nowRealtimeMs = 1000L,
+            pendingDraftCount = 0,
+            fallbackRecordRaceConfig = null,
+        )
+
+        assertTrue(restored?.isRecordRaceRun == true)
+        assertEquals("legacy-ghost-1", restored?.recordRaceConfig?.id)
+        assertEquals(WearRecordRaceStatus.Ahead, restored?.recordRaceFrame?.status)
+        assertEquals(2, restored?.recordRaceCompletionCandidateCount)
+        assertTrue(restored?.recordRaceCompletionPrompt == true)
+        assertTrue(restored?.recordRaceCompletionDismissed == true)
+        assertEquals(WearRecordRaceStatus.Behind, restored?.recordRaceCompletionFrame?.status)
     }
 
     private fun runningState(
         elapsedMs: Long = 10_000L,
         phase: WearRunPhase = WearRunPhase.Running,
-        ghostConfig: WearGhostConfig? = null,
-        ghostFrame: WearGhostFrame? = null,
+        recordRaceConfig: WearRecordRaceConfig? = null,
+        recordRaceFrame: WearRecordRaceFrame? = null,
     ): WearRunState {
         return WearRunState(
             phase = phase,
@@ -194,15 +253,15 @@ class WearActiveRunStoreTest {
             points = listOf(WearRunPoint(37.0, 127.0, elapsedMs)),
             elapsedBeforeActiveSegmentMs = elapsedMs,
             activeSegmentStartedRealtimeMs = if (phase == WearRunPhase.Running) 1_000L else null,
-            ghostConfig = ghostConfig,
-            isGhostRun = ghostConfig != null,
-            ghostFrame = ghostFrame,
+            recordRaceConfig = recordRaceConfig,
+            isRecordRaceRun = recordRaceConfig != null,
+            recordRaceFrame = recordRaceFrame,
         )
     }
 
-    private fun ghostConfig(): WearGhostConfig {
-        return WearGhostConfig(
-            id = "ghost-1",
+    private fun recordRaceConfig(): WearRecordRaceConfig {
+        return WearRecordRaceConfig(
+            id = "record-race-1",
             durationMs = 600_000L,
             distanceM = 2_000.0,
             sourceSummary = "한강 2K",

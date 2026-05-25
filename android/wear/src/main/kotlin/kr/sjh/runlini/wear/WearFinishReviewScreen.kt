@@ -50,12 +50,12 @@ internal fun WearFinishReviewScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         WearReviewMetricGrid(metrics = summary.detailMetrics)
-        summary.ghostResult?.let { result ->
+        summary.recordRaceResult?.let { result ->
             Spacer(modifier = Modifier.height(8.dp))
             WearReviewStatusRow(
-                label = "고스트",
+                label = "기록 레이스",
                 value = result,
-                color = ghostColor(state.ghostFrame?.status),
+                color = recordRaceColor(state.recordRaceFrame?.status),
             )
         }
 

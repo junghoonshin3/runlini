@@ -1,12 +1,12 @@
 package kr.sjh.runlini.wear
 
-internal enum class WearActiveRunPage { Core, Interval, Ghost, Details, Controls }
+internal enum class WearActiveRunPage { Core, Interval, RecordRace, Details, Controls }
 
-internal enum class WearReadyPage { Ready, Ghosts, Settings }
+internal enum class WearReadyPage { Ready, RecordRaces, Settings }
 
 internal object WearReadyPageModel {
     fun pagesFor(state: WearRunState): List<WearReadyPage> {
-        return listOf(WearReadyPage.Ready, WearReadyPage.Ghosts, WearReadyPage.Settings)
+        return listOf(WearReadyPage.Ready, WearReadyPage.RecordRaces, WearReadyPage.Settings)
     }
 
     fun initialPageFor(pages: List<WearReadyPage>): Int {
@@ -19,11 +19,11 @@ internal object WearActiveRunPageModel {
         return buildList {
             add(WearActiveRunPage.Controls)
             add(WearActiveRunPage.Core)
-            if (!state.isGhostRun && state.settings.intervalWorkout.enabled) {
+            if (!state.isRecordRaceRun && state.settings.intervalWorkout.enabled) {
                 add(WearActiveRunPage.Interval)
             }
-            if (state.isGhostRun) {
-                add(WearActiveRunPage.Ghost)
+            if (state.isRecordRaceRun) {
+                add(WearActiveRunPage.RecordRace)
             }
             add(WearActiveRunPage.Details)
         }
@@ -36,22 +36,22 @@ internal object WearActiveRunPageModel {
 
 internal data class WearReadyScreenModel(
     val primaryLabel: String,
-    val usesGhostPrimary: Boolean,
+    val usesRecordRacePrimary: Boolean,
     val secondaryLabel: String?,
     val statusLabel: String,
     val isError: Boolean,
-    val ghostLabel: String?,
-    val ghostCount: Int,
+    val recordRaceLabel: String?,
+    val recordRaceCount: Int,
 )
 
-internal data class WearGhostReadyActionModel(
-    val ghostStartLabel: String,
+internal data class WearRecordRaceReadyActionModel(
+    val recordRaceStartLabel: String,
     val normalStartLabel: String,
     val statusLabel: String,
     val isError: Boolean,
 )
 
-internal data class WearGhostReadyLayoutSpec(
+internal data class WearRecordRaceReadyLayoutSpec(
     val circleSizeDp: Int,
     val gapDp: Int,
     val labelSizeSp: Int,
@@ -60,29 +60,29 @@ internal data class WearGhostReadyLayoutSpec(
     val actionRowWidthDp: Int = (circleSizeDp * 2) + gapDp
 }
 
-internal object WearGhostReadyModelBuilder {
-    fun actionsFrom(model: WearReadyScreenModel): WearGhostReadyActionModel {
-        return WearGhostReadyActionModel(
-            ghostStartLabel = "고스트런\n시작",
+internal object WearRecordRaceReadyModelBuilder {
+    fun actionsFrom(model: WearReadyScreenModel): WearRecordRaceReadyActionModel {
+        return WearRecordRaceReadyActionModel(
+            recordRaceStartLabel = "기록 레이스\n시작",
             normalStartLabel = "일반\n시작",
             statusLabel = when {
                 model.isError -> "오류"
-                model.ghostCount >= 2 -> "고스트 ${model.ghostCount}개"
-                else -> "고스트 모드 ON"
+                model.recordRaceCount >= 2 -> "기록 레이스 ${model.recordRaceCount}개"
+                else -> "기록 레이스 모드 ON"
             },
             isError = model.isError,
         )
     }
 
-    fun layoutFor(profile: WearLayoutProfile): WearGhostReadyLayoutSpec {
+    fun layoutFor(profile: WearLayoutProfile): WearRecordRaceReadyLayoutSpec {
         return when (profile) {
-            WearLayoutProfile.Compact -> WearGhostReadyLayoutSpec(
+            WearLayoutProfile.Compact -> WearRecordRaceReadyLayoutSpec(
                 circleSizeDp = 64,
                 gapDp = 8,
                 labelSizeSp = 12,
                 titleSizeSp = 19,
             )
-            WearLayoutProfile.Regular -> WearGhostReadyLayoutSpec(
+            WearLayoutProfile.Regular -> WearRecordRaceReadyLayoutSpec(
                 circleSizeDp = 76,
                 gapDp = 12,
                 labelSizeSp = 13,
@@ -103,7 +103,7 @@ internal object WearGhostReadyModelBuilder {
     }
 }
 
-internal data class WearGhostPickerItemModel(
+internal data class WearRecordRacePickerItemModel(
     val id: String,
     val label: String,
     val distance: String,
@@ -111,17 +111,17 @@ internal data class WearGhostPickerItemModel(
     val isSelected: Boolean,
 )
 
-internal data class WearGhostPickerModel(
-    val items: List<WearGhostPickerItemModel>,
+internal data class WearRecordRacePickerModel(
+    val items: List<WearRecordRacePickerItemModel>,
     val emptyLabel: String?,
 )
 
-internal object WearGhostPickerModelBuilder {
-    fun from(state: WearRunState): WearGhostPickerModel {
-        val activeId = state.ghostConfig?.id
-        return WearGhostPickerModel(
-            items = state.ghostConfigs.take(3).mapIndexed { index, config ->
-                WearGhostPickerItemModel(
+internal object WearRecordRacePickerModelBuilder {
+    fun from(state: WearRunState): WearRecordRacePickerModel {
+        val activeId = state.recordRaceConfig?.id
+        return WearRecordRacePickerModel(
+            items = state.recordRaceConfigs.take(3).mapIndexed { index, config ->
+                WearRecordRacePickerItemModel(
                     id = config.id,
                     label = shortLabel(config.sourceSummary, index),
                     distance = WearRunFormatters.distance(config.distanceM),
@@ -129,12 +129,12 @@ internal object WearGhostPickerModelBuilder {
                     isSelected = config.id == activeId,
                 )
             },
-            emptyLabel = if (state.ghostConfigs.isEmpty()) "없음" else null,
+            emptyLabel = if (state.recordRaceConfigs.isEmpty()) "없음" else null,
         )
     }
 
     private fun shortLabel(sourceSummary: String, index: Int): String {
-        val fallback = "고스트 ${index + 1}"
+        val fallback = "기록 레이스 ${index + 1}"
         val cleaned = sourceSummary.trim()
         if (cleaned.isBlank() || cleaned.startsWith("device:")) {
             return fallback
@@ -151,7 +151,7 @@ internal data class WearCountdownModel(
 internal object WearCountdownModelBuilder {
     fun from(state: WearRunState): WearCountdownModel {
         return WearCountdownModel(
-            label = if (state.countdownStartGhostConfig != null) "고스트 준비" else "준비",
+            label = if (state.countdownStartRecordRaceConfig != null) "기록 레이스 준비" else "준비",
             remainingSeconds = (state.countdownRemainingSeconds ?: 3)
                 .coerceIn(1, 3)
                 .toString(),
@@ -206,17 +206,17 @@ internal object WearCompletionFeedbackModelBuilder {
 
 internal object WearReadyScreenModelBuilder {
     fun from(state: WearRunState): WearReadyScreenModel {
-        val hasGhost = state.ghostConfig != null
-        val ghostCount = state.ghostConfigs.size.takeIf { count -> count > 0 }
-            ?: if (hasGhost) 1 else 0
+        val hasRecordRace = state.recordRaceConfig != null
+        val recordRaceCount = state.recordRaceConfigs.size.takeIf { count -> count > 0 }
+            ?: if (hasRecordRace) 1 else 0
         return WearReadyScreenModel(
-            primaryLabel = if (hasGhost) "고스트\n시작" else "시작",
-            usesGhostPrimary = hasGhost,
-            secondaryLabel = if (hasGhost) "일반 시작" else null,
+            primaryLabel = if (hasRecordRace) "기록 레이스\n시작" else "시작",
+            usesRecordRacePrimary = hasRecordRace,
+            secondaryLabel = if (hasRecordRace) "일반 시작" else null,
             statusLabel = state.errorMessage ?: readyStatusMessage(state.statusMessage),
             isError = state.errorMessage != null,
-            ghostLabel = state.ghostConfig?.sourceSummary,
-            ghostCount = ghostCount,
+            recordRaceLabel = state.recordRaceConfig?.sourceSummary,
+            recordRaceCount = recordRaceCount,
         )
     }
 
@@ -236,7 +236,7 @@ internal data class WearReviewSummaryModel(
     val averageCadence: String,
     val calories: String,
     val speed: String,
-    val ghostResult: String?,
+    val recordRaceResult: String?,
     val pendingLabel: String?,
     val detailMetrics: List<WearReviewMetric>,
 )
@@ -265,8 +265,8 @@ internal object WearReviewSummaryModelBuilder {
             averageCadence = averageCadence,
             calories = calories,
             speed = speed,
-            ghostResult = if (state.isGhostRun && state.ghostFrame != null) {
-                WearRunFormatters.ghostResult(state.ghostFrame)
+            recordRaceResult = if (state.isRecordRaceRun && state.recordRaceFrame != null) {
+                WearRunFormatters.recordRaceResult(state.recordRaceFrame)
             } else {
                 null
             },

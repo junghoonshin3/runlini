@@ -48,7 +48,7 @@ class HealthServicesRunController(
     private val pendingQueue: PendingDraftQueue =
         PendingDraftQueue(WearPendingDraftStore(context)),
     private val draftSender: WearDraftSender = WearDraftSender(context),
-    private val ghostStore: WearGhostConfigStore = WearGhostConfigStore(context),
+    private val recordRaceStore: WearRecordRaceConfigStore = WearRecordRaceConfigStore(context),
     private val activeRunStore: WearActiveRunStore = WearActiveRunStore(context),
     private val settingsStore: WearRunSettingsStore = WearRunSettingsStore(context),
     private val alertController: WearRunAlertController =
@@ -56,9 +56,9 @@ class HealthServicesRunController(
             haptics = AndroidWearRunHaptics(context),
             speech = AndroidWearRunSpeech(context),
         ),
-    private val ghostGapCalculator: WearGhostGapCalculator = WearGhostGapCalculator(),
-    private val ghostCompletionDetector: WearGhostCompletionDetector =
-        WearGhostCompletionDetector(),
+    private val recordRaceGapCalculator: WearRecordRaceGapCalculator = WearRecordRaceGapCalculator(),
+    private val recordRaceCompletionDetector: WearRecordRaceCompletionDetector =
+        WearRecordRaceCompletionDetector(),
     private val debugGpsInjectionMerger: WearDebugGpsInjectionMerger =
         WearDebugGpsInjectionMerger(),
     private val autoPauseDetector: WearAutoPauseDetector = WearAutoPauseDetector(),
@@ -69,8 +69,8 @@ class HealthServicesRunController(
         WearRunState(
             settings = settingsStore.current(),
             pendingDraftCount = pendingQueue.pendingCount(),
-            ghostConfig = ghostStore.current(),
-            ghostConfigs = ghostStore.cached(),
+            recordRaceConfig = recordRaceStore.current(),
+            recordRaceConfigs = recordRaceStore.cached(),
         ),
     )
     val state: StateFlow<WearRunState> = _state.asStateFlow()
@@ -85,7 +85,7 @@ class HealthServicesRunController(
         if (BuildConfig.DEBUG) {
             observeDebugGpsInjection()
         }
-        observeGhostConfigChanges()
+        observeRecordRaceConfigChanges()
         observeSettingsChanges()
     }
 
@@ -128,7 +128,8 @@ class HealthServicesRunController(
                 sample,
                 now,
             )
-            val framed = applyGhostFrame(next)
+            alertController.beginAlertCycle()
+            val framed = applyRecordRaceFrame(next)
             emitRunAlerts(framed)
             setState(framed)
         }
@@ -152,14 +153,14 @@ class HealthServicesRunController(
     fun recoverActiveRun() {
         scope.launch {
             val pendingCount = pendingQueue.pendingCount()
-            val ghostConfigs = ghostStore.cached()
-            val ghostConfig = ghostStore.current()
+            val recordRaceConfigs = recordRaceStore.cached()
+            val recordRaceConfig = recordRaceStore.current()
             val settings = settingsStore.current()
             val recovered = activeRunStore.restore(
                 nowRealtimeMs = nowRealtimeMs(),
                 pendingDraftCount = pendingCount,
-                fallbackGhostConfig = ghostConfig,
-            )?.copy(settings = settings, ghostConfigs = ghostConfigs)
+                fallbackRecordRaceConfig = recordRaceConfig,
+            )?.copy(settings = settings, recordRaceConfigs = recordRaceConfigs)
 
             val exerciseInfo = runCatching {
                 exerciseClient.getCurrentExerciseInfo()
@@ -170,8 +171,8 @@ class HealthServicesRunController(
                     _state.value = reducer.fail(
                         reducer.ready(
                             pendingDraftCount = pendingCount,
-                            ghostConfig = ghostConfig,
-                            ghostConfigs = ghostConfigs,
+                            recordRaceConfig = recordRaceConfig,
+                            recordRaceConfigs = recordRaceConfigs,
                             settings = settings,
                         ),
                         "다른 운동이 진행 중이에요",
@@ -191,7 +192,7 @@ class HealthServicesRunController(
                             restoreCheckpointWithoutExercise(recovered)
                             return@launch
                         }
-                        setState(applyGhostFrame(recovered), forceCheckpoint = true)
+                        setState(applyRecordRaceFrame(recovered), forceCheckpoint = true)
                         if (recovered.phase == WearRunPhase.Running) {
                             startTicker()
                         }
@@ -199,8 +200,8 @@ class HealthServicesRunController(
                         _state.value = reducer.fail(
                             reducer.ready(
                                 pendingDraftCount = pendingCount,
-                                ghostConfig = ghostConfig,
-                                ghostConfigs = ghostConfigs,
+                                recordRaceConfig = recordRaceConfig,
+                                recordRaceConfigs = recordRaceConfigs,
                                 settings = settings,
                             ),
                             "진행 중 기록 복구 정보가 없어요",
@@ -221,26 +222,26 @@ class HealthServicesRunController(
     }
 
     fun startRun() {
-        startCountdown(ghostConfig = null)
+        startCountdown(recordRaceConfig = null)
     }
 
-    fun startGhostRun() {
-        val config = _state.value.ghostConfig ?: ghostStore.current()
+    fun startRecordRaceRun() {
+        val config = _state.value.recordRaceConfig ?: recordRaceStore.current()
         if (config == null) {
             startRun()
             return
         }
-        startCountdown(ghostConfig = config)
+        startCountdown(recordRaceConfig = config)
     }
 
-    private fun startCountdown(ghostConfig: WearGhostConfig?) {
+    private fun startCountdown(recordRaceConfig: WearRecordRaceConfig?) {
         if (_state.value.phase != WearRunPhase.Ready || countdownJob?.isActive == true) {
             return
         }
         feedbackJob?.cancel()
         val settings = settingsStore.current()
         if (!WearRunStartPolicy.shouldUseCountdown(settings)) {
-            startRunInternal(ghostConfig)
+            startRunInternal(recordRaceConfig)
             return
         }
         countdownJob = scope.launch {
@@ -248,16 +249,16 @@ class HealthServicesRunController(
                 _state.value = reducer.countdown(
                     _state.value.copy(settings = settings),
                     remainingSeconds = remaining,
-                    ghostConfig = ghostConfig,
+                    recordRaceConfig = recordRaceConfig,
                 )
                 delay(1_000L)
             }
             countdownJob = null
-            startRunInternal(ghostConfig)
+            startRunInternal(recordRaceConfig)
         }
     }
 
-    private fun startRunInternal(ghostConfig: WearGhostConfig?) {
+    private fun startRunInternal(recordRaceConfig: WearRecordRaceConfig?) {
         scope.launch {
             alertController.reset()
             autoPauseDetector.reset()
@@ -267,7 +268,7 @@ class HealthServicesRunController(
                     _state.value.copy(settings = settingsStore.current()),
                     startedAt,
                     nowRealtimeMs(),
-                    ghostConfig,
+                    recordRaceConfig,
                 ),
                 forceCheckpoint = true,
             )
@@ -283,8 +284,8 @@ class HealthServicesRunController(
                     WearRunState(
                         settings = settingsStore.current(),
                         pendingDraftCount = pendingQueue.pendingCount(),
-                        ghostConfig = ghostStore.current(),
-                        ghostConfigs = ghostStore.cached(),
+                        recordRaceConfig = recordRaceStore.current(),
+                        recordRaceConfigs = recordRaceStore.cached(),
                     ),
                     error.shortMessage("러닝 시작 실패"),
                 )
@@ -317,7 +318,7 @@ class HealthServicesRunController(
             autoPauseDetector.reset()
             runCatching { exerciseClient.endExercise() }
             setState(
-                applyGhostFrame(
+                applyRecordRaceFrame(
                     reducer.review(
                         _state.value,
                         System.currentTimeMillis(),
@@ -330,9 +331,9 @@ class HealthServicesRunController(
         }
     }
 
-    fun continueAfterGhostCompletion() {
+    fun continueAfterRecordRaceCompletion() {
         setState(
-            reducer.continueAfterGhostCompletion(_state.value),
+            reducer.continueAfterRecordRaceCompletion(_state.value),
             forceCheckpoint = true,
         )
     }
@@ -373,7 +374,7 @@ class HealthServicesRunController(
     }
 
     fun refreshPendingDraftCount() {
-        val cachedGhosts = ghostStore.cached()
+        val cachedRecordRaces = recordRaceStore.cached()
         _state.value = _state.value.copy(
             settings = if (_state.value.isActive) {
                 _state.value.settings
@@ -381,27 +382,27 @@ class HealthServicesRunController(
                 settingsStore.current()
             },
             pendingDraftCount = pendingQueue.pendingCount(),
-            ghostConfig = if (_state.value.isActive) {
-                _state.value.ghostConfig
+            recordRaceConfig = if (_state.value.isActive) {
+                _state.value.recordRaceConfig
             } else {
-                ghostStore.current()
+                recordRaceStore.current()
             },
-            ghostConfigs = if (_state.value.isActive) {
-                _state.value.ghostConfigs
+            recordRaceConfigs = if (_state.value.isActive) {
+                _state.value.recordRaceConfigs
             } else {
-                cachedGhosts
+                cachedRecordRaces
             },
         )
     }
 
-    fun refreshGhostConfigCache() {
+    fun refreshRecordRaceConfigCache() {
         if (_state.value.phase != WearRunPhase.Ready) {
             return
         }
-        val cached = ghostStore.cached()
+        val cached = recordRaceStore.cached()
         _state.value = _state.value.copy(
-            ghostConfig = ghostStore.current(),
-            ghostConfigs = cached,
+            recordRaceConfig = recordRaceStore.current(),
+            recordRaceConfigs = cached,
             errorMessage = null,
         )
     }
@@ -420,8 +421,8 @@ class HealthServicesRunController(
             _state.value = current.copy(
                 settings = settingsStore.current(),
                 pendingDraftCount = pendingCount,
-                ghostConfig = ghostStore.current(),
-                ghostConfigs = ghostStore.cached(),
+                recordRaceConfig = recordRaceStore.current(),
+                recordRaceConfigs = recordRaceStore.cached(),
                 statusMessage = current.statusMessage,
                 errorMessage = null,
             )
@@ -432,8 +433,8 @@ class HealthServicesRunController(
         _state.value = reducer.feedback(
             type = type,
             pendingDraftCount = pendingQueue.pendingCount(),
-            ghostConfig = ghostStore.current(),
-            ghostConfigs = ghostStore.cached(),
+            recordRaceConfig = recordRaceStore.current(),
+            recordRaceConfigs = recordRaceStore.cached(),
             settings = settingsStore.current(),
         )
         feedbackJob = scope.launch {
@@ -442,23 +443,23 @@ class HealthServicesRunController(
             if (current.phase == WearRunPhase.Feedback && current.feedbackType == type) {
                 _state.value = reducer.ready(
                     pendingDraftCount = pendingQueue.pendingCount(),
-                    ghostConfig = ghostStore.current(),
-                    ghostConfigs = ghostStore.cached(),
+                    recordRaceConfig = recordRaceStore.current(),
+                    recordRaceConfigs = recordRaceStore.cached(),
                     settings = settingsStore.current(),
                 )
             }
         }
     }
 
-    fun selectGhostConfig(id: String) {
+    fun selectRecordRaceConfig(id: String) {
         if (_state.value.phase != WearRunPhase.Ready) {
             return
         }
-        val selected = ghostStore.select(id) ?: return
-        val cached = ghostStore.cached()
+        val selected = recordRaceStore.select(id) ?: return
+        val cached = recordRaceStore.cached()
         _state.value = _state.value.copy(
-            ghostConfig = selected,
-            ghostConfigs = cached,
+            recordRaceConfig = selected,
+            recordRaceConfigs = cached,
             statusMessage = null,
             errorMessage = null,
         )
@@ -474,10 +475,10 @@ class HealthServicesRunController(
         alertController.playVoiceTestCue(volume)
     }
 
-    private fun observeGhostConfigChanges() {
+    private fun observeRecordRaceConfigChanges() {
         scope.launch {
-            WearGhostConfigChangeBus.changes.collect {
-                refreshGhostConfigCache()
+            WearRecordRaceConfigChangeBus.changes.collect {
+                refreshRecordRaceConfigCache()
             }
         }
     }
@@ -508,7 +509,7 @@ class HealthServicesRunController(
 
     private fun withCurrentIntervalFrame(state: WearRunState): WearRunState {
         if (!state.isActive) return state.copy(intervalFrame = null)
-        if (state.isGhostRun) return state.copy(intervalFrame = null)
+        if (state.isRecordRaceRun) return state.copy(intervalFrame = null)
         return state.copy(
             intervalFrame = WearIntervalWorkoutCalculator().calculate(
                 workout = state.settings.intervalWorkout,
@@ -564,7 +565,8 @@ class HealthServicesRunController(
         if (tickerJob?.isActive == true) return
         tickerJob = scope.launch {
             while (_state.value.phase == WearRunPhase.Running) {
-                val next = applyGhostFrame(
+                alertController.beginAlertCycle()
+                val next = applyRecordRaceFrame(
                     reducer.tick(_state.value, nowRealtimeMs()),
                 )
                 emitRunAlerts(next)
@@ -605,7 +607,8 @@ class HealthServicesRunController(
                     rawMetricSample,
                 )
                 val next = reducer.applyMetrics(_state.value, metricSample, now)
-                val framed = applyGhostFrame(next)
+                alertController.beginAlertCycle()
+                val framed = applyRecordRaceFrame(next)
                 emitRunAlerts(framed)
                 setState(framed)
             }
@@ -613,48 +616,67 @@ class HealthServicesRunController(
     }
 
     private fun emitRunAlerts(state: WearRunState) {
+        alertController.onRecordRaceFrame(
+            frame = state.recordRaceFrame,
+            settings = state.settings,
+            isRecordRaceRun = state.isRecordRaceRun,
+        )
         alertController.onDistanceChanged(
             distanceM = state.distanceM,
             averagePaceSecPerKm = state.averagePaceSecPerKm,
             settings = state.settings,
             elapsedMs = state.elapsedMs,
-            isGhostRun = state.isGhostRun,
-        )
-        alertController.onGhostFrame(
-            frame = state.ghostFrame,
-            settings = state.settings,
-            isGhostRun = state.isGhostRun,
+            isRecordRaceRun = state.isRecordRaceRun,
+            recordRaceFrame = state.recordRaceFrame,
         )
         alertController.onIntervalFrame(
             frame = state.intervalFrame,
             settings = state.settings,
-            isGhostRun = state.isGhostRun,
+            isRecordRaceRun = state.isRecordRaceRun,
         )
     }
 
-    private fun applyGhostFrame(state: WearRunState): WearRunState {
-        val config = state.ghostConfig
-        if (!state.isGhostRun || config == null || state.points.isEmpty()) {
+    private fun applyRecordRaceFrame(state: WearRunState): WearRunState {
+        val config = state.recordRaceConfig
+        if (!state.isRecordRaceRun || config == null || state.points.isEmpty()) {
             return state
         }
-        val frame = ghostGapCalculator.calculate(
-            runnerPoint = state.points.last(),
-            ghostConfig = config,
-            runnerElapsedMs = state.elapsedMs,
+        val startDecision = recordRaceGapCalculator.evaluateStart(
+            runnerPoints = state.points,
+            recordRaceConfig = config,
+            alreadyConfirmed = state.recordRaceStartConfirmed,
+            previousCandidateCount = state.recordRaceStartCandidateCount,
+            lastEvaluatedPointCount = state.recordRaceStartLastEvaluatedPointCount,
         )
-        val framed = reducer.applyGhostFrame(state, frame)
-        val decision = ghostCompletionDetector.evaluate(
+        val frame = recordRaceGapCalculator.calculate(
+            runnerPoint = state.points.last(),
+            recordRaceConfig = config,
+            runnerElapsedMs = state.elapsedMs,
+            startConfirmed = startDecision.isConfirmed,
+            startCandidateCount = startDecision.candidateCount,
+            startLastEvaluatedPointCount = startDecision.lastEvaluatedPointCount,
+            previousDistanceAlongRouteM = state.recordRaceTrackedDistanceAlongRouteM,
+        )
+        val framed = reducer.applyRecordRaceFrame(state, frame)
+        if (!frame.startConfirmed) {
+            return framed
+        }
+        val decision = recordRaceCompletionDetector.evaluate(
             frame = frame,
             runnerDistanceM = state.distanceM,
-            previousCandidateCount = state.ghostCompletionCandidateCount,
+            previousCandidateCount = state.recordRaceCompletionCandidateCount,
         )
-        val completed = reducer.applyGhostCompletionDecision(
+        val completed = reducer.applyRecordRaceCompletionDecision(
             framed,
             decision,
             frame,
         )
-        if (!state.ghostCompletionPrompt && completed.ghostCompletionPrompt) {
-            alertController.onGhostCompleted(completed.settings, completed.isGhostRun)
+        if (!state.recordRaceCompletionPrompt && completed.recordRaceCompletionPrompt) {
+            alertController.onRecordRaceCompleted(
+                completed.settings,
+                completed.isRecordRaceRun,
+                completed.recordRaceCompletionFrame ?: completed.recordRaceFrame,
+            )
         }
         return completed
     }
@@ -692,15 +714,15 @@ class HealthServicesRunController(
             activeRunStore.clear()
             _state.value = reducer.ready(
                 pendingDraftCount = pendingQueue.pendingCount(),
-                ghostConfig = ghostStore.current(),
-                ghostConfigs = ghostStore.cached(),
+                recordRaceConfig = recordRaceStore.current(),
+                recordRaceConfigs = recordRaceStore.cached(),
                 settings = settingsStore.current(),
             )
             return
         }
         val reviewState = recovered.copy(
             settings = settingsStore.current(),
-            ghostConfigs = ghostStore.cached(),
+            recordRaceConfigs = recordRaceStore.cached(),
             phase = WearRunPhase.Reviewing,
             endedAtEpochMs = recovered.endedAtEpochMs ?: System.currentTimeMillis(),
             elapsedBeforeActiveSegmentMs = recovered.elapsedMs,
@@ -708,7 +730,7 @@ class HealthServicesRunController(
             statusMessage = "기록 복구됨",
             errorMessage = null,
         )
-        setState(applyGhostFrame(reviewState), forceCheckpoint = true)
+        setState(applyRecordRaceFrame(reviewState), forceCheckpoint = true)
     }
 
     private fun DataPointContainer.toMetricSample(activeDurationMs: Long?): WearMetricSample {

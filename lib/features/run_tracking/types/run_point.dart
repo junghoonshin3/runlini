@@ -21,6 +21,7 @@ class RunPoint {
     this.elevationM,
     this.heartRateBpm,
     this.cadenceSpm,
+    this.startsNewSegment = false,
   });
 
   final double latitude;
@@ -34,6 +35,7 @@ class RunPoint {
   final int? heartRateBpm;
   final double? cadenceSpm;
   final RunPointSource source;
+  final bool startsNewSegment;
 
   RunPoint copyWith({
     double? latitude,
@@ -47,6 +49,7 @@ class RunPoint {
     int? heartRateBpm,
     double? cadenceSpm,
     RunPointSource? source,
+    bool? startsNewSegment,
   }) {
     return RunPoint(
       latitude: latitude ?? this.latitude,
@@ -60,6 +63,7 @@ class RunPoint {
       heartRateBpm: heartRateBpm ?? this.heartRateBpm,
       cadenceSpm: cadenceSpm ?? this.cadenceSpm,
       source: source ?? this.source,
+      startsNewSegment: startsNewSegment ?? this.startsNewSegment,
     );
   }
 
@@ -76,6 +80,7 @@ class RunPoint {
       heartRateBpm: (json['heartRateBpm'] as num?)?.round(),
       cadenceSpm: (json['cadenceSpm'] as num?)?.toDouble(),
       source: RunPointSource.values.byName(json['source'] as String),
+      startsNewSegment: json['startsNewSegment'] as bool? ?? false,
     );
   }
 
@@ -92,6 +97,7 @@ class RunPoint {
       'heartRateBpm': heartRateBpm,
       'cadenceSpm': cadenceSpm,
       'source': source.name,
+      if (startsNewSegment) 'startsNewSegment': true,
     };
   }
 }

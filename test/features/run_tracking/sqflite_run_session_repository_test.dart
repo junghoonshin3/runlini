@@ -49,6 +49,7 @@ void main() {
     expect(sessions.single.points.first.cadenceSpm, 172);
     expect(sessions.single.points.first.horizontalAccuracyM, 6);
     expect(sessions.single.points.first.speedAccuracyMps, 0.4);
+    expect(sessions.single.points.last.startsNewSegment, isTrue);
   });
 
   test('lists session summaries without hydrating run points', () async {
@@ -159,6 +160,7 @@ CREATE TABLE run_points (
     expect(session!.points.single.cadenceSpm, isNull);
     expect(session.points.single.horizontalAccuracyM, isNull);
     expect(session.points.single.speedAccuracyMps, isNull);
+    expect(session.points.single.startsNewSegment, isFalse);
   });
 
   test('updates a health synced session without creating duplicates', () async {
@@ -273,6 +275,7 @@ RunSession _session({
         longitude: 127.001,
         timestampRelMs: 600000,
         source: RunPointSource.healthConnect,
+        startsNewSegment: true,
       ),
     ],
   );

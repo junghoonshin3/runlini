@@ -11,7 +11,7 @@ ghost run or interval.
 - [x] Add start-time stale-state guard before countdown.
 - [x] Make phone interval frames null during ghost runs.
 - [x] Make Wear interval frames null during ghost runs.
-- [x] Keep ghost-run TTS fully silent while preserving normal-run cues.
+- [x] Initially keep ghost-run TTS silent while preserving normal-run cues.
 - [x] Add Flutter and Wear regression tests.
 - [x] Run guardrails, analyze, Flutter tests, and Wear tests.
 
@@ -20,4 +20,9 @@ ghost run or interval.
 - Phone users resolve conflicts explicitly with a dialog.
 - Wear ghost runs silently ignore interval settings for the active run.
 - Persisted interval and ghost settings schemas do not change.
-- Ghost-run TTS remains disabled until the policy is redesigned.
+- Ghost-run TTS is handled by `ghost-run-live-experience-v1.md`: kilometer
+  summaries and event-gated ghost speech can run, while interval speech remains
+  disabled during ghost runs.
+- As of 2026-05-11, interval is product-locked. Saved interval settings remain
+  intact, but phone runtime and Wear sync treat interval as disabled, so
+  ghost/interval conflict dialogs are bypassed while the lock is active.
