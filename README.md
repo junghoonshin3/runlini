@@ -4,6 +4,14 @@ Runlini is a Flutter running app for live running, route history, record racing,
 and health sync. Docs are the system of record, execution plans live in-repo,
 and structural checks enforce architecture.
 
+## Emulator Demo
+
+<video src="docs/assets/runlini-emulator-demo.mov" controls width="360"></video>
+
+[Watch the Android emulator demo](docs/assets/runlini-emulator-demo.mov)
+
+Recorded from the Android emulator with the built-in macOS screen recorder.
+
 ## Core Commands
 
 ```bash
