@@ -17,7 +17,6 @@ import 'package:runlini/features/run_tracking/state/run_watch_providers.dart';
 import 'package:runlini/features/run_tracking/ui/history/history_tab_screen.dart';
 import 'package:runlini/features/run_tracking/ui/running/running_tab_screen.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
-import 'package:runlini/features/settings/ui/startup_weight_screen.dart';
 
 part 'runlini_home_screen_sync.dart';
 
@@ -60,14 +59,6 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   Widget build(BuildContext context) {
     final currentTab = ref.watch(appTabProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
-    final settingsState = ref.watch(runSettingsControllerProvider);
-    final promptEnabled = ref.watch(startupWeightPromptEnabledProvider);
-
-    if (promptEnabled &&
-        settingsState.hasValue &&
-        settingsState.value?.bodyWeightKg == null) {
-      return const StartupWeightScreen();
-    }
 
     _listenForRunSessionChanges();
     _listenForRunSettingsChanges();

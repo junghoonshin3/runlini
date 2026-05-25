@@ -190,7 +190,7 @@ void main() {
       expect(find.text('0:00:00'), findsOneWidget);
       expect(find.text('--:-- /mi'), findsOneWidget);
       expect(find.text('0.0 mph'), findsNothing);
-      expect(find.text('-- kcal'), findsNothing);
+      expect(find.text('몸무게 필요'), findsNothing);
 
       await tester.tap(find.byKey(const Key('live-run-dashboard-toggle')));
       await tester.pumpAndSettle();
@@ -199,7 +199,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('0.0 mph'), findsOneWidget);
-      expect(find.text('-- kcal'), findsOneWidget);
+      expect(find.text('몸무게 필요'), findsOneWidget);
 
       now = startedAt.add(const Duration(seconds: 1));
       await tester.pump(const Duration(seconds: 1));

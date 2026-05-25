@@ -13,6 +13,7 @@ import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overlay.dart';
 
+import 'helpers/fake_run_settings_repository.dart';
 import 'helpers/runlini_widget_harness.dart';
 
 void main() {
@@ -51,6 +52,50 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets(
+    'finish review offers body weight input when calories are missing',
+    (WidgetTester tester) async {
+      final settingsRepository = FakeRunSettingsRepository();
+
+      await _pumpFinishReviewOverlay(
+        tester,
+        settingsRepository: settingsRepository,
+      );
+
+      expect(find.text('몸무게 입력 필요'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const Key('set-body-weight-for-calories-button')),
+      );
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const Key('set-body-weight-for-calories-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('calorie-weight-input-sheet')),
+        findsOneWidget,
+      );
+      await tester.enterText(
+        find.byKey(const Key('calorie-weight-input')),
+        '5',
+      );
+      await tester.tap(find.byKey(const Key('calorie-weight-save-button')));
+      await tester.pump();
+      expect(find.text('20kg부터 250kg 사이로 입력해 주세요.'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('calorie-weight-input')),
+        '70',
+      );
+      await tester.tap(find.byKey(const Key('calorie-weight-save-button')));
+      await tester.pumpAndSettle();
+
+      expect(settingsRepository.settings.bodyWeightKg, 70);
+      expect(find.byKey(const Key('calorie-weight-input-sheet')), findsNothing);
+    },
+  );
 
   testWidgets('stop shows finish review and save returns to idle controls', (
     WidgetTester tester,
@@ -159,10 +204,14 @@ Future<void> _pumpFinishReviewOverlay(
   bool reduceMotion = false,
   VoidCallback? onSave,
   VoidCallback? onDiscard,
+  FakeRunSettingsRepository? settingsRepository,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        runSettingsRepositoryProvider.overrideWithValue(
+          settingsRepository ?? FakeRunSettingsRepository(),
+        ),
         runDisplaySettingsProvider.overrideWithValue(
           const RunDisplaySettings(),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/motion/run_motion_evidence_client.dart';
 import 'package:runlini/features/run_tracking/service/run_auto_pause_detector.dart';
+import 'package:runlini/features/run_tracking/service/run_calorie_calculator.dart';
 import 'package:runlini/features/run_tracking/service/run_playback_sample_fusion.dart';
 import 'package:runlini/features/run_tracking/state/live_location_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_motion_evidence_providers.dart';
@@ -155,6 +156,22 @@ class RunPlaybackController extends Notifier<RunPlaybackState>
     state = const RunPlaybackState.idle();
     _resetCadenceTracking();
     return exportResult;
+  }
+
+  void applyBodyWeightToPendingFinishedRun(double bodyWeightKg) {
+    final pendingSession = state.pendingFinishedSession;
+    if (state.status != RunScreenStatus.reviewing || pendingSession == null) {
+      return;
+    }
+    final caloriesKcal = const RunCalorieCalculator().activeCaloriesKcal(
+      distanceM: pendingSession.distanceM,
+      bodyWeightKg: bodyWeightKg,
+    );
+    state = state.copyWith(
+      pendingFinishedSession: pendingSession.copyWith(
+        caloriesKcal: caloriesKcal,
+      ),
+    );
   }
 
   Future<void> discardFinishedRun() async {

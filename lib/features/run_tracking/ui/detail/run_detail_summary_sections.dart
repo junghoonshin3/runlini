@@ -112,6 +112,7 @@ class RunDetailMetricStrip extends StatelessWidget {
     this.privacySettings = const RunPrivacySettings(),
     this.shoeName,
     this.includePrimaryMetrics = true,
+    this.onSetBodyWeightForCalories,
   });
 
   final RunSessionDetail detail;
@@ -119,6 +120,7 @@ class RunDetailMetricStrip extends StatelessWidget {
   final RunPrivacySettings privacySettings;
   final String? shoeName;
   final bool includePrimaryMetrics;
+  final VoidCallback? onSetBodyWeightForCalories;
 
   @override
   Widget build(BuildContext context) {
@@ -143,9 +145,12 @@ class RunDetailMetricStrip extends StatelessWidget {
       ),
       _MetricItem(
         'Calories (kcal)',
-        privacySettings.hideCalories
-            ? 'Hidden'
-            : detail.caloriesLabel.replaceAll(' kcal', ''),
+        _caloriesValue(),
+        actionLabel: _needsBodyWeightForCalories ? '입력' : null,
+        actionKey: const Key('set-body-weight-for-calories-button'),
+        onAction: _needsBodyWeightForCalories
+            ? onSetBodyWeightForCalories
+            : null,
       ),
       _MetricItem(
         'Elevation (m)',
@@ -184,6 +189,21 @@ class RunDetailMetricStrip extends StatelessWidget {
 
   String _distanceValue(double distanceM) {
     return _formatDistanceValue(distanceM, displaySettings);
+  }
+
+  bool get _needsBodyWeightForCalories =>
+      !privacySettings.hideCalories &&
+      detail.caloriesLabel == '-- kcal' &&
+      onSetBodyWeightForCalories != null;
+
+  String _caloriesValue() {
+    if (privacySettings.hideCalories) {
+      return 'Hidden';
+    }
+    if (_needsBodyWeightForCalories) {
+      return '몸무게 입력 필요';
+    }
+    return detail.caloriesLabel.replaceAll(' kcal', '');
   }
 }
 
@@ -229,6 +249,24 @@ class _MetricTile extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(metric.value, maxLines: 1, style: _valueStyle),
           ),
+          if (metric.onAction != null && metric.actionLabel != null) ...[
+            const SizedBox(height: 10),
+            TextButton(
+              key: metric.actionKey,
+              onPressed: metric.onAction,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.voltGreen,
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(44, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                alignment: Alignment.centerLeft,
+              ),
+              child: Text(
+                metric.actionLabel!,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -236,10 +274,19 @@ class _MetricTile extends StatelessWidget {
 }
 
 class _MetricItem {
-  const _MetricItem(this.label, this.value);
+  const _MetricItem(
+    this.label,
+    this.value, {
+    this.actionLabel,
+    this.actionKey,
+    this.onAction,
+  });
 
   final String label;
   final String value;
+  final String? actionLabel;
+  final Key? actionKey;
+  final VoidCallback? onAction;
 }
 
 BoxDecoration _panelDecoration(Color accent) {

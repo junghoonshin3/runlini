@@ -33,6 +33,7 @@ class RunFinishReviewPanel extends StatelessWidget {
     this.showHeaderSummaryMetrics = true,
     this.showRouteSpeedTooltip = false,
     this.recordRaceSession,
+    this.onSetBodyWeightForCalories,
   });
 
   final RunSession session;
@@ -50,6 +51,7 @@ class RunFinishReviewPanel extends StatelessWidget {
   final bool showHeaderSummaryMetrics;
   final bool showRouteSpeedTooltip;
   final RunSession? recordRaceSession;
+  final VoidCallback? onSetBodyWeightForCalories;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +87,7 @@ class RunFinishReviewPanel extends StatelessWidget {
                         displaySettings: displaySettings,
                         privacySettings: privacySettings,
                         includePrimaryMetrics: includePrimaryMetrics,
+                        onSetBodyWeightForCalories: onSetBodyWeightForCalories,
                       ),
                       if (privacySettings.hideStartEndArea) ...[
                         const SizedBox(height: 12),

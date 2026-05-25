@@ -36,6 +36,16 @@ void main() {
     expect(find.text('7.5 mph'), findsOneWidget);
   });
 
+  testWidgets(
+    'live run metrics panel asks for body weight when calories are null',
+    (WidgetTester tester) async {
+      await _pumpPanel(tester, caloriesKcal: null);
+
+      expect(find.text('몸무게 필요'), findsOneWidget);
+      expect(find.text('-- kcal'), findsNothing);
+    },
+  );
+
   testWidgets('live run metrics panel shows off-route recordRace state', (
     WidgetTester tester,
   ) async {
@@ -78,17 +88,18 @@ void main() {
 Future<void> _pumpPanel(
   WidgetTester tester, {
   RunDisplaySettings displaySettings = const RunDisplaySettings(),
+  double? caloriesKcal = 84,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: LiveRunMetricsPanel(
-          metrics: const LiveRunMetrics(
+          metrics: LiveRunMetrics(
             distanceKm: 1.2,
             elapsedMs: 360000,
             averagePaceSecPerKm: 300,
             averageSpeedKmh: 12,
-            caloriesKcal: 84,
+            caloriesKcal: caloriesKcal,
             isPaused: false,
           ),
           displaySettings: displaySettings,
