@@ -124,20 +124,6 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
             recordRaceSettings.selectedSessionId != null);
   }
 
-  bool _shouldShowRecordRaceControlChip() {
-    final recordRaceSettings = ref.watch(recordRaceSettingsProvider);
-    if (recordRaceSettings.enabled) {
-      return true;
-    }
-    return ref
-        .watch(runRecordRaceRecommendationProvider)
-        .maybeWhen(
-          data: (recommendation) => recommendation == null,
-          error: (_, _) => true,
-          orElse: () => false,
-        );
-  }
-
   Future<void> _stopActiveRunWithRecordRaceSummary({
     RunSessionRecordRaceSummary? preferredRecordRaceSummary,
   }) async {

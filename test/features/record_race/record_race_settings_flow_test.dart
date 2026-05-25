@@ -62,16 +62,11 @@ void main() {
       await openRunningTab(tester);
       await pumpUntilFound(
         tester,
-        find.byKey(const Key('record-race-control-chip')),
+        find.byKey(const Key('record-race-fallback-card')),
       );
-      await pumpUntilFound(tester, find.text('경쟁레이스 선택'));
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('record-race-control-chip')));
-      await pumpUntilFound(
-        tester,
-        find.byKey(const Key('record-race-session-sheet')),
-      );
+      await _openRecordRacePickerFromTopCard(tester);
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('record-race-session-draggable-sheet')),
@@ -107,9 +102,14 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
-      expect(find.byKey(const Key('record-race-clear-button')), findsOneWidget);
+      expect(
+        find.byKey(const Key('record-race-selected-clear-button')),
+        findsOneWidget,
+      );
 
-      await tester.tap(find.byKey(const Key('record-race-control-chip')));
+      await tester.tap(
+        find.byKey(const Key('record-race-selected-change-button')),
+      );
       await pumpUntilFound(
         tester,
         find.byKey(const Key('record-race-session-sheet')),
@@ -130,10 +130,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('record-race-clear-button')));
+      await tester.tap(
+        find.byKey(const Key('record-race-selected-clear-button')),
+      );
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byKey(const Key('record-race-polyline-layer')), findsNothing);
-      expect(find.text('경쟁레이스 선택'), findsOneWidget);
+      expect(find.text('내 기록과 다시 달리기'), findsOneWidget);
     },
   );
 
@@ -164,16 +166,7 @@ void main() {
       );
       await tester.pump();
       await openRunningTab(tester);
-      await pumpUntilFound(
-        tester,
-        find.byKey(const Key('record-race-control-chip')),
-      );
-
-      await tester.tap(find.byKey(const Key('record-race-control-chip')));
-      await pumpUntilFound(
-        tester,
-        find.byKey(const Key('record-race-session-sheet')),
-      );
+      await _openRecordRacePickerFromTopCard(tester);
       await tester.pumpAndSettle();
 
       final handleFinder = find.byKey(
@@ -213,16 +206,7 @@ void main() {
     );
     await tester.pump();
     await openRunningTab(tester);
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('record-race-control-chip')),
-    );
-
-    await tester.tap(find.byKey(const Key('record-race-control-chip')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('record-race-session-sheet')),
-    );
+    await _openRecordRacePickerFromTopCard(tester);
     await tester.pumpAndSettle();
 
     final handleFinder = find.byKey(
@@ -261,7 +245,11 @@ void main() {
     expect(find.byKey(const Key('settings-button')), findsNothing);
     expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
     expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
-    expect(find.text('경쟁레이스 선택'), findsNothing);
+    expect(
+      find.byKey(const Key('record-race-recommendation-empty-card')),
+      findsOneWidget,
+    );
+    expect(find.text('저장된 기록이 필요해요'), findsOneWidget);
     expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
   });
 
@@ -295,4 +283,16 @@ void main() {
     expect(find.byKey(const Key('run-interval-sheet-scroll')), findsNothing);
     expect(find.byKey(const Key('record-race-toggle')), findsNothing);
   });
+}
+
+Future<void> _openRecordRacePickerFromTopCard(WidgetTester tester) async {
+  await pumpUntilFound(
+    tester,
+    find.byKey(const Key('record-race-fallback-select-button')),
+  );
+  await tester.tap(find.byKey(const Key('record-race-fallback-select-button')));
+  await pumpUntilFound(
+    tester,
+    find.byKey(const Key('record-race-session-sheet')),
+  );
 }

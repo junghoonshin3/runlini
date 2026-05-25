@@ -28,11 +28,7 @@ void main() {
     );
     await _pumpRunningApp(tester, repository);
 
-    await tester.tap(find.byKey(const Key('record-race-control-chip')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('record-race-session-sheet')),
-    );
+    await _openRecordRacePicker(tester);
     await _selectFirstRecordRace(tester);
     await tester.pumpAndSettle();
 
@@ -50,11 +46,7 @@ void main() {
     final repository = FakeRunSettingsRepository();
     await _pumpRunningApp(tester, repository);
 
-    await tester.tap(find.byKey(const Key('record-race-control-chip')));
-    await pumpUntilFound(
-      tester,
-      find.byKey(const Key('record-race-session-sheet')),
-    );
+    await _openRecordRacePicker(tester);
     await _selectFirstRecordRace(tester);
     await pumpUntilFound(tester, find.textContaining('경쟁레이스 ·'));
 
@@ -163,6 +155,18 @@ Future<void> _pumpRunningApp(
   await tester.pump();
   await openRunningTab(tester);
   await pumpUntilFound(tester, find.byKey(const Key('run-map')));
+}
+
+Future<void> _openRecordRacePicker(WidgetTester tester) async {
+  await pumpUntilFound(
+    tester,
+    find.byKey(const Key('record-race-fallback-select-button')),
+  );
+  await tester.tap(find.byKey(const Key('record-race-fallback-select-button')));
+  await pumpUntilFound(
+    tester,
+    find.byKey(const Key('record-race-session-sheet')),
+  );
 }
 
 Future<void> _selectFirstRecordRace(WidgetTester tester) async {

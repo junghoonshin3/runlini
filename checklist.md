@@ -1,5 +1,14 @@
 # Checklist
 
+## 러닝탭 기록레이스 상단 카드 복구
+
+- [x] 현재 기록레이스 카드 노출 조건과 최근 변경 원인을 확인한다.
+- [x] 러닝 전 상단 카드가 선택, 추천, fallback, empty, loading, error 상태를 처리하게 바꾼다.
+- [x] START 근처 하단 기록레이스 칩 노출을 제거한다.
+- [x] 관련 widget tests를 새 상단 카드 정책에 맞게 갱신한다.
+- [x] focused tests, analyzer, guardrails를 실행한다.
+- [x] 변경을 커밋한다.
+
 ## README 인라인 데모 재생 개선
 
 - [x] README의 기존 `.mov` 링크가 다운로드 흐름이 되는 문제를 확인한다.

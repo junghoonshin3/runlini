@@ -1,5 +1,21 @@
 # Context Notes
 
+## 2026-05-25 러닝탭 기록레이스 상단 카드 복구
+
+- 사용자는 러닝탭 상단 기록레이스 카드가 사라진 이유를 물었고, 이어 상단 카드 복구 계획 구현을 요청했다.
+- 원인은 카드 삭제가 아니라 `a30011f 러닝탭 경쟁레이스 진입점 정리` 이후 상단 `오늘 추천` 카드가 추천 가능한 기록이 있을 때만 보이고, 추천이 없으면 START 근처 하단 칩으로 내려가는 정책 변경이다.
+- 새 정책은 러닝 시작 전, 카운트다운 전, 리뷰 전 상태에서는 기록레이스 관련 진입점을 상단 카드로 항상 보여주는 것이다.
+- 선택 가능한 기록이 없으면 상단 카드에서 비활성 안내만 보여주고 선택 시트를 열지 않는다.
+- 이미 기록레이스가 선택된 상태에서도 상단 카드가 선택 상태와 변경, 해제 액션을 보여준다.
+- Android 지도 설정 준비 여부를 보는 `mapControlsReady` 기존 보호 조건은 건드리지 않는다.
+- 기존 미추적 파일 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `RunRecordRaceRecommendationCard`는 추천, 선택됨, 선택 가능 기록 있음, 빈 상태, 로딩, 오류 상태를 모두 상단 카드로 표시한다.
+- `RunningTabScreen`에서는 START 근처 `RunRecordRaceControlChip` 렌더링을 제거했고, 칩 파일은 후속 정리를 위해 남겨뒀다.
+- 선택 전 fallback 카드의 `기록 선택`, 추천 카드의 `다른 기록`, 선택 카드의 `변경` 버튼이 모두 기존 선택 시트를 연다.
+- 선택 카드의 `해제` 버튼은 기존 `recordRaceSettingsProvider`의 disable 흐름을 그대로 사용한다.
+- 새 공통 카드 레이아웃은 `run_record_race_card_shell.dart`로 분리해 각 Dart 파일을 300줄 이하로 유지했다.
+- 검증은 `flutter test test/features/run_tracking/run_record_race_recommendation_card_test.dart`, `flutter test test/features/record_race/record_race_settings_flow_test.dart test/features/run_tracking/record_race_interval_conflict_test.dart`, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
 ## 2026-05-25 README 인라인 데모 재생 개선
 
 - 사용자는 README에서 영상을 다운로드하지 않고 바로 볼 수 있게 하라고 요청했다.

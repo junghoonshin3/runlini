@@ -34,7 +34,6 @@ import 'package:runlini/features/run_tracking/ui/running/run_finish_review_overl
 import 'package:runlini/features/run_tracking/ui/running/run_interval_sheet.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_map_panel.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_record_race_completion_overlay.dart';
-import 'package:runlini/features/run_tracking/ui/running/run_record_race_control_chip.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_record_race_recommendation_card.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_save_feedback.dart';
 import 'package:runlini/features/run_tracking/ui/running/run_session_record_race_summary_mapper.dart';
@@ -138,7 +137,6 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final isReviewing = playbackState.isReviewing;
     final recordRaceCompletionSummary =
         playbackState.recordRaceCompletionSummary;
-    final showRecordRaceControlChip = _shouldShowRecordRaceControlChip();
 
     return SafeArea(
       bottom: false,
@@ -206,14 +204,6 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                         ),
                 ),
               ),
-            if (!playbackState.hasActiveSession && !countdownState.isActive)
-              if (showRecordRaceControlChip)
-                const Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 156,
-                  child: RunliniFadeUp(child: RunRecordRaceControlChip()),
-                ),
             Positioned(
               right: 20,
               bottom: 28,
