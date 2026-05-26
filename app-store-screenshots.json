@@ -1,10 +1,10 @@
 {
-  "appName": "Runlini",
-  "themeId": "runlini-dark",
+  "appName": "런린이",
+  "themeId": "runlini-clean",
   "locales": [
-    "en"
+    "ko"
   ],
-  "locale": "en",
+  "locale": "ko",
   "device": "android",
   "orientation": "portrait",
   "appIcon": "/app-icon.png",
@@ -74,45 +74,45 @@
         "id": "android-01-record-race",
         "layout": "hero",
         "label": {
-          "en": "RECORD RACE"
+          "ko": "기록 레이스"
         },
         "headline": {
-          "en": "Race your\nown record."
+          "ko": "내 기록과\n다시 달리기"
         },
-        "screenshot": "/screenshots/android/phone/{locale}/04.png"
+        "screenshot": "/screenshots/android/phone/{locale}/03.png"
       },
       {
-        "id": "android-02-live-clarity",
+        "id": "android-02-live-gap",
         "layout": "device-bottom",
         "label": {
-          "en": "LIVE CLARITY"
+          "ko": "실시간 비교"
         },
         "headline": {
-          "en": "Know if\nyou're ahead."
+          "ko": "앞섬과 뒤처짐을\n바로 확인"
         },
-        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "inverted": true
       },
       {
         "id": "android-03-run-log",
         "layout": "two-devices",
         "label": {
-          "en": "RUN LOG"
+          "ko": "기록 홈"
         },
         "headline": {
-          "en": "Every route\nstays useful."
+          "ko": "목표와 기록을\n한눈에"
         },
         "screenshot": "/screenshots/android/phone/{locale}/01.png",
-        "screenshotSecondary": "/screenshots/android/phone/{locale}/04.png"
+        "screenshotSecondary": "/screenshots/android/phone/{locale}/03.png"
       },
       {
-        "id": "android-04-start-fast",
+        "id": "android-04-start-ready",
         "layout": "device-top",
         "label": {
-          "en": "ONE TAP START"
+          "ko": "오늘 추천"
         },
         "headline": {
-          "en": "Open the map.\nStart fast."
+          "ko": "출발 전\n기록 선택"
         },
         "screenshot": "/screenshots/android/phone/{locale}/02.png"
       },
@@ -120,12 +120,12 @@
         "id": "android-05-run-ready",
         "layout": "device-bottom",
         "label": {
-          "en": "RUN READY"
+          "ko": "러닝 준비"
         },
         "headline": {
-          "en": "Cues, goals\nand backup."
+          "ko": "위치와 음성 안내를\n내 방식대로"
         },
-        "screenshot": "/screenshots/android/phone/{locale}/03.png",
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
         "inverted": true
       }
     ],
@@ -167,74 +167,76 @@
     ],
     "android-7": [
       {
-        "id": "android-7-01-record-race",
+        "id": "android-tablet-1",
         "layout": "hero",
         "label": {
-          "en": "RECORD RACE"
+          "ko": "기록 레이스"
         },
         "headline": {
-          "en": "Race your\nown record."
+          "ko": "내 기록과\n다시 달리기"
         },
-        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/04.png"
+        "screenshot": "/screenshots/android/phone/{locale}/03.png"
       },
       {
-        "id": "android-7-02-live-clarity",
+        "id": "android-tablet-2",
         "layout": "device-bottom",
         "label": {
-          "en": "LIVE CLARITY"
+          "ko": "실시간 비교"
         },
         "headline": {
-          "en": "Know if\nyou're ahead."
+          "ko": "앞섬과 뒤처짐을\n바로 확인"
         },
-        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/05.png",
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "inverted": true
       },
       {
-        "id": "android-7-03-run-ready",
-        "layout": "device-top",
+        "id": "android-tablet-3",
+        "layout": "device-bottom",
         "label": {
-          "en": "RUN READY"
+          "ko": "러닝 준비"
         },
         "headline": {
-          "en": "Cues, goals\nand backup."
+          "ko": "위치와 음성 안내를\n내 방식대로"
         },
-        "screenshot": "/screenshots/android/tablet-7/portrait/{locale}/03.png"
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "inverted": true
       }
     ],
     "android-10": [
       {
-        "id": "android-10-01-record-race",
+        "id": "android-tablet-1",
         "layout": "hero",
         "label": {
-          "en": "RECORD RACE"
+          "ko": "기록 레이스"
         },
         "headline": {
-          "en": "Race your\nown record."
+          "ko": "내 기록과\n다시 달리기"
         },
-        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/04.png"
+        "screenshot": "/screenshots/android/phone/{locale}/03.png"
       },
       {
-        "id": "android-10-02-live-clarity",
+        "id": "android-tablet-2",
         "layout": "device-bottom",
         "label": {
-          "en": "LIVE CLARITY"
+          "ko": "실시간 비교"
         },
         "headline": {
-          "en": "Know if\nyou're ahead."
+          "ko": "앞섬과 뒤처짐을\n바로 확인"
         },
-        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/05.png",
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "inverted": true
       },
       {
-        "id": "android-10-03-run-ready",
-        "layout": "device-top",
+        "id": "android-tablet-3",
+        "layout": "device-bottom",
         "label": {
-          "en": "RUN READY"
+          "ko": "러닝 준비"
         },
         "headline": {
-          "en": "Cues, goals\nand backup."
+          "ko": "위치와 음성 안내를\n내 방식대로"
         },
-        "screenshot": "/screenshots/android/tablet-10/portrait/{locale}/03.png"
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "inverted": true
       }
     ],
     "feature-graphic": [
@@ -243,9 +245,9 @@
         "layout": "feature-graphic",
         "label": {},
         "headline": {
-          "en": "Race your record.\nSee the gap live."
+          "ko": "내 기록과 다시 달리는 러닝 앱"
         },
-        "screenshot": "/screenshots/android/phone/{locale}/05.png"
+        "screenshot": "/screenshots/android/phone/{locale}/03.png"
       }
     ]
   }

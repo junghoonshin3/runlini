@@ -56,6 +56,7 @@ export type ThemeId =
   | "dark-bold"
   | "warm-editorial"
   | "ocean-fresh"
+  | "runlini-clean"
   | "runlini-dark";
 
 export type Theme = {

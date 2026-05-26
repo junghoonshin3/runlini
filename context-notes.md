@@ -1,5 +1,20 @@
 # Context Notes
 
+## 2026-05-26 Google Play 스토어 스크린샷 제작
+
+- 사용자는 출시 준비를 위해 Google Play Store에 올릴 앱 스크린샷 제작을 요청했다.
+- 사용자는 별도 스크린샷과 앱 아이콘 경로를 모른다고 했고, Google Play 전용, 한국어, 추천 스타일로 진행을 승인했다.
+- 기존 프로젝트에는 `package.json`, `app-store-screenshots.json`, `public/app-icon.png`, Android와 Apple 예시 스크린샷 디렉터리가 이미 존재한다.
+- 새 템플릿을 루트에 덮어쓰지 않고 기존 스크린샷 에디터를 활용한다.
+- 앱 아이콘 후보는 `assets/branding/runlini_play_store_icon_512.png`와 `public/app-icon.png`가 있다.
+- Android 에뮬레이터는 `Medium_Phone_API_36.0`을 사용하고, 연결된 디바이스는 `emulator-5554`다.
+- 스크린샷 카피는 한국어만 우선 seed하며, Runlini의 핵심 흐름인 기록 레이스, 실시간 러닝 화면, 기록 분석, 시작 화면, 설정/러닝 준비를 보여준다.
+- 실제 캡처는 `public/screenshots/android/phone/ko/01.png`부터 `05.png`까지 저장했다.
+- 스크린샷 덱은 Google Play Android Phone과 Feature Graphic 중심으로 `app-store-screenshots.json`에 seed했다.
+- `runlini-clean` 테마를 추가해 밝은 배경과 런린이 네온 그린 포인트를 사용한다.
+- 검증은 `npm run build`와 `curl -sI http://localhost:3000`으로 통과했다.
+- 스크린샷 에디터는 `npm run dev`로 실행 중이며, 로컬 주소는 `http://localhost:3000`이다.
+
 ## 2026-05-25 러닝탭 기록레이스 상단 카드 복구
 
 - 사용자는 러닝탭 상단 기록레이스 카드가 사라진 이유를 물었고, 이어 상단 카드 복구 계획 구현을 요청했다.
