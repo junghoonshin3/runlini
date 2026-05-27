@@ -399,3 +399,14 @@
 - 변경 범위는 러닝 탭 시작 전 추천 카드의 위치와 시각 밀도 조정으로 제한한다.
 - 추천 카드 노출 조건은 기존과 동일하다. 러닝 탭, 시작 전, 카운트다운 전, 리뷰 아님, 기록 레이스 미선택 상태에서 표시된다.
 - 추천 후보가 있으면 같은 요일 최신 기록을 우선하고 없으면 최근 기록을 쓴다. 추천 가능한 기록이 없으면 빈 상태 안내를 표시한다.
+
+## 2026-05-27 기록 레이스 완료 리뷰 비교 표시 정리
+
+- 사용자는 기록 레이스 완료 직후 상세 리뷰에서 `기록 레이스 비교`가 요약 행만 보이는 문제를 수정하길 원했다.
+- 상세 화면은 `RunSessionDetailScreen`에서 원본 기록 레이스 세션을 `runSessionByIdProvider`로 로드해 `RunFinishReviewPanel`에 넘긴다.
+- 완료 오버레이인 `RunFinishReviewOverlay`는 현재 원본 기록 레이스 세션을 넘기지 않아 `RunRecordRaceComparisonBuilder`가 `hasCourseMetrics == false` fallback을 사용한다.
+- 수정 방향은 완료 오버레이에서도 `recordRaceSummary.recordRaceSessionId` 기준으로 원본 세션을 조회해 패널에 넘기는 것이다.
+- `평균 페이스` 차이의 `0:13/km 느림` 표현은 초 단위 한국어로 바꿔 읽기 부담을 줄인다.
+- `시작/종료 위치 보호 켜짐` 배지는 사용자가 불필요하다고 판단했으므로 패널에서 제거한다. 경로 자체를 숨기는 설정과 숨김 패널은 유지한다.
+- 완료 오버레이는 선택된 기록 레이스 세션이 이미 지도 상태에 있으면 먼저 쓰고, 없으면 `runSessionByIdProvider`로 저장된 원본 세션을 조회한다.
+- 검증은 focused widget tests, `dart run tool/guardrails.dart`, `flutter analyze`, `git diff --check`, 전체 `flutter test`로 통과했다.

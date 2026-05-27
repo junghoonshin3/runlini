@@ -16,6 +16,7 @@ void main() {
     expect(find.text('12초 빨랐어요'), findsOneWidget);
     expect(find.text('코스 시간'), findsOneWidget);
     expect(find.text('평균 페이스'), findsOneWidget);
+    expect(find.text('km당 12초 빠름'), findsOneWidget);
     expect(find.text('평균 속도'), findsOneWidget);
     expect(find.text('거리 차이'), findsOneWidget);
     expect(find.text('RecordRace Compare'), findsNothing);
@@ -35,7 +36,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('/mi'), findsWidgets);
+    expect(find.textContaining('mi당'), findsWidgets);
     expect(find.textContaining('mph'), findsWidgets);
     expect(find.textContaining('mi'), findsWidgets);
   });
@@ -45,6 +46,15 @@ void main() {
 
     final text = tester.widget<Text>(find.text('12초 빠름'));
     expect(text.style?.color, AppColors.voltGreen);
+  });
+
+  testWidgets('describes a slower pace delta in natural Korean', (
+    tester,
+  ) async {
+    await _pumpComparison(tester, summary: _summary(timeGapMs: -13000));
+
+    expect(find.text('km당 13초 느림'), findsOneWidget);
+    expect(find.text('0:13/km 느림'), findsNothing);
   });
 
   testWidgets('long recordRace labels do not overflow on a narrow screen', (

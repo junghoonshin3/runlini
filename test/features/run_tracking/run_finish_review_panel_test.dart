@@ -142,7 +142,8 @@ void main() {
     );
 
     expect(find.byKey(const Key('detail-route-hidden')), findsOneWidget);
-    expect(find.byKey(const Key('start-end-privacy-badge')), findsOneWidget);
+    expect(find.byKey(const Key('start-end-privacy-badge')), findsNothing);
+    expect(find.text('시작/종료 위치 보호 켜짐'), findsNothing);
     expect(find.text('Heart Rate Hidden'), findsOneWidget);
     expect(find.text('Hidden'), findsWidgets);
   });

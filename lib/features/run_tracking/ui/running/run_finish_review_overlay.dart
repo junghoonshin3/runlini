@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
@@ -29,6 +30,7 @@ class RunFinishReviewOverlay extends ConsumerWidget {
     final privacySettings = ref.watch(runPrivacySettingsProvider);
     final shoes = ref.watch(runShoeListProvider).value ?? const <RunShoe>[];
     final shoe = _shoeFor(shoes);
+    final recordRaceSession = _recordRaceSessionFor(ref);
 
     return RunliniOverlayEntrance(
       child: RunFinishReviewPanel(
@@ -37,6 +39,7 @@ class RunFinishReviewOverlay extends ConsumerWidget {
         privacySettings: privacySettings,
         shoeName: shoe == null ? null : '${shoe.brand} ${shoe.name}',
         shoeImagePath: shoe?.imagePath,
+        recordRaceSession: recordRaceSession,
         onSave: onSave,
         onDiscard: onDiscard,
         onSetBodyWeightForCalories: session.caloriesKcal == null
@@ -44,6 +47,26 @@ class RunFinishReviewOverlay extends ConsumerWidget {
             : null,
       ),
     );
+  }
+
+  RunSession? _recordRaceSessionFor(WidgetRef ref) {
+    final recordRaceSummary = session.recordRaceSummary;
+    if (recordRaceSummary == null) {
+      return null;
+    }
+
+    final selectedRecordRaceSession = ref
+        .watch(runMapStaticStateProvider)
+        .value
+        ?.selectedRecordRaceSession;
+    if (selectedRecordRaceSession?.id ==
+        recordRaceSummary.recordRaceSessionId) {
+      return selectedRecordRaceSession;
+    }
+
+    return ref
+        .watch(runSessionByIdProvider(recordRaceSummary.recordRaceSessionId))
+        .value;
   }
 
   Future<void> _showBodyWeightPrompt(

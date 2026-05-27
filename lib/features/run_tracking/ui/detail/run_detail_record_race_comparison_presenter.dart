@@ -212,10 +212,8 @@ class RunDetailRecordRaceComparisonPresenter {
 
   String _formatPaceDeltaValue(double secondsPerKm) {
     final displayPace = paceForDisplay(secondsPerKm, displaySettings).round();
-    final minutes = displayPace ~/ 60;
-    final seconds = displayPace % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}'
-        '/${distanceUnitLabel(displaySettings)}';
+    return '${distanceUnitLabel(displaySettings)}당 '
+        '${_formatKoreanSeconds(displayPace)}';
   }
 
   String _formatSpeedDelta(double speedKmh) {
@@ -243,8 +241,10 @@ class RunDetailRecordRaceComparisonPresenter {
     return '$sign${value.abs().round()}$suffix';
   }
 
-  String _formatKoreanDuration(int durationMs) {
-    final totalSeconds = (durationMs / 1000).round();
+  String _formatKoreanDuration(int durationMs) =>
+      _formatKoreanSeconds((durationMs / 1000).round());
+
+  String _formatKoreanSeconds(int totalSeconds) {
     final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
     if (minutes == 0) {
