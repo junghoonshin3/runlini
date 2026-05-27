@@ -137,6 +137,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final isReviewing = playbackState.isReviewing;
     final recordRaceCompletionSummary =
         playbackState.recordRaceCompletionSummary;
+    final activeRunBottomInset = 28 + MediaQuery.paddingOf(context).bottom;
+    final activeRunCenterBottomInset =
+        24 + MediaQuery.paddingOf(context).bottom;
 
     return SafeArea(
       bottom: false,
@@ -176,7 +179,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
             if (playbackState.hasActiveSession || !countdownState.isActive)
               Positioned(
                 left: 20,
-                bottom: 28,
+                bottom: playbackState.hasActiveSession
+                    ? activeRunBottomInset
+                    : 28,
                 child: AnimatedSwitcher(
                   duration: RunliniMotion.enabledDuration(
                     context,
@@ -206,7 +211,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
               ),
             Positioned(
               right: 20,
-              bottom: 28,
+              bottom: playbackState.hasActiveSession
+                  ? activeRunBottomInset
+                  : 28,
               child: RunCurrentLocationButton(
                 onPressed: () async {
                   await _handleCurrentLocationPressed(context);
@@ -216,7 +223,9 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 24,
+              bottom: playbackState.hasActiveSession
+                  ? activeRunCenterBottomInset
+                  : 24,
               child: Center(
                 child: RunStartStopButton(
                   showsStopAction: playbackState.hasActiveSession,

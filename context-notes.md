@@ -1,5 +1,21 @@
 # Context Notes
 
+## 2026-05-27 러닝 집중 상태 하단탭 숨김
+
+- 사용자는 하단탭이 보이면 안 되거나 눌리면 안 되는 러닝 집중 상태에서는 하단탭을 아예 안 보이게 하는 방향을 선택했다.
+- 작업은 새 브랜치 `feature/hide-run-focus-bottom-tab`에서 진행한다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 하단탭 표시 정책은 `RunliniHomeScreen` 한 곳에서만 소유한다.
+- 하단탭 숨김 대상은 카운트다운, active running, paused running, record race completion, finish review다.
+- 기록 메인, 러닝 대기, 설정 메인에서는 기존 앱 하단탭 `runlini-bottom-navigation`을 그대로 보여준다.
+- 기록 상세, 러닝화 관리, 착용 기록, 러닝화 추가와 수정 같은 push leaf route는 기존 구조상 앱 하단탭이 없는 전체 화면으로 유지한다.
+- `RunShoeFormScreen`의 `Scaffold.bottomNavigationBar`는 저장 CTA 영역이며 앱 하단탭이 아니다.
+- 이번 변경에서는 ShellRoute, 탭별 Navigator, route별 `showBottomTab` 플래그를 추가하지 않는다.
+- 하단탭을 `bottomNavigationBar: null`로 숨기면 러닝 컨트롤이 시스템 제스처 영역에 가까워질 수 있으므로 active/paused 컨트롤의 SafeArea 하단 여백을 같이 보정한다.
+- 구현 결과 `RunliniHomeScreen`이 카운트다운, active, paused, review, record race completion 상태를 보고 앱 하단탭을 렌더링하지 않는다.
+- active/paused 러닝 컨트롤은 하단 시스템 inset을 더해 배치한다.
+- 검증은 focused widget tests, `flutter analyze`, `dart run tool/guardrails.dart`, 전체 `flutter test`, `git diff --check`로 통과했다.
+
 ## 2026-05-26 Google Play 스토어 스크린샷 제작
 
 - 사용자는 출시 준비를 위해 Google Play Store에 올릴 앱 스크린샷 제작을 요청했다.

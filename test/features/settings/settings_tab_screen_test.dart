@@ -134,12 +134,14 @@ void main() {
     await tester.tap(manageShoesButtonFinder);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('shoe-management-screen')), findsOneWidget);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
 
     final addShoeButtonFinder = find.byKey(const Key('add-shoe-button')).first;
     await tester.ensureVisible(addShoeButtonFinder);
     await tester.pumpAndSettle();
     await tester.tap(addShoeButtonFinder);
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
     await tester.enterText(find.byKey(const Key('shoe-name-field')), 'Pegasus');
     await tester.enterText(find.byKey(const Key('shoe-brand-field')), 'Nike');
     final saveShoeButton = find.byKey(const Key('save-shoe-button'));
@@ -164,6 +166,7 @@ void main() {
     await tester.tap(editFirstShoeFinder);
     await tester.pumpAndSettle();
     expect(find.text('러닝화 수정'), findsWidgets);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
     await tester.enterText(
       find.byKey(const Key('shoe-name-field')),
       'Pegasus 41',

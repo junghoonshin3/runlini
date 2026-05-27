@@ -65,6 +65,10 @@ void main() {
       await openRunningTab(tester);
       await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
+      expect(
+        find.byKey(const Key('runlini-bottom-navigation')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
@@ -84,6 +88,7 @@ void main() {
         find.byKey(const Key('live-run-dashboard-collapsed')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(
         find.byKey(const Key('live-run-dashboard-expanded')),
         findsNothing,
@@ -116,6 +121,7 @@ void main() {
       await tester.tap(find.byKey(const Key('pause-run-button')));
       await tester.pump();
 
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(find.byKey(const Key('live-run-paused-label')), findsOneWidget);
       expect(find.byKey(const Key('pause-run-button')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsOneWidget);
@@ -143,6 +149,7 @@ void main() {
 
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       await tester.tap(find.byKey(const Key('save-run-button')));
@@ -151,6 +158,10 @@ void main() {
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+      expect(
+        find.byKey(const Key('runlini-bottom-navigation')),
+        findsOneWidget,
+      );
       expect(find.text('START'), findsOneWidget);
     },
   );
@@ -193,6 +204,7 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('resume-run-button')), findsOneWidget);
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(
         find.byKey(const Key('live-run-dashboard-overlay')),
         findsOneWidget,
@@ -208,6 +220,7 @@ void main() {
       );
       expect(find.byKey(const Key('live-run-dashboard-overlay')), findsNothing);
       expect(find.byKey(const Key('run-finish-review-panel')), findsOneWidget);
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       expect(find.byKey(const Key('resume-run-button')), findsNothing);

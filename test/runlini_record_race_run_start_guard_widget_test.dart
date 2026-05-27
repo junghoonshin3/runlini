@@ -134,6 +134,7 @@ void main() {
         find.byKey(const Key('live-run-dashboard-overlay')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
 
       final container = ProviderScope.containerOf(
         tester.element(find.byKey(const Key('live-run-dashboard-overlay'))),
@@ -156,6 +157,7 @@ void main() {
         find.byKey(const Key('record-race-run-completion-dialog')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(find.text('기록 레이스 완료'), findsOneWidget);
       expect(find.text('실시간 결과'), findsOneWidget);
       expect(find.text('기록 레이스보다 12초 빨랐어요'), findsOneWidget);
@@ -173,6 +175,7 @@ void main() {
         find.byKey(const Key('live-run-dashboard-overlay')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
     },
   );
 }
