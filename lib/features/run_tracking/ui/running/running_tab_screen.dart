@@ -23,6 +23,7 @@ import 'package:runlini/features/run_tracking/state/run_record_race_providers.da
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_voice_cue_providers.dart';
+import 'package:runlini/features/run_tracking/types/run_interval_workout.dart';
 import 'package:runlini/features/run_tracking/types/run_playback_state.dart';
 import 'package:runlini/features/run_tracking/types/run_screen_status.dart';
 import 'package:runlini/features/run_tracking/types/run_session_record_race_summary.dart';
@@ -40,6 +41,7 @@ import 'package:runlini/features/run_tracking/ui/running/run_session_record_race
 import 'package:runlini/features/run_tracking/ui/running/run_training_mode_conflict_dialog.dart';
 
 part 'running_tab_screen_actions.dart';
+part 'running_tab_screen_bottom_controls.dart';
 part 'running_tab_screen_record_race_completion.dart';
 
 final bool _isFlutterTest = Platform.environment.containsKey('FLUTTER_TEST');
@@ -140,6 +142,8 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
     final activeRunBottomInset = 28 + MediaQuery.paddingOf(context).bottom;
     final activeRunCenterBottomInset =
         24 + MediaQuery.paddingOf(context).bottom;
+    final showBottomControls =
+        playbackState.hasActiveSession || !countdownState.isActive;
 
     return SafeArea(
       bottom: false,
@@ -176,67 +180,13 @@ class _RunningTabScreenState extends ConsumerState<RunningTabScreen> {
                 right: 20,
                 child: RunliniFadeUp(child: RunRecordRaceRecommendationCard()),
               ),
-            if (playbackState.hasActiveSession || !countdownState.isActive)
-              Positioned(
-                left: 20,
-                bottom: playbackState.hasActiveSession
-                    ? activeRunBottomInset
-                    : 28,
-                child: AnimatedSwitcher(
-                  duration: RunliniMotion.enabledDuration(
-                    context,
-                    RunliniMotion.shortTransition,
-                  ),
-                  switchInCurve: RunliniMotion.enterCurve,
-                  switchOutCurve: RunliniMotion.exitCurve,
-                  transitionBuilder: _runControlTransition,
-                  child: playbackState.hasActiveSession
-                      ? RunPauseResumeButton(
-                          key: const ValueKey<String>('pause-resume-control'),
-                          isPaused:
-                              playbackState.status == RunScreenStatus.paused,
-                          onPressed: () async {
-                            await _handlePauseResumePressed(
-                              playbackState: playbackState,
-                            );
-                          },
-                        )
-                      : RunIntervalButton(
-                          key: const ValueKey<String>('interval-control'),
-                          workout: intervalWorkout,
-                          onPressed: () =>
-                              _handleIntervalButtonPressed(context),
-                        ),
-                ),
-              ),
-            Positioned(
-              right: 20,
-              bottom: playbackState.hasActiveSession
-                  ? activeRunBottomInset
-                  : 28,
-              child: RunCurrentLocationButton(
-                onPressed: () async {
-                  await _handleCurrentLocationPressed(context);
-                },
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: playbackState.hasActiveSession
-                  ? activeRunCenterBottomInset
-                  : 24,
-              child: Center(
-                child: RunStartStopButton(
-                  showsStopAction: playbackState.hasActiveSession,
-                  onPressed: () async {
-                    await _handleStartStopPressed(
-                      context: context,
-                      playbackState: playbackState,
-                    );
-                  },
-                ),
-              ),
+            _buildBottomControlsLayer(
+              context: context,
+              playbackState: playbackState,
+              intervalWorkout: intervalWorkout,
+              showBottomControls: showBottomControls,
+              activeRunBottomInset: activeRunBottomInset,
+              activeRunCenterBottomInset: activeRunCenterBottomInset,
             ),
           ],
           if (isReviewing && pendingFinishedSession != null)

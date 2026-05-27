@@ -1,5 +1,16 @@
 # Checklist
 
+## START 하단 컨트롤 종료 애니메이션
+
+- [x] 새 브랜치를 생성한다.
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] `RunningTabScreen`의 프리런 하단 컨트롤 묶음에 종료 애니메이션을 적용한다.
+- [x] START 수락 직후 outgoing 컨트롤의 입력과 semantics action을 차단한다.
+- [x] 카운트다운 overlay 즉시 표시, exit 완료, reduce motion, 실패 후 idle 복귀 테스트를 보강한다.
+- [x] focused tests, `flutter analyze`, guardrails, diff 검사를 실행한다.
+- [x] 가능한 Android 실행 대상에서 대표 화면을 확인한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## 러닝 집중 상태 하단탭 숨김
 
 - [x] 별도 브랜치를 생성한다.

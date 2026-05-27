@@ -1,5 +1,23 @@
 # Context Notes
 
+## 2026-05-27 START 하단 컨트롤 종료 애니메이션
+
+- 사용자는 START 버튼을 누를 때 하단 컨트롤 또는 바텀시트처럼 보이는 영역이 너무 갑자기 사라져 자연스러운 애니메이션 적용을 요청했다.
+- Agent Company deep discussion 결과 `service-planner`, `ui-ux-designer`, `architect`, `fullstack-developer`, `qa-engineer`, `knowledge-manager` 전원이 `RunningTabScreen` 프리런 하단 컨트롤 묶음에만 visual exit를 적용하는 데 합의했다.
+- 작업은 새 브랜치 `feature/start-bottom-controls-exit-animation`에서 진행한다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 적용 대상은 `START`, `인터벌`, `현재 위치` 버튼으로 구성된 프리런 하단 컨트롤 묶음이다.
+- 제외 대상은 `RunliniHomeScreen` 하단탭, 실제 `showModalBottomSheet`, countdown provider, playback state machine, 지도, 위치 권한, 저장 흐름이다.
+- 모션은 기존 `RunliniMotion.shortTransition` 140ms와 `RunliniMotion.exitCurve`를 사용하고, fade out plus 20dp downward slide를 기본으로 한다.
+- START 수락과 `RunStartCountdownOverlay` 표시는 애니메이션 완료를 기다리지 않고 즉시 진행해야 한다.
+- 하단 컨트롤은 시각적으로 남아 있어도 즉시 hit-test와 semantics action에서 제외되어야 한다.
+- reduce motion에서는 `RunliniMotion.enabledDuration`에 따라 즉시 전환하고 중간 fade나 slide 상태를 남기지 않는다.
+- 구현은 `RunningTabScreen` 본문에서 하단 컨트롤 배치를 `running_tab_screen_bottom_controls.dart` part로 옮기고, stable key가 있는 `_RunBottomControlsExit` wrapper가 outgoing child를 140ms 동안 보존하는 방식으로 정리했다.
+- `AnimatedSwitcher` 단독 적용은 상단 추천 카드가 동시에 제거될 때 하단 레이어 state가 새로 만들어져 outgoing child 보존이 불안정했으므로 사용하지 않는다.
+- focused 검증은 `flutter test test/runlini_countdown_widget_test.dart test/runlini_countdown_bottom_controls_animation_test.dart test/runlini_running_controls_widget_test.dart`로 통과했다.
+- 전체 검증은 `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, `flutter test`로 통과했다.
+- Android 실기기 `5200024fee2b2571`에서 `flutter run -d 5200024fee2b2571`로 debug 설치와 launch를 확인했고, 러닝 탭 화면의 START, 인터벌, 현재 위치 컨트롤 표시를 캡처로 확인했다.
+
 ## 2026-05-27 러닝 집중 상태 하단탭 숨김
 
 - 사용자는 하단탭이 보이면 안 되거나 눌리면 안 되는 러닝 집중 상태에서는 하단탭을 아예 안 보이게 하는 방향을 선택했다.

@@ -220,7 +220,7 @@ void main() {
       );
 
       expect(find.byKey(const Key('settings-button')), findsNothing);
-      expect(find.byKey(const Key('run-interval-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       await tester.pump();
       expect(find.byKey(const Key('settings-tab-screen')), findsNothing);
       expect(
