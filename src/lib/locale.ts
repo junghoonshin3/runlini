@@ -1,7 +1,7 @@
 // 스토어 스크린샷 편집기 화면과 동작을 구성한다.
 import type { LocalizedText } from "./types";
 
-export const DEFAULT_LOCALE = "en";
+export const DEFAULT_LOCALE = "ko";
 
 // Read the value for `locale` from a localized field. Falls back to en, then to
 // the first locale that has a non-empty value, then to empty string. Used by

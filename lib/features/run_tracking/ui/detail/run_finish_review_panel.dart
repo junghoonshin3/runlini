@@ -89,10 +89,6 @@ class RunFinishReviewPanel extends StatelessWidget {
                         includePrimaryMetrics: includePrimaryMetrics,
                         onSetBodyWeightForCalories: onSetBodyWeightForCalories,
                       ),
-                      if (privacySettings.hideStartEndArea) ...[
-                        const SizedBox(height: 12),
-                        const _PrivacyBadge(),
-                      ],
                       if (session.recordRaceSummary != null) ...[
                         const SizedBox(height: 14),
                         RunDetailRecordRaceComparison(
@@ -175,24 +171,6 @@ Future<bool> confirmDiscardFinishedRun(BuildContext context) async {
     },
   );
   return confirmed == true;
-}
-
-class _PrivacyBadge extends StatelessWidget {
-  const _PrivacyBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('start-end-privacy-badge'),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.black,
-        border: Border.all(color: AppColors.amber.withValues(alpha: 0.5)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Text('시작/종료 위치 보호 켜짐', style: _mutedTextStyle),
-    );
-  }
 }
 
 class _HiddenRoutePanel extends StatelessWidget {

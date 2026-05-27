@@ -75,9 +75,10 @@ void main() {
       find.byKey(const Key('record-race-recommendation-card')),
       findsNothing,
     );
+    expect(find.byKey(const Key('record-race-selected-card')), findsOneWidget);
     expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
     expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
-    expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
   });
 
   testWidgets('opens the picker from the recommendation secondary action', (
@@ -147,7 +148,7 @@ void main() {
     expect(find.textContaining('경쟁레이스 ·'), findsOneWidget);
   });
 
-  testWidgets('hides recommendation and selector before any runnable record', (
+  testWidgets('shows empty recordRace card before any runnable record', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -177,7 +178,10 @@ void main() {
     );
     await tester.pump();
     await openRunningTab(tester);
-    await tester.pumpAndSettle();
+    await pumpUntilFound(
+      tester,
+      find.byKey(const Key('record-race-recommendation-empty-card')),
+    );
 
     expect(
       find.byKey(const Key('record-race-recommendation-card')),
@@ -185,10 +189,12 @@ void main() {
     );
     expect(
       find.byKey(const Key('record-race-recommendation-empty-card')),
-      findsNothing,
+      findsOneWidget,
     );
-    expect(find.text('오늘 추천'), findsNothing);
+    expect(find.text('기록 레이스'), findsOneWidget);
+    expect(find.text('저장된 기록이 필요해요'), findsOneWidget);
     expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+    expect(find.byKey(const Key('record-race-session-sheet')), findsNothing);
   });
 
   testWidgets('shows selector fallback when no recommendation is available', (
@@ -224,14 +230,27 @@ void main() {
     await openRunningTab(tester);
     await pumpUntilFound(
       tester,
-      find.byKey(const Key('record-race-control-chip')),
+      find.byKey(const Key('record-race-fallback-card')),
     );
 
+    _expectTopCompactCard(
+      tester,
+      find.byKey(const Key('record-race-fallback-card')),
+    );
     expect(
       find.byKey(const Key('record-race-recommendation-card')),
       findsNothing,
     );
-    expect(find.text('경쟁레이스 선택'), findsOneWidget);
+    expect(find.text('내 기록과 다시 달리기'), findsOneWidget);
+    expect(find.text('기록 선택'), findsOneWidget);
+    expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
+
+    await tester.tap(
+      find.byKey(const Key('record-race-fallback-select-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-race-session-sheet')), findsOneWidget);
   });
 }
 

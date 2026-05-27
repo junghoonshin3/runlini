@@ -123,6 +123,16 @@ export const THEMES: Record<ThemeId, Theme> = {
     accent: "#0284C7",
     muted: "#475569",
   },
+  "runlini-clean": {
+    id: "runlini-clean",
+    name: "Runlini Clean",
+    bg: "#F3F6EE",
+    bgAlt: "#050505",
+    fg: "#0A0A0A",
+    fgAlt: "#F8FAF2",
+    accent: "#CEFF00",
+    muted: "#5C6470",
+  },
   "runlini-dark": {
     id: "runlini-dark",
     name: "Runlini Dark",

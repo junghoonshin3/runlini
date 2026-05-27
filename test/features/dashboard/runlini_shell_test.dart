@@ -32,6 +32,7 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const Key('history-list')));
 
     expect(find.byKey(const Key('history-list')), findsOneWidget);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsOneWidget);
     expect(find.byKey(const Key('history-settings-button')), findsNothing);
     expect(
       find.byKey(const Key('history-session-fixture_morning_tempo')),
@@ -56,6 +57,7 @@ void main() {
     await pumpUntilFound(tester, find.byKey(const Key('run-map')));
 
     expect(find.byKey(const Key('run-map')), findsOneWidget);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsOneWidget);
     expect(find.byKey(const Key('current-location-button')), findsOneWidget);
     expect(find.text('START'), findsOneWidget);
   });
@@ -92,6 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('finish-route-preview')), findsOneWidget);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('detail-chart-pace')), findsOneWidget);
     expect(find.text('Run Detail'), findsOneWidget);
     expect(find.byKey(const Key('save-run-button')), findsNothing);
@@ -102,6 +105,7 @@ void main() {
 
     expect(find.byKey(const Key('run-finish-review-panel')), findsNothing);
     expect(find.byKey(const Key('history-list')), findsOneWidget);
+    expect(find.byKey(const Key('runlini-bottom-navigation')), findsOneWidget);
   });
 
   testWidgets('imports health records into the history tab', (

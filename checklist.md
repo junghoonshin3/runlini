@@ -1,5 +1,44 @@
 # Checklist
 
+## START 하단 컨트롤 종료 애니메이션
+
+- [x] 새 브랜치를 생성한다.
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] `RunningTabScreen`의 프리런 하단 컨트롤 묶음에 종료 애니메이션을 적용한다.
+- [x] START 수락 직후 outgoing 컨트롤의 입력과 semantics action을 차단한다.
+- [x] 카운트다운 overlay 즉시 표시, exit 완료, reduce motion, 실패 후 idle 복귀 테스트를 보강한다.
+- [x] focused tests, `flutter analyze`, guardrails, diff 검사를 실행한다.
+- [x] 가능한 Android 실행 대상에서 대표 화면을 확인한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## 러닝 집중 상태 하단탭 숨김
+
+- [x] 별도 브랜치를 생성한다.
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] `RunliniHomeScreen`에서 러닝 집중 상태 하단탭을 숨긴다.
+- [x] 러닝 중 컨트롤 하단 SafeArea 여백을 보정한다.
+- [x] 카운트다운, 러닝 중, 일시정지, 종료 검토, 기록 레이스 완료 테스트를 보강한다.
+- [x] push 전체 화면의 앱 하단탭 부재 테스트를 보강한다.
+- [x] focused tests, `flutter analyze`, guardrails, 전체 테스트를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## Google Play 스토어 스크린샷 제작
+
+- [x] 기존 스크린샷 에디터, 앱 아이콘, Android 에뮬레이터 상태를 확인한다.
+- [x] Android 에뮬레이터에서 실제 앱 주요 화면을 캡처한다.
+- [x] Google Play 한국어 스크린샷 덱을 실제 캡처와 추천 카피로 seed한다.
+- [x] 에디터 실행과 export 준비 상태를 확인한다.
+- [x] 변경을 검증하고 커밋한다.
+
+## 러닝탭 기록레이스 상단 카드 복구
+
+- [x] 현재 기록레이스 카드 노출 조건과 최근 변경 원인을 확인한다.
+- [x] 러닝 전 상단 카드가 선택, 추천, fallback, empty, loading, error 상태를 처리하게 바꾼다.
+- [x] START 근처 하단 기록레이스 칩 노출을 제거한다.
+- [x] 관련 widget tests를 새 상단 카드 정책에 맞게 갱신한다.
+- [x] focused tests, analyzer, guardrails를 실행한다.
+- [x] 변경을 커밋한다.
+
 ## README 인라인 데모 재생 개선
 
 - [x] README의 기존 `.mov` 링크가 다운로드 흐름이 되는 문제를 확인한다.
@@ -283,3 +322,16 @@
 - [x] 추천 카드 시각 밀도를 낮춘다.
 - [x] focused widget test와 정적 검사를 실행한다.
 - [x] 가능한 범위에서 전체 테스트를 실행한다.
+
+## 기록 레이스 완료 리뷰 비교 표시 정리
+
+- [x] 완료 리뷰와 기록 레이스 비교 데이터 흐름을 실제 코드로 확인한다.
+- [x] 완료 리뷰 오버레이가 원본 기록 레이스 세션을 비교 카드에 전달하게 한다.
+- [x] 평균 페이스 차이 문구를 자연스러운 한국어 표현으로 바꾼다.
+- [x] 시작/종료 위치 보호 배지를 완료 리뷰/상세 패널에서 제거한다.
+- [x] 관련 widget test를 추가 또는 갱신한다.
+- [x] focused test를 실행한다.
+- [x] `dart run tool/guardrails.dart`를 실행한다.
+- [x] `flutter analyze`를 실행한다.
+- [x] `git diff --check`를 실행한다.
+- [x] 전체 `flutter test`를 실행한다.

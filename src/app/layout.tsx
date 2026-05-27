@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Runlini Store Screenshots",
-  description: "Design and export Runlini App Store + Google Play screenshots.",
+  title: "런린이 Google Play Screenshots",
+  description: "Design and export Runlini Google Play screenshots.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body>{children}</body>
     </html>
   );

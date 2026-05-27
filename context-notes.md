@@ -1,5 +1,70 @@
 # Context Notes
 
+## 2026-05-27 START 하단 컨트롤 종료 애니메이션
+
+- 사용자는 START 버튼을 누를 때 하단 컨트롤 또는 바텀시트처럼 보이는 영역이 너무 갑자기 사라져 자연스러운 애니메이션 적용을 요청했다.
+- Agent Company deep discussion 결과 `service-planner`, `ui-ux-designer`, `architect`, `fullstack-developer`, `qa-engineer`, `knowledge-manager` 전원이 `RunningTabScreen` 프리런 하단 컨트롤 묶음에만 visual exit를 적용하는 데 합의했다.
+- 작업은 새 브랜치 `feature/start-bottom-controls-exit-animation`에서 진행한다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 적용 대상은 `START`, `인터벌`, `현재 위치` 버튼으로 구성된 프리런 하단 컨트롤 묶음이다.
+- 제외 대상은 `RunliniHomeScreen` 하단탭, 실제 `showModalBottomSheet`, countdown provider, playback state machine, 지도, 위치 권한, 저장 흐름이다.
+- 모션은 기존 `RunliniMotion.shortTransition` 140ms와 `RunliniMotion.exitCurve`를 사용하고, fade out plus 20dp downward slide를 기본으로 한다.
+- START 수락과 `RunStartCountdownOverlay` 표시는 애니메이션 완료를 기다리지 않고 즉시 진행해야 한다.
+- 하단 컨트롤은 시각적으로 남아 있어도 즉시 hit-test와 semantics action에서 제외되어야 한다.
+- reduce motion에서는 `RunliniMotion.enabledDuration`에 따라 즉시 전환하고 중간 fade나 slide 상태를 남기지 않는다.
+- 구현은 `RunningTabScreen` 본문에서 하단 컨트롤 배치를 `running_tab_screen_bottom_controls.dart` part로 옮기고, stable key가 있는 `_RunBottomControlsExit` wrapper가 outgoing child를 140ms 동안 보존하는 방식으로 정리했다.
+- `AnimatedSwitcher` 단독 적용은 상단 추천 카드가 동시에 제거될 때 하단 레이어 state가 새로 만들어져 outgoing child 보존이 불안정했으므로 사용하지 않는다.
+- focused 검증은 `flutter test test/runlini_countdown_widget_test.dart test/runlini_countdown_bottom_controls_animation_test.dart test/runlini_running_controls_widget_test.dart`로 통과했다.
+- 전체 검증은 `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, `flutter test`로 통과했다.
+- Android 실기기 `5200024fee2b2571`에서 `flutter run -d 5200024fee2b2571`로 debug 설치와 launch를 확인했고, 러닝 탭 화면의 START, 인터벌, 현재 위치 컨트롤 표시를 캡처로 확인했다.
+
+## 2026-05-27 러닝 집중 상태 하단탭 숨김
+
+- 사용자는 하단탭이 보이면 안 되거나 눌리면 안 되는 러닝 집중 상태에서는 하단탭을 아예 안 보이게 하는 방향을 선택했다.
+- 작업은 새 브랜치 `feature/hide-run-focus-bottom-tab`에서 진행한다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 하단탭 표시 정책은 `RunliniHomeScreen` 한 곳에서만 소유한다.
+- 하단탭 숨김 대상은 카운트다운, active running, paused running, record race completion, finish review다.
+- 기록 메인, 러닝 대기, 설정 메인에서는 기존 앱 하단탭 `runlini-bottom-navigation`을 그대로 보여준다.
+- 기록 상세, 러닝화 관리, 착용 기록, 러닝화 추가와 수정 같은 push leaf route는 기존 구조상 앱 하단탭이 없는 전체 화면으로 유지한다.
+- `RunShoeFormScreen`의 `Scaffold.bottomNavigationBar`는 저장 CTA 영역이며 앱 하단탭이 아니다.
+- 이번 변경에서는 ShellRoute, 탭별 Navigator, route별 `showBottomTab` 플래그를 추가하지 않는다.
+- 하단탭을 `bottomNavigationBar: null`로 숨기면 러닝 컨트롤이 시스템 제스처 영역에 가까워질 수 있으므로 active/paused 컨트롤의 SafeArea 하단 여백을 같이 보정한다.
+- 구현 결과 `RunliniHomeScreen`이 카운트다운, active, paused, review, record race completion 상태를 보고 앱 하단탭을 렌더링하지 않는다.
+- active/paused 러닝 컨트롤은 하단 시스템 inset을 더해 배치한다.
+- 검증은 focused widget tests, `flutter analyze`, `dart run tool/guardrails.dart`, 전체 `flutter test`, `git diff --check`로 통과했다.
+
+## 2026-05-26 Google Play 스토어 스크린샷 제작
+
+- 사용자는 출시 준비를 위해 Google Play Store에 올릴 앱 스크린샷 제작을 요청했다.
+- 사용자는 별도 스크린샷과 앱 아이콘 경로를 모른다고 했고, Google Play 전용, 한국어, 추천 스타일로 진행을 승인했다.
+- 기존 프로젝트에는 `package.json`, `app-store-screenshots.json`, `public/app-icon.png`, Android와 Apple 예시 스크린샷 디렉터리가 이미 존재한다.
+- 새 템플릿을 루트에 덮어쓰지 않고 기존 스크린샷 에디터를 활용한다.
+- 앱 아이콘 후보는 `assets/branding/runlini_play_store_icon_512.png`와 `public/app-icon.png`가 있다.
+- Android 에뮬레이터는 `Medium_Phone_API_36.0`을 사용하고, 연결된 디바이스는 `emulator-5554`다.
+- 스크린샷 카피는 한국어만 우선 seed하며, Runlini의 핵심 흐름인 기록 레이스, 실시간 러닝 화면, 기록 분석, 시작 화면, 설정/러닝 준비를 보여준다.
+- 실제 캡처는 `public/screenshots/android/phone/ko/01.png`부터 `05.png`까지 저장했다.
+- 스크린샷 덱은 Google Play Android Phone과 Feature Graphic 중심으로 `app-store-screenshots.json`에 seed했다.
+- `runlini-clean` 테마를 추가해 밝은 배경과 런린이 네온 그린 포인트를 사용한다.
+- 검증은 `npm run build`와 `curl -sI http://localhost:3000`으로 통과했다.
+- 스크린샷 에디터는 `npm run dev`로 실행 중이며, 로컬 주소는 `http://localhost:3000`이다.
+
+## 2026-05-25 러닝탭 기록레이스 상단 카드 복구
+
+- 사용자는 러닝탭 상단 기록레이스 카드가 사라진 이유를 물었고, 이어 상단 카드 복구 계획 구현을 요청했다.
+- 원인은 카드 삭제가 아니라 `a30011f 러닝탭 경쟁레이스 진입점 정리` 이후 상단 `오늘 추천` 카드가 추천 가능한 기록이 있을 때만 보이고, 추천이 없으면 START 근처 하단 칩으로 내려가는 정책 변경이다.
+- 새 정책은 러닝 시작 전, 카운트다운 전, 리뷰 전 상태에서는 기록레이스 관련 진입점을 상단 카드로 항상 보여주는 것이다.
+- 선택 가능한 기록이 없으면 상단 카드에서 비활성 안내만 보여주고 선택 시트를 열지 않는다.
+- 이미 기록레이스가 선택된 상태에서도 상단 카드가 선택 상태와 변경, 해제 액션을 보여준다.
+- Android 지도 설정 준비 여부를 보는 `mapControlsReady` 기존 보호 조건은 건드리지 않는다.
+- 기존 미추적 파일 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `RunRecordRaceRecommendationCard`는 추천, 선택됨, 선택 가능 기록 있음, 빈 상태, 로딩, 오류 상태를 모두 상단 카드로 표시한다.
+- `RunningTabScreen`에서는 START 근처 `RunRecordRaceControlChip` 렌더링을 제거했고, 칩 파일은 후속 정리를 위해 남겨뒀다.
+- 선택 전 fallback 카드의 `기록 선택`, 추천 카드의 `다른 기록`, 선택 카드의 `변경` 버튼이 모두 기존 선택 시트를 연다.
+- 선택 카드의 `해제` 버튼은 기존 `recordRaceSettingsProvider`의 disable 흐름을 그대로 사용한다.
+- 새 공통 카드 레이아웃은 `run_record_race_card_shell.dart`로 분리해 각 Dart 파일을 300줄 이하로 유지했다.
+- 검증은 `flutter test test/features/run_tracking/run_record_race_recommendation_card_test.dart`, `flutter test test/features/record_race/record_race_settings_flow_test.dart test/features/run_tracking/record_race_interval_conflict_test.dart`, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
 ## 2026-05-25 README 인라인 데모 재생 개선
 
 - 사용자는 README에서 영상을 다운로드하지 않고 바로 볼 수 있게 하라고 요청했다.
@@ -334,3 +399,14 @@
 - 변경 범위는 러닝 탭 시작 전 추천 카드의 위치와 시각 밀도 조정으로 제한한다.
 - 추천 카드 노출 조건은 기존과 동일하다. 러닝 탭, 시작 전, 카운트다운 전, 리뷰 아님, 기록 레이스 미선택 상태에서 표시된다.
 - 추천 후보가 있으면 같은 요일 최신 기록을 우선하고 없으면 최근 기록을 쓴다. 추천 가능한 기록이 없으면 빈 상태 안내를 표시한다.
+
+## 2026-05-27 기록 레이스 완료 리뷰 비교 표시 정리
+
+- 사용자는 기록 레이스 완료 직후 상세 리뷰에서 `기록 레이스 비교`가 요약 행만 보이는 문제를 수정하길 원했다.
+- 상세 화면은 `RunSessionDetailScreen`에서 원본 기록 레이스 세션을 `runSessionByIdProvider`로 로드해 `RunFinishReviewPanel`에 넘긴다.
+- 완료 오버레이인 `RunFinishReviewOverlay`는 현재 원본 기록 레이스 세션을 넘기지 않아 `RunRecordRaceComparisonBuilder`가 `hasCourseMetrics == false` fallback을 사용한다.
+- 수정 방향은 완료 오버레이에서도 `recordRaceSummary.recordRaceSessionId` 기준으로 원본 세션을 조회해 패널에 넘기는 것이다.
+- `평균 페이스` 차이의 `0:13/km 느림` 표현은 초 단위 한국어로 바꿔 읽기 부담을 줄인다.
+- `시작/종료 위치 보호 켜짐` 배지는 사용자가 불필요하다고 판단했으므로 패널에서 제거한다. 경로 자체를 숨기는 설정과 숨김 패널은 유지한다.
+- 완료 오버레이는 선택된 기록 레이스 세션이 이미 지도 상태에 있으면 먼저 쓰고, 없으면 `runSessionByIdProvider`로 저장된 원본 세션을 조회한다.
+- 검증은 focused widget tests, `dart run tool/guardrails.dart`, `flutter analyze`, `git diff --check`, 전체 `flutter test`로 통과했다.

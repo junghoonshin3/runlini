@@ -9,7 +9,7 @@ import 'package:runlini/features/dashboard/types/app_tab.dart';
 import 'package:runlini/features/dashboard/ui/run_start_countdown_overlay.dart';
 import 'package:runlini/features/health_sync/state/health_sync_providers.dart';
 import 'package:runlini/features/record_race/state/record_race_providers.dart';
-import 'package:runlini/features/run_tracking/state/run_interval_providers.dart';
+import 'package:runlini/features/run_tracking/state/run_playback_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_session_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_settings_providers.dart';
 import 'package:runlini/features/run_tracking/state/run_start_countdown_providers.dart';
@@ -59,6 +59,15 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
   Widget build(BuildContext context) {
     final currentTab = ref.watch(appTabProvider);
     final countdownState = ref.watch(runStartCountdownControllerProvider);
+    final hasRunFocusState = ref.watch(
+      runPlaybackControllerProvider.select(
+        (state) =>
+            state.hasActiveSession ||
+            state.isReviewing ||
+            state.recordRaceCompletionPromptPending,
+      ),
+    );
+    final showBottomNavigation = !countdownState.isActive && !hasRunFocusState;
 
     _listenForRunSessionChanges();
     _listenForRunSettingsChanges();
@@ -75,13 +84,14 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
               SettingsTabScreen(),
             ],
           ),
-          bottomNavigationBar: _RunliniBottomNavigationBar(
-            currentTab: currentTab,
-            enabled: !countdownState.isActive,
-            onSelected: (AppTab tab) {
-              ref.read(appTabProvider.notifier).setTab(tab);
-            },
-          ),
+          bottomNavigationBar: showBottomNavigation
+              ? _RunliniBottomNavigationBar(
+                  currentTab: currentTab,
+                  onSelected: (AppTab tab) {
+                    ref.read(appTabProvider.notifier).setTab(tab);
+                  },
+                )
+              : null,
         ),
         if (countdownState.isActive)
           RunStartCountdownOverlay(
@@ -95,12 +105,10 @@ class _RunliniHomeScreenState extends ConsumerState<RunliniHomeScreen>
 class _RunliniBottomNavigationBar extends StatelessWidget {
   const _RunliniBottomNavigationBar({
     required this.currentTab,
-    required this.enabled,
     required this.onSelected,
   });
 
   final AppTab currentTab;
-  final bool enabled;
   final ValueChanged<AppTab> onSelected;
 
   @override
@@ -117,9 +125,7 @@ class _RunliniBottomNavigationBar extends StatelessWidget {
         child: BottomNavigationBar(
           key: const Key('runlini-bottom-navigation'),
           currentIndex: currentTab.index,
-          onTap: enabled
-              ? (int index) => onSelected(AppTab.values[index])
-              : null,
+          onTap: (int index) => onSelected(AppTab.values[index]),
           backgroundColor: AppColors.panel,
           elevation: 0,
           selectedItemColor: AppColors.voltGreen,

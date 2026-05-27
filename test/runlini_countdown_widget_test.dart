@@ -73,6 +73,7 @@ void main() {
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(healthRecorder.prepareCalls, 0);
       expect(healthRecorder.beginCalls, 0);
       expect(
@@ -92,6 +93,7 @@ void main() {
         find.byKey(const Key('live-run-dashboard-overlay')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(healthRecorder.beginCalls, 0);
     },
   );
@@ -128,6 +130,7 @@ void main() {
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(
         find.byKey(const Key('run-start-countdown-overlay')),
         findsOneWidget,
@@ -169,6 +172,7 @@ void main() {
       expect(find.byKey(const Key('settings-button')), findsNothing);
       expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
       expect(find.text('STOP'), findsOneWidget);
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
     },
   );
 
@@ -204,8 +208,10 @@ void main() {
       await tester.tap(find.byKey(const Key('start-stop-button')));
       await tester.pump();
 
+      expect(find.byKey(const Key('runlini-bottom-navigation')), findsNothing);
       expect(find.byKey(const Key('record-race-control-chip')), findsNothing);
-      await tester.tapAt(tester.getCenter(find.text('기록')));
+      final viewSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+      await tester.tapAt(Offset(40, viewSize.height - 12));
       await tester.pump();
       expect(find.byKey(const Key('history-list')), findsNothing);
       expect(
@@ -214,7 +220,7 @@ void main() {
       );
 
       expect(find.byKey(const Key('settings-button')), findsNothing);
-      expect(find.byKey(const Key('run-interval-button')), findsNothing);
+      expect(find.byKey(const Key('run-interval-button')), findsOneWidget);
       await tester.pump();
       expect(find.byKey(const Key('settings-tab-screen')), findsNothing);
       expect(
