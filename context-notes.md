@@ -1,5 +1,18 @@
 # Context Notes
 
+## 2026-05-28 Health 기록 가져오기 버튼 줄바꿈 수정
+
+- 사용자는 설정의 Health 기록 가져오기 버튼 텍스트가 줄바꿈된다고 지적했다.
+- 문제 위치는 `SettingsSyncSection`의 `settings-health-import-button`이며, 실제 문구는 연결 후 `최근 기록 가져오기`다.
+- 버튼은 공통 `SettingsCompactButton`을 사용하고 현재 내부가 일반 `Text`라 부모 폭이 좁으면 줄바꿈될 수 있다.
+- 수정 방향은 문구와 Health 동작을 바꾸지 않고 공통 설정 버튼 텍스트를 `FittedBox`와 `maxLines: 1`, `softWrap: false`로 한 줄 축소 렌더링하는 것이다.
+- compact width 회귀 테스트는 Health 버튼을 직접 대상으로 추가한다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `SettingsCompactButton`은 모든 compact 설정 버튼의 라벨을 `FittedBox` 안에서 한 줄로 축소 렌더링한다.
+- `settings_health_sync_section_test.dart`에 112px 폭에서도 `최근 기록 가져오기`가 `maxLines: 1`, `softWrap: false`와 `FittedBox`를 유지하는 회귀 테스트를 추가했다.
+- 전역 UI audit는 settings 플로우에서 `manage-shoes-button`이 하단 내비게이션 뒤에 걸치지 않도록 `Scrollable.ensureVisible` alignment를 지정해 실제 탭 가능한 위치를 검증하게 했다.
+- 검증은 settings 관련 위젯 테스트, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`까지 통과했다.
+
 ## 2026-05-28 Android 전역 UI 깨짐 점검
 
 - 사용자는 전역 화면에서 글자가 넘어가거나 의도치 않게 줄바꿈되는 부분, 컴포넌트 높이와 크기가 맞지 않는 부분을 전체적으로 확인하고 수정하길 요청했다.

@@ -84,13 +84,18 @@ class SettingsCompactButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             width: expand ? double.infinity : null,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
               ),
             ),
           ),

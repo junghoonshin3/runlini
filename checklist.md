@@ -1,5 +1,13 @@
 # Checklist
 
+## Health 기록 가져오기 버튼 줄바꿈 수정
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] `SettingsCompactButton` 텍스트를 한 줄 축소 렌더링으로 수정한다.
+- [x] Health 기록 가져오기 버튼의 compact width 회귀 테스트를 추가한다.
+- [x] 관련 settings tests, global UI audit, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## Android 전역 UI 깨짐 점검
 
 - [x] 실행 계획과 컨텍스트 노트를 갱신한다.

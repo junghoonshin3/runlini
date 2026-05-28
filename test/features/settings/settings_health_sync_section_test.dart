@@ -12,6 +12,7 @@ import 'package:runlini/features/run_tracking/types/run_point.dart';
 import 'package:runlini/features/run_tracking/types/run_session.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
+import 'package:runlini/features/settings/ui/settings_section_panel.dart';
 import 'package:runlini/features/settings/ui/settings_sync_card.dart';
 import 'package:runlini/features/settings/ui/settings_sync_section.dart';
 import 'package:runlini/features/settings/ui/settings_tab_screen.dart';
@@ -64,6 +65,45 @@ void main() {
     expect(find.text('백업'), findsNothing);
     expect(find.textContaining('앱 기록 백업'), findsNothing);
     expect(find.textContaining('백업 실패'), findsNothing);
+  });
+
+  testWidgets('Health import button keeps its label on one line', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 112,
+              child: SettingsCompactButton(
+                key: const Key('settings-health-import-button'),
+                label: '최근 기록 가져오기',
+                onPressed: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final buttonFinder = find.byKey(const Key('settings-health-import-button'));
+    final labelFinder = find.descendant(
+      of: buttonFinder,
+      matching: find.text('최근 기록 가져오기'),
+    );
+    final label = tester.widget<Text>(labelFinder);
+
+    expect(buttonFinder, findsOneWidget);
+    expect(label.maxLines, 1);
+    expect(label.softWrap, isFalse);
+    expect(
+      find.descendant(of: buttonFinder, matching: find.byType(FittedBox)),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('iOS Health card uses the user-facing Health app name', (

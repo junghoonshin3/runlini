@@ -202,20 +202,26 @@ Future<void> _auditPrimaryFlow(WidgetTester tester) async {
   await pumpUntilFound(tester, find.byKey(const Key('start-stop-button')));
 
   await _tapBottomNavigationIcon(tester, Icons.settings_rounded);
-  await pumpUntilFound(tester, find.byKey(const Key('settings-tab-screen')));
-  await tester.scrollUntilVisible(
-    find.byKey(const Key('manage-shoes-button')),
-    400,
-    scrollable: find
-        .descendant(
-          of: find.byKey(const Key('settings-tab-screen')),
-          matching: find.byType(Scrollable),
-        )
-        .first,
+  final settingsTab = find.byKey(const Key('settings-tab-screen'));
+  final manageShoesButton = find.byKey(const Key('manage-shoes-button'));
+  await pumpUntilFound(tester, settingsTab);
+  final settingsScrollable = find.descendant(
+    of: settingsTab,
+    matching: find.byType(Scrollable),
   );
+  await tester.scrollUntilVisible(
+    manageShoesButton,
+    400,
+    scrollable: settingsScrollable.first,
+  );
+  await Scrollable.ensureVisible(
+    tester.element(manageShoesButton),
+    alignment: 0.45,
+  );
+  await tester.pump();
   _expectMinTouchSize(tester, const Key('manage-shoes-button'));
   _expectStableFrame(tester, 'settings');
-  await tester.tap(find.byKey(const Key('manage-shoes-button')));
+  await tester.tap(manageShoesButton);
   await pumpUntilFound(tester, find.byKey(const Key('shoe-management-screen')));
   _expectMinTouchSize(tester, const Key('add-shoe-button'));
   _expectStableFrame(tester, 'shoe management');
