@@ -1,5 +1,19 @@
 # Context Notes
 
+## 2026-05-28 Android 전역 UI 깨짐 점검
+
+- 사용자는 전역 화면에서 글자가 넘어가거나 의도치 않게 줄바꿈되는 부분, 컴포넌트 높이와 크기가 맞지 않는 부분을 전체적으로 확인하고 수정하길 요청했다.
+- 범위는 Android 우선이며, 현재 연결된 실행 대상은 `emulator-5554`다.
+- 처리 방식은 발견한 명확한 UI 깨짐을 같은 작업에서 바로 수정하는 것이다.
+- 기존 `integration_test/app_ui_smoke_test.dart`는 최근 기록 레이스 진입점이 하단 chip에서 상단 card로 변경된 상태를 반영하지 못해 `record-race-control-chip` 기대값에서 먼저 실패한다.
+- `StartupWeightScreen`은 현재 `RunliniApp`의 home 흐름에 연결되어 있지 않으므로 전역 smoke 안에서 앱 라우트로 기대하지 않고, 필요하면 별도 위젯 검증 대상으로 다룬다.
+- 검증 기준은 compact viewport, 일반 Android viewport, 텍스트 확대에서 Flutter framework overflow 예외가 없고 주요 CTA와 터치 대상이 화면과 부모 컴포넌트 안에 유지되는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `integration_test/app_ui_smoke_test.dart`는 최신 기록 레이스 상단 카드, 선택 카드, 권한 preflight skip, 독립 `StartupWeightScreen` 검증 흐름에 맞게 갱신했다.
+- 새 `test/runlini_global_ui_audit_test.dart`는 360x640 compact viewport와 390x844 텍스트 1.3배 환경에서 히스토리, 상세, 러닝 idle, 기록 레이스 card와 sheet, active run, 종료 리뷰, 설정, 러닝화 관리를 순회한다.
+- audit 결과 production UI 코드에서 즉시 수정해야 할 텍스트 overflow나 터치 타깃 크기 문제는 재현되지 않았다.
+- 검증은 새 global UI audit, 관련 focused UI tests, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
 ## 2026-05-28 Android 앱 시작 크래시 수정
 
 - 사용자는 직전 `ACTIVITY_RECOGNITION` preflight 구현 후 앱이 종료된다고 보고했다.

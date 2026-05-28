@@ -1,5 +1,14 @@
 # Checklist
 
+## Android 전역 UI 깨짐 점검
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Android UI smoke 테스트를 최신 기록 레이스 상단 카드 흐름에 맞춘다.
+- [x] compact viewport와 텍스트 확대 전역 UI audit 테스트를 추가한다.
+- [x] 발견된 텍스트 overflow, 줄바꿈, 컴포넌트 크기 문제를 확인하고 필요한 경우 최소 수정한다.
+- [x] focused UI tests, Android emulator smoke, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## Android 앱 시작 크래시 수정
 
 - [x] 크래시 원인과 수정 계획을 작업 기록에 남긴다.

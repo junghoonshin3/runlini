@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:runlini/app/runlini_app.dart';
+import 'package:runlini/app/theme/app_theme.dart';
 import 'package:runlini/core/health/health_workout_recorder.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
@@ -34,6 +35,7 @@ import 'package:runlini/features/run_tracking/types/run_session_summary.dart';
 import 'package:runlini/features/run_tracking/types/run_settings.dart';
 import 'package:runlini/features/run_tracking/types/run_shoe.dart';
 import 'package:runlini/features/run_tracking/types/watch_record_race_config.dart';
+import 'package:runlini/features/settings/ui/startup_weight_screen.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -83,27 +85,48 @@ void main() {
     _expectRunningMapSurface();
     expect(find.byKey(const Key('start-stop-button')), findsOneWidget);
     expect(find.byKey(const Key('current-location-button')), findsOneWidget);
-    expect(find.byKey(const Key('record-race-control-chip')), findsOneWidget);
+    await _expectScreen(
+      tester,
+      const Key('record-race-recommendation-card'),
+      'record-race-recommendation',
+    );
     await _expectNoFrameworkException(tester, 'running tab');
 
-    await tester.tap(find.byKey(const Key('record-race-control-chip')));
+    await tester.tap(
+      find.byKey(const Key('record-race-recommendation-other-button')),
+    );
     await _expectScreen(
       tester,
       const Key('record-race-session-sheet'),
       'record-race-picker',
     );
-    expect(find.text('기록 선택'), findsOneWidget);
+    expect(find.text('경쟁레이스 선택'), findsOneWidget);
     await _expectNoFrameworkException(tester, 'record race picker');
+    await _goBack(tester);
+    await _expectScreen(
+      tester,
+      const Key('record-race-recommendation-card'),
+      'record-race-picker-dismissed',
+    );
     await tester.tap(
-      find.byKey(const Key('record-race-session-select-session-today')),
+      find.byKey(const Key('record-race-recommendation-select-button')),
     );
     await _expectScreen(
       tester,
-      const Key('record-race-control-chip'),
+      const Key('record-race-selected-card'),
       'record-race-selected',
+    );
+    await tester.tap(
+      find.byKey(const Key('record-race-selected-clear-button')),
+    );
+    await _expectScreen(
+      tester,
+      const Key('record-race-recommendation-card'),
+      'record-race-cleared',
     );
 
     await tester.tap(find.byKey(const Key('start-stop-button')));
+    await _skipMotionPreflightIfShown(tester);
     await _expectScreen(
       tester,
       const Key('run-start-countdown-overlay'),
@@ -217,11 +240,16 @@ void main() {
       settings: const RunSettingsState(),
       shoes: const <RunShoe>[],
     );
-    await _pumpRunlini(
-      tester,
-      sessionRepository: _FakeRunSessionRepository(const <RunSession>[]),
-      settingsRepository: settingsRepository,
-      startupWeightPromptEnabled: true,
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          runSettingsRepositoryProvider.overrideWithValue(settingsRepository),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: const StartupWeightScreen(),
+        ),
+      ),
     );
 
     await _expectScreen(
@@ -231,7 +259,8 @@ void main() {
     );
     await tester.enterText(find.byKey(const Key('startup-weight-input')), '65');
     await tester.tap(find.byKey(const Key('startup-weight-save-button')));
-    await _expectScreen(tester, const Key('history-list'), 'startup-to-home');
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(settingsRepository._settings.bodyWeightKg, 65);
     await _expectNoFrameworkException(tester, 'startup weight');
     await _tryScreenshot(binding, 'startup_weight_complete');
   });
@@ -270,7 +299,7 @@ Future<void> _pumpRunlini(
         ),
         runStartCountdownSecondsProvider.overrideWithValue(1),
         runStartCountdownStepDurationProvider.overrideWithValue(
-          const Duration(milliseconds: 160),
+          const Duration(milliseconds: 800),
         ),
         wearDraftInboxClientProvider.overrideWithValue(
           const _FakeWearDraftInboxClient(),
@@ -304,6 +333,18 @@ Future<void> _tapBottomTab(WidgetTester tester, IconData icon) async {
 Future<void> _goBack(WidgetTester tester) async {
   await tester.binding.handlePopRoute();
   await tester.pumpAndSettle(const Duration(milliseconds: 100));
+}
+
+Future<void> _skipMotionPreflightIfShown(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 100));
+  final skipButton = find.byKey(
+    const Key('motion-permission-skip-start-button'),
+  );
+  if (skipButton.evaluate().isEmpty) {
+    return;
+  }
+  await tester.tap(skipButton);
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 Future<void> _waitForRouteTransition(WidgetTester tester) async {
