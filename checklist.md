@@ -1,5 +1,14 @@
 # Checklist
 
+## Android 앱 시작 크래시 수정
+
+- [x] 크래시 원인과 수정 계획을 작업 기록에 남긴다.
+- [x] `RunMotionPermissionHandler`의 SharedPreferences 접근을 Activity attach 이후로 늦춘다.
+- [x] `MainActivity`의 motion permission handler 초기화를 `configureFlutterEngine` 이후로 늦춘다.
+- [x] Kotlin 컴파일, focused tests, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 에뮬레이터에서 앱 실행과 crash log 부재를 확인한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## ACTIVITY_RECOGNITION 시작 전 preflight
 
 - [x] 실행 계획과 컨텍스트 노트를 갱신한다.

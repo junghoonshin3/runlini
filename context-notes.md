@@ -1,5 +1,18 @@
 # Context Notes
 
+## 2026-05-28 Android 앱 시작 크래시 수정
+
+- 사용자는 직전 `ACTIVITY_RECOGNITION` preflight 구현 후 앱이 종료된다고 보고했다.
+- 에뮬레이터 logcat crash buffer에서 `Unable to instantiate activity ComponentInfo{kr.sjh.runlini/kr.sjh.runlini.MainActivity}`와 `NullPointerException: ... Context.getSharedPreferences(...) on a null object reference`를 확인했다.
+- 스택트레이스는 `RunMotionPermissionHandler.<init>(RunMotionPermissionHandler.kt:21)`와 `MainActivity.<init>(MainActivity.kt:11)`를 가리킨다.
+- 원인은 `MainActivity` 필드 초기화 시점에 `RunMotionPermissionHandler(this)`를 만들고, 핸들러 생성자에서 즉시 `getSharedPreferences()`를 호출한 것이다.
+- 수정 방향은 `RunMotionPermissionHandler` 생성을 `configureFlutterEngine()` 내부로 늦추고, SharedPreferences 접근도 lazy로 늦추는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `MainActivity`는 `configureFlutterEngine()` 이후에만 `RunMotionPermissionHandler`를 생성하고, permission callback도 handler 초기화 이후에만 위임한다.
+- `RunMotionPermissionHandler`는 `SharedPreferences` 접근을 lazy로 늦추고 `applicationContext`를 사용해 Activity attach 전 context 접근을 피한다.
+- 검증은 `./gradlew :app:compileDebugKotlin`, `flutter test test/runlini_motion_permission_preflight_widget_test.dart test/core/motion/run_motion_permission_client_test.dart`, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, `./gradlew :app:assembleDebug`로 통과했다.
+- 수정 APK를 `emulator-5554`에 설치해 `kr.sjh.runlini/.MainActivity`를 실행했고, 프로세스 생존과 crash buffer에 새 로그가 없는 것을 확인했다.
+
 ## 2026-05-28 ACTIVITY_RECOGNITION 시작 전 preflight
 
 - 사용자는 러닝 시작 버튼을 누른 뒤 카운트다운이 끝난 시점에 피지컬 액티비티 권한 팝업이 떠서 UX를 해치는 문제를 제기했고, Agent Company deep discussion 후 구현을 요청했다.

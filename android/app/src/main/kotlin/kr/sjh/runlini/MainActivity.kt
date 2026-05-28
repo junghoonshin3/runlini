@@ -8,10 +8,11 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
     private val motionEvidenceStreamHandler = RunMotionEvidenceStreamHandler(this)
-    private val motionPermissionHandler = RunMotionPermissionHandler(this)
+    private lateinit var motionPermissionHandler: RunMotionPermissionHandler
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        motionPermissionHandler = RunMotionPermissionHandler(this)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -202,9 +203,13 @@ class MainActivity : FlutterFragmentActivity() {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
-        if (!motionPermissionHandler.onRequestPermissionsResult(requestCode)) {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (
+            ::motionPermissionHandler.isInitialized &&
+            motionPermissionHandler.onRequestPermissionsResult(requestCode)
+        ) {
+            return
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     companion object {

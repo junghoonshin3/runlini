@@ -17,8 +17,12 @@ class RunMotionPermissionHandler(
     private val activity: FlutterFragmentActivity,
 ) {
     private var pendingRequestResult: MethodChannel.Result? = null
-    private val preferences =
-        activity.getSharedPreferences("run_motion_permissions", Context.MODE_PRIVATE)
+    private val preferences by lazy {
+        activity.applicationContext.getSharedPreferences(
+            "run_motion_permissions",
+            Context.MODE_PRIVATE,
+        )
+    }
 
     fun checkActivityRecognitionPermission(): String {
         return activityRecognitionStatus()
