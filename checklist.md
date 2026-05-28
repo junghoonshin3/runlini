@@ -1,5 +1,13 @@
 # Checklist
 
+## 히스토리 Health 복구 버튼 줄바꿈 수정
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] 히스토리 빈 상태 `Health 기록 가져오기` CTA를 한 줄 축소 렌더링으로 수정한다.
+- [x] compact viewport 회귀 테스트를 추가한다.
+- [x] 관련 tests, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## Health 기록 가져오기 버튼 줄바꿈 수정
 
 - [x] 실행 계획과 컨텍스트 노트를 갱신한다.

@@ -1,5 +1,16 @@
 # Context Notes
 
+## 2026-05-28 히스토리 Health 복구 버튼 줄바꿈 수정
+
+- 사용자가 첨부한 스크린샷에서 히스토리 빈 상태 카드의 `Health 기록 가져오기` 버튼 마지막 글자 `기`가 다음 줄로 넘어간 것을 확인했다.
+- 직전 수정은 설정 화면의 `SettingsCompactButton`만 대상으로 해서, 히스토리 빈 상태 패널의 별도 `OutlinedButton`에는 적용되지 않았다.
+- 문제 위치는 `lib/features/run_tracking/ui/history/history_tab_screen_sections.dart`의 `_HistoryRecoveryPanel`이다.
+- 수정 방향은 문구와 동작을 바꾸지 않고 CTA 폭을 조금 넓히며, 버튼 라벨을 `FittedBox`, `maxLines: 1`, `softWrap: false`로 한 줄 유지하는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 CTA는 사용 가능한 폭 안에서 최대 220px까지 넓어지고, 라벨은 `FittedBox`로 축소되며 한 줄만 허용한다.
+- `runlini_health_restore_cta_test.dart`에 360x640 viewport와 1.3 텍스트 배율에서 `Health 기록 가져오기`가 한 줄 설정과 `FittedBox`를 유지하는 회귀 테스트를 추가했다.
+- 검증은 Health 복구 CTA 테스트, global UI audit, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
 ## 2026-05-28 Health 기록 가져오기 버튼 줄바꿈 수정
 
 - 사용자는 설정의 Health 기록 가져오기 버튼 텍스트가 줄바꿈된다고 지적했다.
