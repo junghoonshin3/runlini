@@ -54,6 +54,34 @@ void main() {
     );
   });
 
+  testWidgets('empty history CTA keeps label on one line', (
+    WidgetTester tester,
+  ) async {
+    await _configureCompactViewport(tester);
+    await _pumpEmptyHistory(
+      tester,
+      _HealthRoute(const HealthRouteImportResult.authorizationRequired()),
+    );
+
+    final buttonFinder = find.byKey(
+      const Key('health-restore-settings-button'),
+    );
+    final labelFinder = find.descendant(
+      of: buttonFinder,
+      matching: find.text('Health 기록 가져오기'),
+    );
+    final label = tester.widget<Text>(labelFinder);
+
+    expect(label.maxLines, 1);
+    expect(label.softWrap, isFalse);
+    expect(tester.getSize(buttonFinder).width, greaterThanOrEqualTo(220));
+    expect(
+      find.descendant(of: buttonFinder, matching: find.byType(FittedBox)),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('empty history CTA shows permission-needed feedback', (
     WidgetTester tester,
   ) async {
@@ -96,6 +124,15 @@ Future<void> _expectRestoreMessage(
   await tester.pumpAndSettle();
 
   expect(find.text(message), findsOneWidget);
+}
+
+Future<void> _configureCompactViewport(WidgetTester tester) async {
+  tester.view.physicalSize = const Size(360, 640);
+  tester.view.devicePixelRatio = 1;
+  tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 }
 
 Future<void> _pumpEmptyHistory(

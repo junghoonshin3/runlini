@@ -172,13 +172,29 @@ class _HistoryRecoveryPanel extends StatelessWidget {
             ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: 190,
-            child: OutlinedButton(
-              key: const Key('health-restore-settings-button'),
-              onPressed: isBusy ? null : onRestoreFromHealth,
-              child: Text(isBusy ? '처리 중...' : 'Health 기록 가져오기'),
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth.isFinite
+                  ? constraints.maxWidth
+                  : 220.0;
+              final buttonWidth = availableWidth < 220 ? availableWidth : 220.0;
+
+              return SizedBox(
+                width: buttonWidth,
+                child: OutlinedButton(
+                  key: const Key('health-restore-settings-button'),
+                  onPressed: isBusy ? null : onRestoreFromHealth,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      isBusy ? '처리 중...' : 'Health 기록 가져오기',
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

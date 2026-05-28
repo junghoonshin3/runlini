@@ -1,5 +1,49 @@
 # Checklist
 
+## 히스토리 Health 복구 버튼 줄바꿈 수정
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] 히스토리 빈 상태 `Health 기록 가져오기` CTA를 한 줄 축소 렌더링으로 수정한다.
+- [x] compact viewport 회귀 테스트를 추가한다.
+- [x] 관련 tests, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## Health 기록 가져오기 버튼 줄바꿈 수정
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] `SettingsCompactButton` 텍스트를 한 줄 축소 렌더링으로 수정한다.
+- [x] Health 기록 가져오기 버튼의 compact width 회귀 테스트를 추가한다.
+- [x] 관련 settings tests, global UI audit, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## Android 전역 UI 깨짐 점검
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Android UI smoke 테스트를 최신 기록 레이스 상단 카드 흐름에 맞춘다.
+- [x] compact viewport와 텍스트 확대 전역 UI audit 테스트를 추가한다.
+- [x] 발견된 텍스트 overflow, 줄바꿈, 컴포넌트 크기 문제를 확인하고 필요한 경우 최소 수정한다.
+- [x] focused UI tests, Android emulator smoke, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## Android 앱 시작 크래시 수정
+
+- [x] 크래시 원인과 수정 계획을 작업 기록에 남긴다.
+- [x] `RunMotionPermissionHandler`의 SharedPreferences 접근을 Activity attach 이후로 늦춘다.
+- [x] `MainActivity`의 motion permission handler 초기화를 `configureFlutterEngine` 이후로 늦춘다.
+- [x] Kotlin 컴파일, focused tests, analyzer, guardrails, diff 검사를 실행한다.
+- [x] 에뮬레이터에서 앱 실행과 crash log 부재를 확인한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
+## ACTIVITY_RECOGNITION 시작 전 preflight
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Android motion evidence EventChannel에서 권한 요청 부작용을 제거한다.
+- [x] Android phone용 motion permission MethodChannel을 추가한다.
+- [x] Flutter motion permission client와 START 전 preflight UI를 연결한다.
+- [x] 권한 허용, 거부, 다시 묻지 않음, GPS-only 시작 테스트를 보강한다.
+- [x] focused tests, `flutter analyze`, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## START 하단 컨트롤 종료 애니메이션
 
 - [x] 새 브랜치를 생성한다.

@@ -24,9 +24,18 @@ extension _RunningTabScreenActions on _RunningTabScreenState {
     if (!await _ensureRecordRaceRunAccuracy(context)) {
       return;
     }
+    if (!context.mounted) {
+      return;
+    }
 
     _startFlowInProgress = true;
     try {
+      if (!await _prepareMotionPermissionForStart(context)) {
+        return;
+      }
+      if (!context.mounted) {
+        return;
+      }
       final result = await ref
           .read(runStartCountdownControllerProvider.notifier)
           .startAfterCountdown(

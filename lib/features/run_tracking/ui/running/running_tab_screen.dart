@@ -9,6 +9,7 @@ import 'package:runlini/app/theme/app_colors.dart';
 import 'package:runlini/app/ui/runlini_motion.dart';
 import 'package:runlini/core/location/location_stream_client.dart';
 import 'package:runlini/core/map/map_config_client.dart';
+import 'package:runlini/core/motion/run_motion_permission_client.dart';
 import 'package:runlini/core/performance/startup_trace.dart';
 import 'package:runlini/core/voice/run_voice_cue_client.dart';
 import 'package:runlini/features/dashboard/state/app_shell_providers.dart';
@@ -42,6 +43,7 @@ import 'package:runlini/features/run_tracking/ui/running/run_training_mode_confl
 
 part 'running_tab_screen_actions.dart';
 part 'running_tab_screen_bottom_controls.dart';
+part 'running_tab_screen_motion_preflight.dart';
 part 'running_tab_screen_record_race_completion.dart';
 
 final bool _isFlutterTest = Platform.environment.containsKey('FLUTTER_TEST');

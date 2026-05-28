@@ -1,5 +1,72 @@
 # Context Notes
 
+## 2026-05-28 히스토리 Health 복구 버튼 줄바꿈 수정
+
+- 사용자가 첨부한 스크린샷에서 히스토리 빈 상태 카드의 `Health 기록 가져오기` 버튼 마지막 글자 `기`가 다음 줄로 넘어간 것을 확인했다.
+- 직전 수정은 설정 화면의 `SettingsCompactButton`만 대상으로 해서, 히스토리 빈 상태 패널의 별도 `OutlinedButton`에는 적용되지 않았다.
+- 문제 위치는 `lib/features/run_tracking/ui/history/history_tab_screen_sections.dart`의 `_HistoryRecoveryPanel`이다.
+- 수정 방향은 문구와 동작을 바꾸지 않고 CTA 폭을 조금 넓히며, 버튼 라벨을 `FittedBox`, `maxLines: 1`, `softWrap: false`로 한 줄 유지하는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 CTA는 사용 가능한 폭 안에서 최대 220px까지 넓어지고, 라벨은 `FittedBox`로 축소되며 한 줄만 허용한다.
+- `runlini_health_restore_cta_test.dart`에 360x640 viewport와 1.3 텍스트 배율에서 `Health 기록 가져오기`가 한 줄 설정과 `FittedBox`를 유지하는 회귀 테스트를 추가했다.
+- 검증은 Health 복구 CTA 테스트, global UI audit, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
+## 2026-05-28 Health 기록 가져오기 버튼 줄바꿈 수정
+
+- 사용자는 설정의 Health 기록 가져오기 버튼 텍스트가 줄바꿈된다고 지적했다.
+- 문제 위치는 `SettingsSyncSection`의 `settings-health-import-button`이며, 실제 문구는 연결 후 `최근 기록 가져오기`다.
+- 버튼은 공통 `SettingsCompactButton`을 사용하고 현재 내부가 일반 `Text`라 부모 폭이 좁으면 줄바꿈될 수 있다.
+- 수정 방향은 문구와 Health 동작을 바꾸지 않고 공통 설정 버튼 텍스트를 `FittedBox`와 `maxLines: 1`, `softWrap: false`로 한 줄 축소 렌더링하는 것이다.
+- compact width 회귀 테스트는 Health 버튼을 직접 대상으로 추가한다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `SettingsCompactButton`은 모든 compact 설정 버튼의 라벨을 `FittedBox` 안에서 한 줄로 축소 렌더링한다.
+- `settings_health_sync_section_test.dart`에 112px 폭에서도 `최근 기록 가져오기`가 `maxLines: 1`, `softWrap: false`와 `FittedBox`를 유지하는 회귀 테스트를 추가했다.
+- 전역 UI audit는 settings 플로우에서 `manage-shoes-button`이 하단 내비게이션 뒤에 걸치지 않도록 `Scrollable.ensureVisible` alignment를 지정해 실제 탭 가능한 위치를 검증하게 했다.
+- 검증은 settings 관련 위젯 테스트, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`까지 통과했다.
+
+## 2026-05-28 Android 전역 UI 깨짐 점검
+
+- 사용자는 전역 화면에서 글자가 넘어가거나 의도치 않게 줄바꿈되는 부분, 컴포넌트 높이와 크기가 맞지 않는 부분을 전체적으로 확인하고 수정하길 요청했다.
+- 범위는 Android 우선이며, 현재 연결된 실행 대상은 `emulator-5554`다.
+- 처리 방식은 발견한 명확한 UI 깨짐을 같은 작업에서 바로 수정하는 것이다.
+- 기존 `integration_test/app_ui_smoke_test.dart`는 최근 기록 레이스 진입점이 하단 chip에서 상단 card로 변경된 상태를 반영하지 못해 `record-race-control-chip` 기대값에서 먼저 실패한다.
+- `StartupWeightScreen`은 현재 `RunliniApp`의 home 흐름에 연결되어 있지 않으므로 전역 smoke 안에서 앱 라우트로 기대하지 않고, 필요하면 별도 위젯 검증 대상으로 다룬다.
+- 검증 기준은 compact viewport, 일반 Android viewport, 텍스트 확대에서 Flutter framework overflow 예외가 없고 주요 CTA와 터치 대상이 화면과 부모 컴포넌트 안에 유지되는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `integration_test/app_ui_smoke_test.dart`는 최신 기록 레이스 상단 카드, 선택 카드, 권한 preflight skip, 독립 `StartupWeightScreen` 검증 흐름에 맞게 갱신했다.
+- 새 `test/runlini_global_ui_audit_test.dart`는 360x640 compact viewport와 390x844 텍스트 1.3배 환경에서 히스토리, 상세, 러닝 idle, 기록 레이스 card와 sheet, active run, 종료 리뷰, 설정, 러닝화 관리를 순회한다.
+- audit 결과 production UI 코드에서 즉시 수정해야 할 텍스트 overflow나 터치 타깃 크기 문제는 재현되지 않았다.
+- 검증은 새 global UI audit, 관련 focused UI tests, Android emulator smoke, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`로 통과했다.
+
+## 2026-05-28 Android 앱 시작 크래시 수정
+
+- 사용자는 직전 `ACTIVITY_RECOGNITION` preflight 구현 후 앱이 종료된다고 보고했다.
+- 에뮬레이터 logcat crash buffer에서 `Unable to instantiate activity ComponentInfo{kr.sjh.runlini/kr.sjh.runlini.MainActivity}`와 `NullPointerException: ... Context.getSharedPreferences(...) on a null object reference`를 확인했다.
+- 스택트레이스는 `RunMotionPermissionHandler.<init>(RunMotionPermissionHandler.kt:21)`와 `MainActivity.<init>(MainActivity.kt:11)`를 가리킨다.
+- 원인은 `MainActivity` 필드 초기화 시점에 `RunMotionPermissionHandler(this)`를 만들고, 핸들러 생성자에서 즉시 `getSharedPreferences()`를 호출한 것이다.
+- 수정 방향은 `RunMotionPermissionHandler` 생성을 `configureFlutterEngine()` 내부로 늦추고, SharedPreferences 접근도 lazy로 늦추는 것이다.
+- 기존 미추적 `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 `MainActivity`는 `configureFlutterEngine()` 이후에만 `RunMotionPermissionHandler`를 생성하고, permission callback도 handler 초기화 이후에만 위임한다.
+- `RunMotionPermissionHandler`는 `SharedPreferences` 접근을 lazy로 늦추고 `applicationContext`를 사용해 Activity attach 전 context 접근을 피한다.
+- 검증은 `./gradlew :app:compileDebugKotlin`, `flutter test test/runlini_motion_permission_preflight_widget_test.dart test/core/motion/run_motion_permission_client_test.dart`, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, `./gradlew :app:assembleDebug`로 통과했다.
+- 수정 APK를 `emulator-5554`에 설치해 `kr.sjh.runlini/.MainActivity`를 실행했고, 프로세스 생존과 crash buffer에 새 로그가 없는 것을 확인했다.
+
+## 2026-05-28 ACTIVITY_RECOGNITION 시작 전 preflight
+
+- 사용자는 러닝 시작 버튼을 누른 뒤 카운트다운이 끝난 시점에 피지컬 액티비티 권한 팝업이 떠서 UX를 해치는 문제를 제기했고, Agent Company deep discussion 후 구현을 요청했다.
+- deep discussion 참여자는 `service-planner`, `researcher`, `ui-ux-designer`, `architect`, `qa-engineer`였고 최종 전원이 `agree`했다.
+- 결정은 `ACTIVITY_RECOGNITION`을 기본 GPS 러닝 시작의 hard gate가 아니라 자동 일시정지, 케이던스, 걸음 기반 보정, motion evidence를 위한 soft gate로 다루는 것이다.
+- 앱 첫 실행, 카운트다운 중, 카운트다운 종료 직후에는 권한 요청을 하지 않는다.
+- START 직후 카운트다운 전에 짧은 설명과 함께 권한을 요청할 수 있지만, 거부되거나 다시 묻지 않음이어도 GPS-only 러닝은 계속 시작한다.
+- 현재 문제의 원인은 `RunPlaybackController.start()`가 카운트다운 완료 후 motion evidence tracking을 켜고, Android `RunMotionEvidenceStreamHandler.onListen()`이 권한 없음 상태에서 바로 `requestPermissions()`를 호출하는 구조다.
+- 구현 방향은 EventChannel 구독에서 권한 요청 부작용을 제거하고, 별도 MethodChannel을 통해 START preflight에서만 권한 상태 확인과 요청을 수행하는 것이다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 Android phone은 `runlini/motion_permission` MethodChannel에서 활동 인식 권한 상태 확인, 요청, 앱 설정 열기를 처리한다.
+- `RunMotionEvidenceStreamHandler`는 더 이상 `requestPermissions()`를 호출하지 않고, 권한이 없으면 `permissionDenied` evidence만 방출한다.
+- Flutter START 흐름은 기록 레이스 관련 사전 확인 후, 카운트다운 전에 움직임 감지 권한 안내를 표시한다.
+- 권한을 건너뛰거나 거부하거나 다시 묻지 않음 상태여도 GPS-only 카운트다운과 러닝 시작은 계속 진행한다.
+- 검증은 motion permission client 테스트, motion preflight widget 테스트, 기존 countdown widget/provider 테스트, motion evidence client 테스트, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, Android `./gradlew :app:compileDebugKotlin`로 통과했다.
+
 ## 2026-05-27 START 하단 컨트롤 종료 애니메이션
 
 - 사용자는 START 버튼을 누를 때 하단 컨트롤 또는 바텀시트처럼 보이는 영역이 너무 갑자기 사라져 자연스러운 애니메이션 적용을 요청했다.
