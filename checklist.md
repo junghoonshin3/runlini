@@ -1,5 +1,15 @@
 # Checklist
 
+## ACTIVITY_RECOGNITION 시작 전 preflight
+
+- [x] 실행 계획과 컨텍스트 노트를 갱신한다.
+- [x] Android motion evidence EventChannel에서 권한 요청 부작용을 제거한다.
+- [x] Android phone용 motion permission MethodChannel을 추가한다.
+- [x] Flutter motion permission client와 START 전 preflight UI를 연결한다.
+- [x] 권한 허용, 거부, 다시 묻지 않음, GPS-only 시작 테스트를 보강한다.
+- [x] focused tests, `flutter analyze`, guardrails, diff 검사를 실행한다.
+- [x] 변경을 하나의 논리 커밋으로 남긴다.
+
 ## START 하단 컨트롤 종료 애니메이션
 
 - [x] 새 브랜치를 생성한다.

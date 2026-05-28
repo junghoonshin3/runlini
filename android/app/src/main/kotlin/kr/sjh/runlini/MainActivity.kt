@@ -8,6 +8,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
     private val motionEvidenceStreamHandler = RunMotionEvidenceStreamHandler(this)
+    private val motionPermissionHandler = RunMotionPermissionHandler(this)
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -28,6 +29,25 @@ class MainActivity : FlutterFragmentActivity() {
             flutterEngine.dartExecutor.binaryMessenger,
             MOTION_EVIDENCE_CHANNEL,
         ).setStreamHandler(motionEvidenceStreamHandler)
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            MOTION_PERMISSION_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "checkActivityRecognitionPermission" -> {
+                    result.success(motionPermissionHandler.checkActivityRecognitionPermission())
+                }
+                "requestActivityRecognitionPermission" -> {
+                    motionPermissionHandler.requestActivityRecognitionPermission(result)
+                }
+                "openAppSettings" -> {
+                    motionPermissionHandler.openAppSettings()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -182,7 +202,7 @@ class MainActivity : FlutterFragmentActivity() {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
-        if (!motionEvidenceStreamHandler.onRequestPermissionsResult(requestCode, grantResults)) {
+        if (!motionPermissionHandler.onRequestPermissionsResult(requestCode)) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
     }
@@ -190,6 +210,7 @@ class MainActivity : FlutterFragmentActivity() {
     companion object {
         private const val MAP_CONFIG_CHANNEL = "runlini/map_config"
         private const val MOTION_EVIDENCE_CHANNEL = "runlini/motion_evidence"
+        private const val MOTION_PERMISSION_CHANNEL = "runlini/motion_permission"
         private const val WEAR_DRAFTS_CHANNEL = "runlini/wear_drafts"
         private const val WATCH_CONNECTION_CHANNEL = "runlini/watch_connection"
         private const val WEAR_RECORD_RACE_CONFIG_CHANNEL = "runlini/wear_record_race_config"

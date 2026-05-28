@@ -1,5 +1,21 @@
 # Context Notes
 
+## 2026-05-28 ACTIVITY_RECOGNITION 시작 전 preflight
+
+- 사용자는 러닝 시작 버튼을 누른 뒤 카운트다운이 끝난 시점에 피지컬 액티비티 권한 팝업이 떠서 UX를 해치는 문제를 제기했고, Agent Company deep discussion 후 구현을 요청했다.
+- deep discussion 참여자는 `service-planner`, `researcher`, `ui-ux-designer`, `architect`, `qa-engineer`였고 최종 전원이 `agree`했다.
+- 결정은 `ACTIVITY_RECOGNITION`을 기본 GPS 러닝 시작의 hard gate가 아니라 자동 일시정지, 케이던스, 걸음 기반 보정, motion evidence를 위한 soft gate로 다루는 것이다.
+- 앱 첫 실행, 카운트다운 중, 카운트다운 종료 직후에는 권한 요청을 하지 않는다.
+- START 직후 카운트다운 전에 짧은 설명과 함께 권한을 요청할 수 있지만, 거부되거나 다시 묻지 않음이어도 GPS-only 러닝은 계속 시작한다.
+- 현재 문제의 원인은 `RunPlaybackController.start()`가 카운트다운 완료 후 motion evidence tracking을 켜고, Android `RunMotionEvidenceStreamHandler.onListen()`이 권한 없음 상태에서 바로 `requestPermissions()`를 호출하는 구조다.
+- 구현 방향은 EventChannel 구독에서 권한 요청 부작용을 제거하고, 별도 MethodChannel을 통해 START preflight에서만 권한 상태 확인과 요청을 수행하는 것이다.
+- 기존 untracked `docs/assets/runlini-emulator-demo-20260525.mov`는 이번 작업과 무관하므로 건드리지 않는다.
+- 구현 결과 Android phone은 `runlini/motion_permission` MethodChannel에서 활동 인식 권한 상태 확인, 요청, 앱 설정 열기를 처리한다.
+- `RunMotionEvidenceStreamHandler`는 더 이상 `requestPermissions()`를 호출하지 않고, 권한이 없으면 `permissionDenied` evidence만 방출한다.
+- Flutter START 흐름은 기록 레이스 관련 사전 확인 후, 카운트다운 전에 움직임 감지 권한 안내를 표시한다.
+- 권한을 건너뛰거나 거부하거나 다시 묻지 않음 상태여도 GPS-only 카운트다운과 러닝 시작은 계속 진행한다.
+- 검증은 motion permission client 테스트, motion preflight widget 테스트, 기존 countdown widget/provider 테스트, motion evidence client 테스트, `flutter analyze`, `dart run tool/guardrails.dart`, `git diff --check`, Android `./gradlew :app:compileDebugKotlin`로 통과했다.
+
 ## 2026-05-27 START 하단 컨트롤 종료 애니메이션
 
 - 사용자는 START 버튼을 누를 때 하단 컨트롤 또는 바텀시트처럼 보이는 영역이 너무 갑자기 사라져 자연스러운 애니메이션 적용을 요청했다.
